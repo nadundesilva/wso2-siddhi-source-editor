@@ -1,20 +1,4 @@
-/*
- * Copyright (c) 2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// Generated from /Development/Projects/Gsoc/CEP-Siddhi_Editor/client_side_Siddhi_parser/SiddhiQL.g4 by ANTLR 4.5
+// Generated from SiddhiQL.g4 by ANTLR 4.5
 // jshint ignore: start
 var antlr4 = require('../antlr4/index');
 
@@ -38,7 +22,6 @@ SiddhiQLListener.prototype.exitParse = function(ctx) {
 
 // Enter a parse tree produced by SiddhiQLParser#error.
 SiddhiQLListener.prototype.enterError = function(ctx) {
-
 };
 
 // Exit a parse tree produced by SiddhiQLParser#error.
@@ -100,6 +83,24 @@ SiddhiQLListener.prototype.exitDefinition_table = function(ctx) {
 };
 
 
+// Enter a parse tree produced by SiddhiQLParser#definition_window_final.
+SiddhiQLListener.prototype.enterDefinition_window_final = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#definition_window_final.
+SiddhiQLListener.prototype.exitDefinition_window_final = function(ctx) {
+};
+
+
+// Enter a parse tree produced by SiddhiQLParser#definition_window.
+SiddhiQLListener.prototype.enterDefinition_window = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#definition_window.
+SiddhiQLListener.prototype.exitDefinition_window = function(ctx) {
+};
+
+
 // Enter a parse tree produced by SiddhiQLParser#definition_function_final.
 SiddhiQLListener.prototype.enterDefinition_function_final = function(ctx) {
 };
@@ -142,6 +143,33 @@ SiddhiQLListener.prototype.enterFunction_body = function(ctx) {
 
 // Exit a parse tree produced by SiddhiQLParser#function_body.
 SiddhiQLListener.prototype.exitFunction_body = function(ctx) {
+};
+
+
+// Enter a parse tree produced by SiddhiQLParser#definition_trigger_final.
+SiddhiQLListener.prototype.enterDefinition_trigger_final = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#definition_trigger_final.
+SiddhiQLListener.prototype.exitDefinition_trigger_final = function(ctx) {
+};
+
+
+// Enter a parse tree produced by SiddhiQLParser#definition_trigger.
+SiddhiQLListener.prototype.enterDefinition_trigger = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#definition_trigger.
+SiddhiQLListener.prototype.exitDefinition_trigger = function(ctx) {
+};
+
+
+// Enter a parse tree produced by SiddhiQLParser#trigger_name.
+SiddhiQLListener.prototype.enterTrigger_name = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#trigger_name.
+SiddhiQLListener.prototype.exitTrigger_name = function(ctx) {
 };
 
 
@@ -532,21 +560,12 @@ SiddhiQLListener.prototype.exitExpression = function(ctx) {
 };
 
 
-// Enter a parse tree produced by SiddhiQLParser#basic_math_operation.
-SiddhiQLListener.prototype.enterBasic_math_operation = function(ctx) {
+// Enter a parse tree produced by SiddhiQLParser#multiplication_math_operation.
+SiddhiQLListener.prototype.enterMultiplication_math_operation = function(ctx) {
 };
 
-// Exit a parse tree produced by SiddhiQLParser#basic_math_operation.
-SiddhiQLListener.prototype.exitBasic_math_operation = function(ctx) {
-};
-
-
-// Enter a parse tree produced by SiddhiQLParser#equality_math_operation.
-SiddhiQLListener.prototype.enterEquality_math_operation = function(ctx) {
-};
-
-// Exit a parse tree produced by SiddhiQLParser#equality_math_operation.
-SiddhiQLListener.prototype.exitEquality_math_operation = function(ctx) {
+// Exit a parse tree produced by SiddhiQLParser#multiplication_math_operation.
+SiddhiQLListener.prototype.exitMultiplication_math_operation = function(ctx) {
 };
 
 
@@ -559,6 +578,15 @@ SiddhiQLListener.prototype.exitGreaterthan_lessthan_math_operation = function(ct
 };
 
 
+// Enter a parse tree produced by SiddhiQLParser#basic_math_operation.
+SiddhiQLListener.prototype.enterBasic_math_operation = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#basic_math_operation.
+SiddhiQLListener.prototype.exitBasic_math_operation = function(ctx) {
+};
+
+
 // Enter a parse tree produced by SiddhiQLParser#in_math_operation.
 SiddhiQLListener.prototype.enterIn_math_operation = function(ctx) {
 };
@@ -568,12 +596,12 @@ SiddhiQLListener.prototype.exitIn_math_operation = function(ctx) {
 };
 
 
-// Enter a parse tree produced by SiddhiQLParser#multiplication_math_operation.
-SiddhiQLListener.prototype.enterMultiplication_math_operation = function(ctx) {
+// Enter a parse tree produced by SiddhiQLParser#addition_math_operation.
+SiddhiQLListener.prototype.enterAddition_math_operation = function(ctx) {
 };
 
-// Exit a parse tree produced by SiddhiQLParser#multiplication_math_operation.
-SiddhiQLListener.prototype.exitMultiplication_math_operation = function(ctx) {
+// Exit a parse tree produced by SiddhiQLParser#addition_math_operation.
+SiddhiQLListener.prototype.exitAddition_math_operation = function(ctx) {
 };
 
 
@@ -595,21 +623,21 @@ SiddhiQLListener.prototype.exitOr_math_operation = function(ctx) {
 };
 
 
+// Enter a parse tree produced by SiddhiQLParser#equality_math_operation.
+SiddhiQLListener.prototype.enterEquality_math_operation = function(ctx) {
+};
+
+// Exit a parse tree produced by SiddhiQLParser#equality_math_operation.
+SiddhiQLListener.prototype.exitEquality_math_operation = function(ctx) {
+};
+
+
 // Enter a parse tree produced by SiddhiQLParser#not_math_operation.
 SiddhiQLListener.prototype.enterNot_math_operation = function(ctx) {
 };
 
 // Exit a parse tree produced by SiddhiQLParser#not_math_operation.
 SiddhiQLListener.prototype.exitNot_math_operation = function(ctx) {
-};
-
-
-// Enter a parse tree produced by SiddhiQLParser#addition_math_operation.
-SiddhiQLListener.prototype.enterAddition_math_operation = function(ctx) {
-};
-
-// Exit a parse tree produced by SiddhiQLParser#addition_math_operation.
-SiddhiQLListener.prototype.exitAddition_math_operation = function(ctx) {
 };
 
 

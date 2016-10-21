@@ -33,9 +33,9 @@ error
 
 execution_plan
     : (plan_annotation|error)*
-      ( (definition_stream|definition_table|error|definition_function) (';' (definition_stream|definition_table|error|definition_function))* ';'?
+      ( (definition_stream|definition_table|definition_trigger|definition_function|definition_window|error) (';' (definition_stream|definition_table|definition_trigger|definition_function|definition_window|error))* ';'?
       || (execution_element|error) (';' (execution_element|error))* ';'?
-      || (definition_stream|definition_table|error|definition_function) (';' (definition_stream|definition_table|error|definition_function))* (';' (execution_element|error))* ';'? )
+      || (definition_stream|definition_table|definition_trigger|definition_function|definition_window|error) (';' (definition_stream|definition_table|definition_trigger|definition_function|definition_window|error))* (';' (execution_element|error))* ';'? )
     ;
 
 execution_element
@@ -58,6 +58,14 @@ definition_table
     : annotation* DEFINE TABLE source '(' attribute_name attribute_type (',' attribute_name attribute_type )* ')'
     ;
 
+definition_window_final
+    :definition_window ';'? EOF
+    ;
+
+definition_window
+    : annotation* DEFINE WINDOW source '(' attribute_name attribute_type (',' attribute_name attribute_type )* ')' function_operation ( OUTPUT output_event_type )?
+    ;
+
 definition_function_final
     : definition_function ';'? EOF
     ;
@@ -76,6 +84,18 @@ language_name
 
 function_body
     : SCRIPT
+    ;
+
+definition_trigger_final
+    : definition_trigger ';'? EOF
+    ;
+
+definition_trigger
+    : DEFINE TRIGGER trigger_name AT (EVERY time_value | string_value )
+    ;
+
+trigger_name
+    : id
     ;
 
 annotation
@@ -100,7 +120,7 @@ partition_final
 
 partition_with_stream
     :attribute OF stream_id
-    |condition_ranges OF stream_id 
+    |condition_ranges OF stream_id
     ;
 
 condition_ranges
@@ -142,17 +162,17 @@ pattern_stream
     ;
 
 every_pattern_source_chain
-    : '('every_pattern_source_chain')' within_time? 
-    | EVERY '('pattern_source_chain ')' within_time?   
+    : '('every_pattern_source_chain')' within_time?
+    | EVERY '('pattern_source_chain ')' within_time?
     | every_pattern_source_chain  '->' every_pattern_source_chain
     | pattern_source_chain
-    | EVERY pattern_source within_time? 
+    | EVERY pattern_source within_time?
     ;
 
 pattern_source_chain
-    : '('pattern_source_chain')' within_time? 
+    : '('pattern_source_chain')' within_time?
     | pattern_source_chain  '->' pattern_source_chain
-    | pattern_source within_time? 
+    | pattern_source within_time?
     ;
 
 pattern_source
@@ -178,7 +198,7 @@ basic_source
     ;
 
 basic_source_stream_handlers
-    :(basic_source_stream_handler)+ 
+    :(basic_source_stream_handler)+
     ;
 
 basic_source_stream_handler
@@ -190,9 +210,9 @@ sequence_stream
     ;
 
 sequence_source_chain
-    :'('sequence_source_chain ')' within_time? 
+    :'('sequence_source_chain ')' within_time?
     | sequence_source_chain ',' sequence_source_chain
-    | sequence_source  within_time? 
+    | sequence_source  within_time?
     ;
 
 sequence_source
@@ -200,7 +220,7 @@ sequence_source
     ;
 
 sequence_collection_stateful_source
-    :standard_stateful_source ('<' collect '>'|zero_or_more='*'|zero_or_one='?'|one_or_more='+') 
+    :standard_stateful_source ('<' collect '>'|zero_or_more='*'|zero_or_one='?'|one_or_more='+')
     ;
 
 anonymous_stream
@@ -225,7 +245,7 @@ query_section
     ;
 
 group_by
-    : GROUP BY attribute_reference+
+    : GROUP BY attribute_reference (',' attribute_reference)*
     ;
 
 having
@@ -236,11 +256,12 @@ query_output
     :INSERT output_event_type? INTO target
     |DELETE target (FOR output_event_type)? ON expression
     |UPDATE target (FOR output_event_type)? ON expression
+    |INSERT OVERWRITE target (FOR output_event_type)? ON expression
     |RETURN output_event_type?
     ;
 
 output_event_type
-    : ALL EVENTS | ALL RAW EVENTS | EXPIRED EVENTS | EXPIRED RAW EVENTS | CURRENT? EVENTS   
+    : ALL EVENTS | ALL RAW EVENTS | EXPIRED EVENTS | EXPIRED RAW EVENTS | CURRENT? EVENTS
     ;
 
 output_rate
@@ -274,6 +295,7 @@ expression
 
 math_operation
     :'('math_operation')'                         #basic_math_operation
+    |null_check                                   #basic_math_operation
     |NOT math_operation                           #not_math_operation
     |math_operation (multiply='*'|devide='/'|mod='%') math_operation    #multiplication_math_operation
     |math_operation (add='+'|substract='-') math_operation              #addition_math_operation
@@ -283,21 +305,20 @@ math_operation
     |math_operation AND math_operation            #and_math_operation
     |math_operation OR math_operation             #or_math_operation
     |function_operation                           #basic_math_operation
-    |null_check                                   #basic_math_operation
     |constant_value                               #basic_math_operation
     |attribute_reference                          #basic_math_operation
     ;
 
 function_operation
-    : (function_namespace ':')? function_id '('attribute_list?')'
+    : (function_namespace ':')? function_id '(' attribute_list?  ')'
     ;
 
 attribute_list
-    :attribute (','attribute)*
+    :( attribute (',' attribute)* )  | '*'
     ;
 
 null_check
-    :( stream_reference  | attribute_reference) IS NULL
+    :( stream_reference  | attribute_reference | function_operation ) IS NULL
     ;
 
 stream_reference
@@ -365,13 +386,13 @@ collect
     ;
 
 attribute_type
-    :STRING     
-    |INT        
-    |LONG       
-    |FLOAT      
-    |DOUBLE     
-    |BOOL      
-    |OBJECT     
+    :STRING
+    |INT
+    |LONG
+    |FLOAT
+    |DOUBLE
+    |BOOL
+    |OBJECT
     ;
 
 join
@@ -407,6 +428,7 @@ keyword
     | BY
     | HAVING
     | INSERT
+    | OVERWRITE
     | DELETE
     | UPDATE
     | RETURN
@@ -465,13 +487,13 @@ time_value
     |  month_value ( week_value)? ( day_value)? ( hour_value)? ( minute_value)? ( second_value)?  ( millisecond_value)?
     |  week_value ( day_value)? ( hour_value)? ( minute_value)? ( second_value)?  ( millisecond_value)?
     |  day_value ( hour_value)? ( minute_value)? ( second_value)?  ( millisecond_value)?
-    |  hour_value ( minute_value)? ( second_value)?  ( millisecond_value)?       
+    |  hour_value ( minute_value)? ( second_value)?  ( millisecond_value)?
     |  minute_value ( second_value)?  ( millisecond_value)?
     |  second_value ( millisecond_value)?
     |  millisecond_value
     ;
 
-year_value 
+year_value
     : INT_LITERAL YEARS
     ;
 
@@ -510,24 +532,24 @@ signed_int_value: ('-' |'+')? INT_LITERAL;
 bool_value: TRUE|FALSE;
 string_value: STRING_LITERAL;
 
-INT_LITERAL 
+INT_LITERAL
     :  DIGIT+
     ;
 
 LONG_LITERAL
     : DIGIT+ L
-    ; 
+    ;
 
 FLOAT_LITERAL
     : DIGIT+ ( '.' DIGIT* )? ( E [-+]? DIGIT+ )? F
     | (DIGIT+)? '.' DIGIT+ ( E [-+]? DIGIT+ )? F
-    ; 
+    ;
 
 DOUBLE_LITERAL
     : DIGIT+ ( '.' DIGIT* )? ( E [-+]? DIGIT+ )? D
     | DIGIT+ ( '.' DIGIT* )?  E [-+]? DIGIT+  D?
     | (DIGIT+)? '.' DIGIT+ ( E [-+]? DIGIT+ )? D?
-    ; 
+    ;
 
 /*
 ID_QUOTES : '`'('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*'`' {setText(getText().substring(1, getText().length()-1));};
@@ -536,7 +558,7 @@ ID_NO_QUOTES : ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 
 
 STRING_VAL
-    :('\'' ( ~('\u0000'..'\u001f' | '\\' | '\''| '\"' ) )* '\'' 
+    :('\'' ( ~('\u0000'..'\u001f' | '\\' | '\''| '\"' ) )* '\''
     |'"' ( ~('\u0000'..'\u001f' | '\\'  |'\"') )* '"' )         {setText(getText().substring(1, getText().length()-1));}
     ;
 
@@ -563,23 +585,25 @@ GT : '>';
 GT_EQ : '>=';
 EQ : '==';
 NOT_EQ : '!=';
-AT: '@';
+AT_SYMBOL: '@';
 FOLLOWED_BY:'->';
 HASH:'#';
 
 STREAM:   S T R E A M;
 DEFINE:   D E F I N E;
 FUNCTION: F U N C T I O N;
+TRIGGER:  T R I G G E R;
 TABLE:    T A B L E;
 PLAN:     P L A N;
 FROM:     F R O M;
-PARTITION:    P A R T I T I O N; 
+PARTITION:    P A R T I T I O N;
 WINDOW:   W I N D O W;
 SELECT:   S E L E C T;
 GROUP:    G R O U P;
 BY:       B Y;
 HAVING:   H A V I N G;
 INSERT:   I N S E R T;
+OVERWRITE:    O V E R W R I T E;
 DELETE:   D E L E T E;
 UPDATE:   U P D A T E;
 RETURN:   R E T U R N;
@@ -593,6 +617,7 @@ FOR:      F O R;
 RAW:      R A W;
 OF:       O F;
 AS:       A S;
+AT:       A T;
 OR:       O R;
 AND:      A N D;
 IN:       I N;

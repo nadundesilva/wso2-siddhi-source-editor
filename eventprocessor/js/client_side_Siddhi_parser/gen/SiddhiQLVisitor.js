@@ -1,20 +1,4 @@
-/*
- * Copyright (c) 2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// Generated from /Development/Projects/Gsoc/CEP-Siddhi_Editor/client_side_Siddhi_parser/SiddhiQL.g4 by ANTLR 4.5
+// Generated from SiddhiQL.g4 by ANTLR 4.5
 // jshint ignore: start
 var antlr4 = require('../antlr4/index');
 
@@ -71,6 +55,16 @@ SiddhiQLVisitor.prototype.visitDefinition_table = function(ctx) {
 };
 
 
+// Visit a parse tree produced by SiddhiQLParser#definition_window_final.
+SiddhiQLVisitor.prototype.visitDefinition_window_final = function(ctx) {
+};
+
+
+// Visit a parse tree produced by SiddhiQLParser#definition_window.
+SiddhiQLVisitor.prototype.visitDefinition_window = function(ctx) {
+};
+
+
 // Visit a parse tree produced by SiddhiQLParser#definition_function_final.
 SiddhiQLVisitor.prototype.visitDefinition_function_final = function(ctx) {
 };
@@ -93,6 +87,21 @@ SiddhiQLVisitor.prototype.visitLanguage_name = function(ctx) {
 
 // Visit a parse tree produced by SiddhiQLParser#function_body.
 SiddhiQLVisitor.prototype.visitFunction_body = function(ctx) {
+};
+
+
+// Visit a parse tree produced by SiddhiQLParser#definition_trigger_final.
+SiddhiQLVisitor.prototype.visitDefinition_trigger_final = function(ctx) {
+};
+
+
+// Visit a parse tree produced by SiddhiQLParser#definition_trigger.
+SiddhiQLVisitor.prototype.visitDefinition_trigger = function(ctx) {
+};
+
+
+// Visit a parse tree produced by SiddhiQLParser#trigger_name.
+SiddhiQLVisitor.prototype.visitTrigger_name = function(ctx) {
 };
 
 
@@ -311,13 +320,8 @@ SiddhiQLVisitor.prototype.visitExpression = function(ctx) {
 };
 
 
-// Visit a parse tree produced by SiddhiQLParser#basic_math_operation.
-SiddhiQLVisitor.prototype.visitBasic_math_operation = function(ctx) {
-};
-
-
-// Visit a parse tree produced by SiddhiQLParser#equality_math_operation.
-SiddhiQLVisitor.prototype.visitEquality_math_operation = function(ctx) {
+// Visit a parse tree produced by SiddhiQLParser#multiplication_math_operation.
+SiddhiQLVisitor.prototype.visitMultiplication_math_operation = function(ctx) {
 };
 
 
@@ -326,13 +330,18 @@ SiddhiQLVisitor.prototype.visitGreaterthan_lessthan_math_operation = function(ct
 };
 
 
+// Visit a parse tree produced by SiddhiQLParser#basic_math_operation.
+SiddhiQLVisitor.prototype.visitBasic_math_operation = function(ctx) {
+};
+
+
 // Visit a parse tree produced by SiddhiQLParser#in_math_operation.
 SiddhiQLVisitor.prototype.visitIn_math_operation = function(ctx) {
 };
 
 
-// Visit a parse tree produced by SiddhiQLParser#multiplication_math_operation.
-SiddhiQLVisitor.prototype.visitMultiplication_math_operation = function(ctx) {
+// Visit a parse tree produced by SiddhiQLParser#addition_math_operation.
+SiddhiQLVisitor.prototype.visitAddition_math_operation = function(ctx) {
 };
 
 
@@ -346,13 +355,13 @@ SiddhiQLVisitor.prototype.visitOr_math_operation = function(ctx) {
 };
 
 
-// Visit a parse tree produced by SiddhiQLParser#not_math_operation.
-SiddhiQLVisitor.prototype.visitNot_math_operation = function(ctx) {
+// Visit a parse tree produced by SiddhiQLParser#equality_math_operation.
+SiddhiQLVisitor.prototype.visitEquality_math_operation = function(ctx) {
 };
 
 
-// Visit a parse tree produced by SiddhiQLParser#addition_math_operation.
-SiddhiQLVisitor.prototype.visitAddition_math_operation = function(ctx) {
+// Visit a parse tree produced by SiddhiQLParser#not_math_operation.
+SiddhiQLVisitor.prototype.visitNot_math_operation = function(ctx) {
 };
 
 
