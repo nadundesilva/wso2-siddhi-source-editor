@@ -30,7 +30,7 @@ ace.define("ace/mode/siddhi_highlight_rules",["require","exports","module","ace/
         );
 
         var builtinFunctions = (
-            "coalesce|convert|instanceOfBoolean|instanceOfDouble|instanceOfFloat|instanceOfInteger|instanceOfLong|instanceOfString|UUID"
+            "coalesce|convert|instanceOfBoolean|instanceOfDouble|instanceOfFloat|instanceOfInteger|instanceOfLong|instanceOfString|UUID|maximum|minimum|cast|ifThenElse"
         );
 //#05a
         var keywordMapper = this.createKeywordMapper({

@@ -1,18 +1,18 @@
 {
   "functions": {
-    "avg": [
-      {
-        "Description": "Returns the average for all the events."
-      }
-    ],
     "sum": [
       {
         "Description": "Returns the sum for all the events."
       }
     ],
-    "count": [
+    "avg": [
       {
-        "Description": "Returns the count of all the events."
+        "Description": "Returns the average for all the events."
+      }
+    ],
+    "max": [
+      {
+        "Description": "Returns the maximum value for all the events."
       }
     ],
     "min": [
@@ -20,9 +20,29 @@
         "Description": "Returns the minimum value for all the events."
       }
     ],
-    "max": [
+    "count": [
       {
-        "Description": "Returns the maximum value for all the events."
+        "Description": "Returns the count of all the events."
+      }
+    ],
+    "stddev": [
+      {
+        "Description": "Returns the calculated standard deviation for all the events."
+      }
+    ],
+    "distinctcount": [
+      {
+        "Description": "Returns the count of distinct occurrences for a given arg."
+      }
+    ],
+    "maxForever": [
+      {
+        "Description": "This is the attribute aggregator to store the maximum value for a given attribute throughout the lifetime of the query regardless of any windows in-front."
+      }
+    ],
+    "minForever": [
+      {
+        "Description": "This is the attribute aggregator to store the minimum value for a given attribute throughout the lifetime of the query regardless of any windows in-front."
       }
     ],
     "coalesce": [
@@ -32,17 +52,7 @@
     ],
     "convert": [
       {
-        "Description": "Converts the first input parameter according to the convertedTo parameter. ",
-        "argTypes": [
-          [
-            "float",
-            "double"
-          ]
-        ],
-        "returnType": [
-          "float",
-          "double"
-        ]
+        "Description": "Converts the first input parameter according to the convertedTo parameter."
       }
     ],
     "instanceOfBoolean": [
@@ -60,6 +70,11 @@
         "Description": "Checks whether the parameter is an instance of Float or not."
       }
     ],
+    "instanceOfInteger": [
+      {
+        "Description": "Checks whether the parameter is an instance of Integer or not."
+      }
+    ],
     "instanceOfLong": [
       {
         "Description": "Checks whether the parameter is an instance of Long or not."
@@ -75,14 +90,24 @@
         "Description": "Generates a UUID (Universally Unique Identifier)."
       }
     ],
-    "isMatch": [
+    "maximum": [
       {
-        "Description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
+        "Description": "Returns the maximum value of the input parameters."
       }
     ],
-    "concat": [
+    "minimum": [
       {
-        "Description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
+        "Description": "Returns the minimum value of the input parameters."
+      }
+    ],
+    "cast": [
+      {
+        "Description": "Converts the first parameter according to the castTo parameter. Incompatible arguments cause Class Cast exceptions if further processed. This function is used with map extension that returns attributes of the object type. You can use this function to cast the object to an accurate and concrete type."
+      }
+    ],
+    "ifThenElse": [
+      {
+        "Description": "Returns the the value of the arg1 parameter if the condition parameter is set to true, or returns the value of the arg2 parameter if the condition parameter is set to false."
       }
     ]
   },
