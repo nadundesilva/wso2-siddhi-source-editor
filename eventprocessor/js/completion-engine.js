@@ -717,7 +717,15 @@
         return tempList;
     };
     completionEngine.$windowPhrase = function (args) {
-        var defaultArray = ["time(1 min)", "timeBatch( 1 min)", "length(10)", "lengthBatch(10)", "externalTime(timeStamp,windowTime)"];
+        var defaultArray = [
+            "time(windowTime)", "timeBatch(windowTime)", "timeBatch(windowTime, startTime)",
+            "length(windowLength)", "lengthBatch(windowLength)", "externalTime(timeStamp, windowTime)",
+            "cron(cronExpression)", "firstUnique(attribute)", "unique(attribute)", "sort(windowLength)",
+            "sort(windowLength, attribute, order)", "frequent(eventCount)", "frequent(eventCount, attribute)",
+            "lossyFrequent(supportThreshold, errorBound)", "lossyFrequent(supportThreshold, errorBound, attribute)",
+            "externalTimeBatch(timeStamp, windowTime, startTime, timeOut)", "timeLength(windowTime, windowLength)",
+            "uniqueExternalTimeBatch(attribute, timeStamp, windowTime, startTime, timeout, replaceTimestampWithBatchEndTime)"
+        ];
 
 
         var nsArray = getExtensionNamesSpaces(WINDOW_PROCESSORS);

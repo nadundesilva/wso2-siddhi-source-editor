@@ -1,124 +1,163 @@
 {
-    "functions":{
-    "avg":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+  "functions": {
+    "avg": [
+      {
+        "Description": "Returns the average for all the events."
+      }
     ],
-        "sum":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "sum": [
+      {
+        "Description": "Returns the sum for all the events."
+      }
     ],
-        "count":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "count": [
+      {
+        "Description": "Returns the count of all the events."
+      }
     ],
-        "min":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "min": [
+      {
+        "Description": "Returns the minimum value for all the events."
+      }
     ],
-        "max":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "max": [
+      {
+        "Description": "Returns the maximum value for all the events."
+      }
     ],
-        "coalesce":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "coalesce": [
+      {
+        "Description": "Returns the value of the first input parameter that is not null."
+      }
     ],
-        "convert":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
-            "argTypes":[
-                [
-                    "float",
-                    "double"
-                ]
-            ],
-            "returnType":[
-                "float",
-                "double"
-            ]
-        }
+    "convert": [
+      {
+        "Description": "Converts the first input parameter according to the convertedTo parameter. ",
+        "argTypes": [
+          [
+            "float",
+            "double"
+          ]
+        ],
+        "returnType": [
+          "float",
+          "double"
+        ]
+      }
     ],
-        "instanceOfBoolean":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "instanceOfBoolean": [
+      {
+        "Description": "Checks whether the parameter is an instance of Boolean or not."
+      }
     ],
-        "instanceOfDouble":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "instanceOfDouble": [
+      {
+        "Description": "Checks whether the parameter is an instance of Double or not."
+      }
     ],
-        "instanceOfFloat":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "instanceOfFloat": [
+      {
+        "Description": "Checks whether the parameter is an instance of Float or not."
+      }
     ],
-        "instanceOfLong":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "instanceOfLong": [
+      {
+        "Description": "Checks whether the parameter is an instance of Long or not."
+      }
     ],
-        "instanceOfString":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "instanceOfString": [
+      {
+        "Description": "Checks whether the parameter is an instance of String or not."
+      }
     ],
-        "UUID":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "UUID": [
+      {
+        "Description": "Generates a UUID (Universally Unique Identifier)."
+      }
     ],
-        "isMatch":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "isMatch": [
+      {
+        "Description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
+      }
     ],
-        "concat":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "concat": [
+      {
+        "Description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
+      }
     ]
-},
-    "streamProcessors":{
-
-},
-    "windowProcessors":{
-    "time":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+  },
+  "streamProcessors": {
+  },
+  "windowProcessors": {
+    "time": [
+      {
+        "Description": "A sliding time window that holds events that arrived during the last windowTime period at a given time, and gets updated for each event arrival and expiry."
+      }
     ],
-        "timeBatch":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "timeBatch": [
+      {
+        "Description": "A batch (tumbling) time window that holds events that arrive during windowTime periods, and gets updated for each windowTime."
+      }
     ],
-        "length":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "length": [
+      {
+        "Description": "A sliding length window that holds the last windowLength events at a given time, and gets updated for each arrival and expiry."
+      }
     ],
-        "lengthBatch":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "lengthBatch": [
+      {
+        "Description": "A batch (tumbling) length window that holds a number of events specified as the windowLength. The window is updated each time a batch of events that equals the number specified as the windowLength arrives."
+      }
     ],
-        "unique":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "externalTime": [
+      {
+        "Description": "A sliding time window based on external time. It holds events that arrived during the last windowTime period from the external timestamp, and gets updated on every monotonically increasing timestamp."
+      }
     ],
-        "firstunique":[
-        {
-            "Description":"Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function"
-        }
+    "cron": [
+      {
+        "Description": "This window returns events processed periodically as the output in time-repeating patterns, triggered based on time passing."
+      }
+    ],
+    "firstUnique": [
+      {
+        "Description": "First unique window processor keeps only the first events that are unique according to the given unique attribute."
+      }
+    ],
+    "unique": [
+      {
+        "Description": "This window keeps only the latest events that are unique according to the given unique attribute."
+      }
+    ],
+    "sort": [
+      {
+        "Description": "This window holds a batch of events that equal the number specified as the windowLength and sorts them in the given order."
+      }
+    ],
+    "frequent": [
+      {
+        "Description": "This window returns the latest events with the most frequently occurred value for a given attribute(s). Frequency calculation for this window processor is based on Misra-Gries counting algorithm."
+      }
+    ],
+    "lossyFrequent": [
+      {
+        "Description": "This window identifies and returns all the events of which the current frequency exceeds the value specified for the supportThreshold parameter."
+      }
+    ],
+    "externalTimeBatch": [
+      {
+        "Description": "A batch (tumbling) time window based on external time, that holds events arrived during windowTime periods, and gets updated for every windowTime."
+      }
+    ],
+    "timeLength": [
+      {
+        "Description": "A sliding time window that, at a given time holds the last windowLength events that arrived during last windowTime period, and gets updated for every event arrival and expiry."
+      }
+    ],
+    "uniqueExternalTimeBatch": [
+      {
+        "Description": "A batch (tumbling) time window based on external time that holds latest unique events that arrive during the windowTime periods, and gets updated for each windowTime."
+      }
     ]
-}
+  }
 }
