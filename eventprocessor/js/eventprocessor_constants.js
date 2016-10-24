@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-/*Annotations, Annotation Names and relevant tokens*/
+/*
+ * Annotations, Annotation Names and relevant tokens
+ */
 var ANNOTATION_IMPORT = "Import";
 var ANNOTATION_EXPORT = "Export";
 
@@ -37,21 +39,21 @@ var SIDDHI_LITERAL_DEFINE_STREAM = "define stream";
 
 var MIME_TYPE_SIDDHI_QL = "text/siddhi-ql";
 
-var ACE_CONSTANT={
-    LANG_TOOL:"ace/ext/language_tools",
-    TOKEN_TOOLTIP:"js/ace_editor/token-tooltip",
-    SIDDHI_MODE:    "ace/mode/siddhi",
-    THEME:"ace/theme/crimson_editor",
-    EXTENSION:    "siddhi-extensions.json",
-    INBUILT:"siddhi-inbuilt.json",
-    ACE_RANGE:    "ace/range"
+var ACE_CONSTANT = {
+    LANG_TOOL: "ace/ext/language_tools",
+    TOKEN_TOOLTIP: "js/ace_editor/token-tooltip",
+    SIDDHI_MODE: "ace/mode/siddhi",
+    THEME: "ace/theme/crimson_editor",
+    EXTENSION: "siddhi-extensions.json",
+    INBUILT: "siddhi-inbuilt.json",
+    ACE_RANGE: "ace/range"
 };
 
-var ANTLR_CONSTANT= {
-    ROOT: "../eventprocessor/js/client_side_Siddhi_parser/",
+var ANTLR_CONSTANT = {
+    ROOT: "js/client_side_Siddhi_parser/",
     ERROR_LISTENER: "gen/AceErrorListener",
     SIDDHI_LISTENER: "gen/CustomSiddhiListener",
     SIDDHI_PARSER: "gen/SiddhiQLParser",
     SIDDHI_LEXER: "gen/SiddhiQLLexer",
     INDEX: "antlr4/index"
-}
+};

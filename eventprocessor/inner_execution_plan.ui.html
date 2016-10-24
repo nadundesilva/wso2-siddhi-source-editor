@@ -24,43 +24,47 @@
             overflow: hidden;
         }
 
-        #editor {
+        #editor1 {
             margin: 0;
             position: absolute;
             top: 0;
+            height: 50%;
+            left: 0;
+            right: 0;
+        }
+
+        #editor2 {
+            margin: 0;
+            position: absolute;
+            height: 50%;
             bottom: 0;
             left: 0;
             right: 0;
         }
 
-        .line{
+        .line {
             position: absolute;
             z-index: 4;
             border-bottom: thin dotted #E80000;
         }
     </style>
 </head>
-
-
 <body>
 
-
-
-<script src="../eventprocessor/js/jquery.min.js"></script>
+<script src="js/jquery.min.js"></script>
 <script src="js/prototype.js"></script>
 
-
-<script src="../eventprocessor/js/eventprocessor_constants.js"></script>
-<script src="../eventprocessor/js/ace_editor/ace.js"></script>
-<script src="../eventprocessor/js/ace_editor/ext-language_tools.js"></script>
-
+<script src="js/eventprocessor_constants.js"></script>
+<script src="js/ace_editor/ace.js"></script>
+<script src="js/ace_editor/ext-language_tools.js"></script>
 
 <!--<script src="../eventprocessor/js/ace_editor/ext-language_tools.js"></script>-->
-<script src='../eventprocessor/js/client_side_Siddhi_parser/lib/require.js'></script>
-<script src="../eventprocessor/js/create_execution_plan_helper.js"></script>
-<script src="../eventprocessor/js/editor.js"></script>
-<script src="../eventprocessor/js/completion-engine.js"></script>
-<pre id="editor">/* Enter a unique ExecutionPlan */
+<script src="js/client_side_Siddhi_parser/lib/require.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/completion-engine.js"></script>
+
+<pre id="editor1">
+/* Enter a unique ExecutionPlan */
 @Plan:name('ExecutionPlan')
 
 /* Enter a unique description for ExecutionPlan */
@@ -69,17 +73,29 @@
 /* define streams/tables and write queries here ... */
 </pre>
 
+<pre id="editor2">
+/* Enter a unique ExecutionPlan */
+@Plan:name('ExecutionPlan')
+
+/* Enter a unique description for ExecutionPlan */
+-- @Plan:description('ExecutionPlan')
+
+/* define streams/tables and write queries here ... */
+</pre>
 
 <script type="text/javascript">
     jQuery(document).ready(function () {
-        var config={
-            divID:"editor",
-            realTimeValidation:true,
-            autoCompletion:true
-        }
-        SiddhiEditor.init(config);
+        SiddhiEditor.init({
+            divID: "editor1",
+            realTimeValidation: true,
+            autoCompletion: true
+        });
+        SiddhiEditor.init({
+            divID: "editor2",
+            realTimeValidation: true,
+            autoCompletion: true
+        });
     });
 </script>
-<!--<script src="./show_own_source.js"></script>-->
 </body>
 </html>

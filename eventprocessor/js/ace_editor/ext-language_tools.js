@@ -1624,7 +1624,7 @@ Autocomplete.startCommand = {
         if (!editor.completer)
             editor.completer = new Autocomplete();
 
-        completionEngine.adjustAutoCompletionHandlers(editor);//THIS is essential to change the completer based on the context
+        CompletionEngine.adjustAutoCompletionHandlers(editor);//THIS is essential to change the completer based on the context
 
         editor.completer.autoInsert = false;
         editor.completer.autoSelect = true;

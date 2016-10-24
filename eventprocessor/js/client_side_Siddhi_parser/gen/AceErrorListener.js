@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var ErrorListener=require("../antlr4/error/ErrorListener").ErrorListener;
-var loggerContext="AceErrorListener"
-function AceErrorListener() {
+var ErrorListener = require("../antlr4/error/ErrorListener").ErrorListener;
+var loggerContext = "AceErrorListener";
+function AceErrorListener(editor) {
     ErrorListener.call(this);
+    this.editor = editor;
     return this;
 }
 
 AceErrorListener.prototype = Object.create(ErrorListener.prototype);
 AceErrorListener.prototype.constructor = AceErrorListener;
-
-//
-// Provides a default instance of {@link ConsoleErrorListener}.
-//
-AceErrorListener.INSTANCE = new AceErrorListener();
 
 //
 // {@inheritDoc}
@@ -40,15 +36,17 @@ AceErrorListener.INSTANCE = new AceErrorListener();
 // line <em>line</em>:<em>charPositionInLine</em> <em>msg</em>
 // </pre>
 //
-AceErrorListener.prototype.syntaxError = function(recognizer, offendingSymbol, line, column, msg, e) {
-
-
-
-    if(SiddhiEditor.realTimeValidation)
-    SiddhiEditor.syntaxErrorList.push({row:line-1 ,column: column, text:msg,type:"error"});
+AceErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, line, column, msg, e) {
+    if (this.editor.realTimeValidation)
+        this.editor.state.syntaxErrorList.push({
+            row: line - 1,
+            column: column,
+            text: msg,
+            type: "error"
+        });
     if (SiddhiEditor.debug) {
-        console.warn(loggerContext+":"+"syntaxError"+"->");
-        console.error("  Error line " + line + ":" + column + " " + msg," recognizer:",recognizer," offendingSymbol:",offendingSymbol," e:",e);
+        console.warn(loggerContext + ":" + "syntaxError" + "->");
+        console.error("  Error line " + line + ":" + column + " " + msg, " recognizer:", recognizer, " offendingSymbol:", offendingSymbol, " e:", e);
     }
 
 };

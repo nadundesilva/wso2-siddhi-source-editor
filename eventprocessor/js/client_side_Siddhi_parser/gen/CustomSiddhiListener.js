@@ -15,164 +15,141 @@
  */
 
 var SiddhiQLGrammarListener = require('./SiddhiQLListener').SiddhiQLListener;
-var loggerContext="CustomSiddhiListener";
-CustomSiddhiListener = function() {
-    SiddhiQLGrammarListener.call(this); // inherit default listener
+var loggerContext = "CustomSiddhiListener";
+
+function CustomSiddhiListener(editor) {
+    SiddhiQLGrammarListener.call(this);     // inherit default listener
+    this.editor = editor;
     return this;
-};
-
+}
 CustomSiddhiListener.prototype = Object.create(SiddhiQLGrammarListener.prototype);
-
 CustomSiddhiListener.prototype.constructor = CustomSiddhiListener;
 
 
-CustomSiddhiListener.prototype.exitDefinition_function = function(ctx) {
-
+CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
     if (SiddhiEditor.debug) {
-        console.warn(loggerContext+":"+"exitDefinition_function"+"->");
-        console.log("EXIT Function",ctx);
+        console.warn(loggerContext + ":" + "exitDefinition_function" + "->");
+        console.log("EXIT Function", ctx);
     }
-
-
-
-    updateTable(ctx," ;")
+    updateTable(ctx, " ;", this.editor.statementsList);
 };
 
 
-
-CustomSiddhiListener.prototype.exitDefinition_stream = function(ctx) {
-    var tempStrem =new window.completionEngine.STREAM();
+CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
+    var tempStrem = new window.CompletionEngine.STREAM();
     tempStrem.setStreamFromDefineStatement(ctx);
-    window.completionEngine.streamList.addStream(tempStrem);
-    updateTable(ctx," ;")
+    window.CompletionEngine.streamList.addStream(tempStrem);
+    updateTable(ctx, " ;", this.editor.statementsList);
 };
 
 
-
-CustomSiddhiListener.prototype.exitDefinition_table = function(ctx) {
-    window.TABLECTX=ctx;
-    var tempTable =new window.completionEngine.TABLE();
+CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
+    var tempTable = new window.CompletionEngine.TABLE();
     tempTable.setTableFromDefineStatement(ctx);
-    window.completionEngine.tableList.addTable(tempTable);
-    updateTable(ctx," ;")
+    window.CompletionEngine.tableList.addTable(tempTable);
+    updateTable(ctx, " ;", this.editor.statementsList);
 };
 
 
-function updateTable(ctx,seperator){
-    SiddhiEditor.statementsList.push({state:ctx.start.getInputStream().getText(ctx.start.start,ctx.stop.stop)+seperator,line:ctx.start.line});
+function updateTable(ctx, seperator, statementsList) {
+    statementsList.push({
+        state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + seperator,
+        line: ctx.start.line
+    });
 
     if (SiddhiEditor.debug) {
-        console.warn(loggerContext+":"+"updateTable"+"->");
-        console.log("StatementList",SiddhiEditor.statementsList);
+        console.warn(loggerContext + ":" + "updateTable" + "->");
+        console.log("StatementList", statementsList);
     }
 }
 
-CustomSiddhiListener.prototype.exitError = function(ctx) {
-    updateTable(ctx," ")
+CustomSiddhiListener.prototype.exitError = function (ctx) {
+    updateTable(ctx, " ", this.editor.statementsList);
 };
 
-CustomSiddhiListener.prototype.exitExecution_element = function(ctx) {
-    updateTable(ctx,";")
-};
-
-
-
-
-CustomSiddhiListener.prototype.exitPlan_annotation = function(ctx) {
-    updateTable(ctx," ")
+CustomSiddhiListener.prototype.exitExecution_element = function (ctx) {
+    updateTable(ctx, ";", this.editor.statementsList);
 };
 
 
+CustomSiddhiListener.prototype.exitPlan_annotation = function (ctx) {
+    updateTable(ctx, " ", this.editor.statementsList);
+};
 
 
-CustomSiddhiListener.prototype.exitQuery = function(ctx) {
-    window.QUERYCTX=ctx;
-    //ctx.querxy_output().target().stop.text
-    //QUERYCTX.query_output().target().stop.type into-46  ID=95
+CustomSiddhiListener.prototype.exitQuery = function (ctx) {
+    if (ctx.query_output() && ctx.query_output().children &&
+            ctx.query_output().target() && ctx.query_output().target().children &&
+            ctx.query_output().target().stop.type == 95) {
+        var tempStream = new window.CompletionEngine.STREAM();
 
-    ///QUERYCTX.query_section().output_attribute()[1].AS()
-    // QUERYCTX.query_section().output_attribute()[0].attribute_reference().attribute_name().name().start.text
-
-    // a as b => QUERYCTX.query_section().output_attribute()[0].attribute_name().name()  .ruleIndex=73
-    //QUERYCTX.query_section().output_attribute()[0].attribute_name().name().stop.text =b
-    //QUERYCTX.query_section().output_attribute()[0].attribute_name().name().stop.type=
-
-    if(ctx.query_output() && ctx.query_output().children && ctx.query_output().target() && ctx.query_output().target().children && ctx.query_output().target().stop.type ==95) {
-
-        var tempStream = new window.completionEngine.STREAM();
-
-        if(ctx.query_output() && ctx.query_output().target() && ctx.query_output().target().children) {
-            var tableList= completionEngine.tableList.getTableIDList();
-            var id=ctx.query_output().target().stop.text;
-            for(var i=0;i<tableList.length;i++)
-            {
-                if(tableList[i]==id)
+        if (ctx.query_output() && ctx.query_output().target() && ctx.query_output().target().children) {
+            var tableList = CompletionEngine.tableList.getTableIDList();
+            var id = ctx.query_output().target().stop.text;
+            for (var i = 0; i < tableList.length; i++) {
+                if (tableList[i] == id) {
                     return;
+                }
             }
-            tempStream.id =id;
-
-        }
-        else
+            tempStream.id = id;
+        } else {
             return;
+        }
 
+        var attributeList = (ctx.query_section() && ctx.query_section().children && ctx.query_section().output_attribute()) ? ctx.query_section().output_attribute() : [];
 
-
-        var attributeList=(ctx.query_section() && ctx.query_section().children && ctx.query_section().output_attribute())?  ctx.query_section().output_attribute() : [];
-
-        if(!ctx.query_section() ||(attributeList.length==0 && ctx.query_section().children && ctx.query_section().children[1] && ctx.query_section().children[1].symbol.type===14)) {
-            if(ctx.query_input().standard_stream()) {
+        if (!ctx.query_section() || (attributeList.length == 0 &&
+                ctx.query_section().children && ctx.query_section().children[1] &&
+                ctx.query_section().children[1].symbol.type === 14)) {
+            if (ctx.query_input().standard_stream()) {
                 var inputStream = ctx.query_input().standard_stream().source().stream_id().name().stop.text;
-                tempStream.attributeNames = window.completionEngine.streamList.getAttributeList(inputStream);
+                tempStream.attributeNames = window.CompletionEngine.streamList.getAttributeList(inputStream);
 
                 if (SiddhiEditor.debug) {
-                    console.warn(loggerContext+":"+"exitQuery"+"->");
+                    console.warn(loggerContext + ":" + "exitQuery" + "->");
                     console.log("inferred stream", tempStream.attributeNames)
                 }
+            } else if (ctx.query_input().join_stream()) {
+                var leftsource = ctx.query_input().join_stream().left_source.source().stop.text;
+                var rightsource = ctx.query_input().join_stream().right_source.source().stop.text;
 
-
-            }else if(ctx.query_input().join_stream())
-            {
-                var leftsource=ctx.query_input().join_stream().left_source.source().stop.text;
-                var rightsource=ctx.query_input().join_stream().right_source.source().stop.text;
-
-                var leftStreamAttributeList=completionEngine.streamList.getAttributeList(leftsource);
-                var rightStreamAttributeList=completionEngine.streamList.getAttributeList(rightsource);
-                leftStreamAttributeList=leftStreamAttributeList.map(function(d){
-                    return leftsource+"_"+d;
+                var leftStreamAttributeList = CompletionEngine.streamList.getAttributeList(leftsource);
+                var rightStreamAttributeList = CompletionEngine.streamList.getAttributeList(rightsource);
+                leftStreamAttributeList = leftStreamAttributeList.map(function (d) {
+                    return leftsource + "_" + d;
                 });
 
-                rightStreamAttributeList=rightStreamAttributeList.map(function(d){
-                    return rightsource+"_"+d;
+                rightStreamAttributeList = rightStreamAttributeList.map(function (d) {
+                    return rightsource + "_" + d;
                 });
-                tempStream.attributeNames= leftStreamAttributeList.concat(rightStreamAttributeList);
+                tempStream.attributeNames = leftStreamAttributeList.concat(rightStreamAttributeList);
                 if (SiddhiEditor.debug) {
-                    console.warn(loggerContext+":"+"exitQuery"+"->");
-                      console.log("JOIN STREAM",tempStream);
+                    console.warn(loggerContext + ":" + "exitQuery" + "->");
+                    console.log("JOIN STREAM", tempStream);
+                }
+            }
+        }
+        for (i = 0; i < attributeList.length; i++) {
+            if (attributeList[i].AS()) {
+                if (attributeList[i].attribute_name() &&
+                        attributeList[i].attribute_name().children &&
+                        attributeList[i].attribute_name().name().stop.type == 95) {
+                    tempStream.attributeNames.push(attributeList[i].attribute_name().name().stop.text);
                 }
 
-
+            } else {
+                if (attributeList[i].attribute_reference() &&
+                        attributeList[i].attribute_reference().children &&
+                        attributeList[i].attribute_reference().attribute_name() &&
+                        attributeList[i].attribute_reference().attribute_name().children &&
+                        attributeList[i].attribute_reference().attribute_name().name().stop.type == 95) {
+                    tempStream.attributeNames.push(attributeList[i].attribute_reference().attribute_name().name().stop.text);
+                }
             }
         }
-        for( i=0;i<attributeList.length;i++)
-        {
-            if(attributeList[i].AS())
-            {
-                if(attributeList[i].attribute_name() && attributeList[i].attribute_name().children && attributeList[i].attribute_name().name().stop.type==95)
-                    tempStream.attributeNames.push(attributeList[i].attribute_name().name().stop.text);
-
-            }else{
-                if(attributeList[i].attribute_reference() && attributeList[i].attribute_reference().children && attributeList[i].attribute_reference().attribute_name() && attributeList[i].attribute_reference().attribute_name().children && attributeList[i].attribute_reference().attribute_name().name().stop.type==95)
-                    tempStream.attributeNames.push(attributeList[i].attribute_reference().attribute_name().name().stop.text)
-            }
-        }
-
-
-        window.completionEngine.streamList.addStream(tempStream);
-
-
+        window.CompletionEngine.streamList.addStream(tempStream);
     }
-    updateTable(ctx, ";")
-
+    updateTable(ctx, ";", this.editor.statementsList);
 };
 
 exports.CustomSiddhiListener = CustomSiddhiListener;
