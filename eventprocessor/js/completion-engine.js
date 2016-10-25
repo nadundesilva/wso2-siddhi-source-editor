@@ -88,11 +88,11 @@
             next: "$TableSuggestions"
         },
         {
-            regex: "from" + queryInput + "#window\\.$",
+            regex: "from\\s+" + queryInput + "#window\\.$",
             next: "$windowPhrase"
         },
         {
-            regex: "from" + queryInput + "#(.)+:$",
+            regex: "from\\s+" + queryInput + "#(.)+:$",
             next: "$nameSpacePhrase"
         },
         {
@@ -108,7 +108,7 @@
             next: "$resolveVariable"
         },
         {
-            regex: "from" + queryInput + "#\\w*$",
+            regex: "from\\s+" + queryInput + "#\\w*$",
             next: "$processorPhrase"
         },
         {
@@ -188,7 +188,7 @@
             next: "$filterPhrase"
         },
         {
-            regex: "from" + queryInput + "$",    //group by , having , output    join ,on "expired events   "from\\s+((?!select).)*$"
+            regex: "from\\s+" + queryInput + "$",    //group by , having , output    join ,on "expired events   "from\\s+((?!select).)*$"
             next: "$fromPhraseStreamIdList"
         },
         {
@@ -569,9 +569,9 @@
 
 
             essentialKeyWords = makeCompletions(essentialKeyWords, 2);
-            aliasList = makeCompletions(aliasList, 5);
             streams = makeCompletions(streams, 3);
             refList = makeCompletions(refList, 4);
+            aliasList = makeCompletions(aliasList, 5);
 
 
             tempList = tempList.concat(essentialKeyWords);
