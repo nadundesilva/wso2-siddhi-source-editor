@@ -297,6 +297,18 @@
         }
 
         return editor;
+
+        /**
+         * Load meta data from a json file
+         *
+         * @param jsonFile JSON file from which the meta data should be loaded
+         * @param type The type of meta data to be loaded
+         */
+        function loadMetaData(jsonFile, type) {
+            jQuery.getJSON("js/" + jsonFile, function (data) {
+                editor.completionEngine[type] = data;
+            });
+        }
     };
 
     /**
@@ -308,18 +320,6 @@
      */
     function combine(array1, array2) {
         return array1.concat(array2);
-    }
-
-    /**
-     * Load meta data from a json file
-     *
-     * @param jsonFile JSON file from which the meta data should be loaded
-     * @param type The type of meta data to be loaded
-     */
-    function loadMetaData(jsonFile, type) {
-        jQuery.getJSON("js/" + jsonFile, function (data) {
-            CompletionEngine[type] = data;
-        });
     }
 }());
 

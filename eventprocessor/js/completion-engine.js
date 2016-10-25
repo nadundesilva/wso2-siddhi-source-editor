@@ -362,8 +362,7 @@
                 //SiddhiCompleter and snippetCompleter
 
                 completerList = [SiddhiEditor.langTools.snippetCompleter, this.SiddhiCompleter];
-            }
-            else {
+            } else {
                 //if the cursor is placed in the middle of the statement
 
                 if (this.checkVariableResolveness(editor)) {
@@ -379,7 +378,6 @@
             }
 
             editor.completers = completerList;
-
         };
 
         /**
@@ -449,7 +447,6 @@
          *
          */
         self.calculateCompletions = function (editor) {
-
             var pos = editor.getCursorPosition();   //cursor position
             var text = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
                 row: 0,
@@ -479,7 +476,6 @@
 
 
             for (var a = 0; a < ruleBase.length; a++) {
-
                 if (ruleBase[a].hasOwnProperty("cfg")) {
                     if (executeFunctionByName.call(this, ruleBase[a].cfg, [text])) {
                         if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
@@ -489,10 +485,8 @@
                         }
                         return;
                     }
-                }
-                else {
+                } else {
                     var regx = new RegExp(ruleBase[a].regex, "i");
-
                     if (regx.test(text)) {
                         if (SiddhiEditor.debug) {
                             console.warn(loggerContext + ":" + "calculateCompletion" + "->");
@@ -524,14 +518,12 @@
 
         self._checkNestedSquareBracketInFROMPhrase = function (arg) {
             var fromRegxp = /from((?:.(?!from))+)$/i;
-
-
             var fromPhrase = fromRegxp.exec(arg[0]);
-
-            if (fromPhrase == null)
+            if (fromPhrase == null) {
                 return false;
-            var bracketCouter = 0;
+            }
 
+            var bracketCouter = 0;
             for (var index = fromPhrase[1].length - 1; index >= 0; index--) {
 
                 if (fromPhrase[1].charAt(index) == '[')
@@ -542,9 +534,7 @@
                 if (bracketCouter > 0)
                     return true;
             }
-
             return false;
-
         };
 
 
@@ -557,10 +547,11 @@
             return makeCompletions(intialArray)
         };
         self.$fromPhraseStreamIdList = function (args) {
-
             var tempList = [];
-            var essentialKeyWords = ["output", "outer", "inner", "left", "unidirectional", "all", "events", "insert", "delete", "update", "select", "as", "join", "on", "every", "group by", "having", "within"];
-
+            var essentialKeyWords = [
+                "output", "outer", "inner", "left", "unidirectional", "all", "events", "insert",
+                "delete", "update", "select", "as", "join", "on", "every", "group by", "having", "within"
+            ];
             var streams = this.streamList.getStreamIDList();
 
             this.$eventReference(args[0]);
@@ -629,13 +620,11 @@
                 return d + ".";
             });
 
-
             this.$eventReference(result[0]);
             var refList = getEventReferences();
             refList = refList.map(function (d) {
                 return d + ".";
             });
-
 
             var streamIds = [];
             var list = [];
@@ -647,11 +636,7 @@
                     tempList = this.streamList.getAttributeList(streamNames[index]);
 
                     list = list.concat(tempList);
-
-
                 }
-
-
             }
 
             if (SiddhiEditor.debug) {
@@ -706,7 +691,7 @@
         self.$processorPhrase = function (args) {
             var defaultArray = ["window."];
 
-            //if built in streamProcessors exist , they should be included
+            // if built in streamProcessors exist , they should be included
 
             defaultArray = makeCompletions(defaultArray, 2);
 
@@ -810,14 +795,10 @@
                 return d + "."
             });
 
-
             tempList = tempList.concat(makeCompletions(tableList, 4));
             tempList = tempList.concat(makeCompletions(attributeList, 3));
-
             tempList = tempList.concat(makeCompletions(streamList, 2));
-
             tempList = tempList.concat(makeCompletions(keywords, 1));
-
             return tempList;
         };
 
@@ -826,7 +807,6 @@
             var keywords = ["output", "having", "insert", "delete", "update"];
             var result = args[1].exec(args[0]);
             var regx = /from(.*)group/i;
-
             var fromPhrase = regx.exec(result[0]);
 
             if (SiddhiEditor.debug) {
@@ -861,16 +841,13 @@
 
             list = list.concat(makeCompletions(streamNames), 2);
             list = list.concat(makeCompletions(templist, 3));
-
             return list;
         };
         self.$selectPhraseHaving = function (args) {
             var keywords = ["output", "insert", "delete", "update"];
             keywords = keywords.concat(logicalOperatorList);
-
             var result = args[1].exec(args[0]);
             var regx = /from(.*)having/i;
-
             var fromPhrase = regx.exec(result[0]);
 
             if (SiddhiEditor.debug) {
@@ -878,24 +855,16 @@
                 console.log("fromPhrase:", fromPhrase);
             }
 
-
-            //
             var streamNames = this.streamList.getStreamIDList();
             var list = [];
             var templist = [];
-
 
             for (var index = 0; index < streamNames.length; index++) {
                 var regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
 
                 if (fromPhrase[1].match(regex)) {
-
-
                     templist = templist.concat(this.streamList.getAttributeList(streamNames[index]));
-
                 }
-
-
             }
 
             streamNames = streamNames.map(function (d) {
@@ -922,7 +891,6 @@
         };
         self.$filterPhrase = function (args) {
             var keyword = logicalOperatorList;
-
             var fromRegxp = /from((?:.(?!from))+)$/i;
             var result = fromRegxp.exec(args[0]);
 
@@ -943,21 +911,19 @@
                             continue;
                         else
                             break;
-                    }
-                    else {
+                    } else {
                         flag = false;
                         temp = result[0].charAt(i) + temp;
                     }
                 }
 
-                if (result[0].charAt(i) == ']')
+                if (result[0].charAt(i) == ']') {
                     start--;
-
-                if (result[0].charAt(i) == '[')
+                }
+                if (result[0].charAt(i) == '[') {
                     start++;
-
+                }
             }
-
 
             var temparray = [];
             temparray = temparray.concat(makeCompletions(keyword, 1));
@@ -968,11 +934,8 @@
 
             if (this.eventStore.hasOwnProperty(temp)) {
                 temparray = ["last"];
-
                 temparray = makeCompletions(temparray, 2)
             } else {
-
-
                 var refList = getEventReferences();
                 refList = makeCompletions(refList, 2);
 
@@ -982,12 +945,10 @@
                 temparray = temparray.concat(attrList);
             }
 
-
             return temparray;
         };
         self.$nameSpacePhrase = function (args) {
             var result = args[1].exec(args[0]);
-
             var windowRegex = /#window.(\w+):$/i;
             var streamRegex = /#(\w+):$/i;
             var functionRegex = /(\w+):$/i;
@@ -997,31 +958,26 @@
                 var windowResult = windowRegex.exec(result[0]);
                 ns = windowResult[1];
                 tempArray = getExtensionWindowProcessors(ns);
-            }
-            else if (streamRegex.test(result[0])) {
+            } else if (streamRegex.test(result[0])) {
                 var streamFunctionPhrase = streamRegex.exec(result[0]);
                 ns = streamFunctionPhrase[1];
                 tempArray = getExtensionStreamProcessors(ns);
 
-            }
-            else if (functionRegex.test(result[0])) {
+            } else if (functionRegex.test(result[0])) {
                 var functionPhrase = functionRegex.exec(result[0]);
                 ns = functionPhrase[1];
                 tempArray = getExtensionFunctionNames(ns);
-            }
-            else {
+            } else {
 
             }
+
             tempArray = tempArray.map(function (d) {
                 return d + "(argList)"
             });
-
             return makeCompletions(tempArray);
 
         };
         self.$resolveVariable = function (args) {
-
-
             var result = args[1].exec(args[0]);
             var tempList = [];
             if (SiddhiEditor.debug) {
@@ -1032,9 +988,9 @@
             this.$eventReference(args[0]);
             this.$streamAlias(args[0]);
 
-            if (this.tableList.hasTable(result[1]))
+            if (this.tableList.hasTable(result[1])) {
                 tempList = this.tableList.getAttributeList(result[1]);
-            else {
+            } else {
                 if (this.eventStore.hasOwnProperty(result[1]))
                     result[1] = this.eventStore[result[1]];
 
@@ -1048,12 +1004,8 @@
         };
         self.$streamAlias = function (str) {
             var fromRegxp = /from((?:.(?!from))+)$/i;
-
-
             var fromPhrase = fromRegxp.exec(str);
-
             var asRegexp = /\s+as\s+(\w+)\s+/;
-
             var tokenArray = fromPhrase[1].split(asRegexp);
             var streamIdList = this.streamList.getStreamIDList();
 
@@ -1075,12 +1027,9 @@
                 }
             }
 
-
             return Alias;
         };
-
         self.$eventReferenceHandler = function (args) {
-
             var results = args[1].exec(args[0]);
 
             this.$eventReference(args[0]);
@@ -1215,33 +1164,6 @@
             }
             return tempList;
         }
-
-        /**
-         * Get the inbuilt stream processors list
-         * @returns {Array} : list of stream processors
-         */
-        function getSystemStreamProcessors() {
-            var tempList = [];
-            for (var propertyName in this.system.streamProcessors) {
-                if (this.system.streamProcessors.hasOwnProperty(propertyName))
-                    tempList.push(propertyName);
-            }
-            return tempList;
-        }
-
-        /**
-         * Get the inbuilt window processors list
-         * @returns {Array} : list of window processors.
-         */
-        function getSystemWindowProcessors() {
-            var tempList = [];
-            for (var propertyName in this.system.windowProcessors) {
-                if (this.system.windowProcessors.hasOwnProperty(propertyName))
-                    tempList.push(propertyName);
-            }
-            return tempList;
-        }
-
     };
 
     //Constructor of the Stream class is exposed to global scope
