@@ -75,9 +75,11 @@
         editor.state.semanticErrorList = [];    // To save semanticErrors with line numbers
         editor.state.lastEdit = 0;              // Last edit time
 
+        editor.completionEngine = new CompletionEngine();
+
         // Adding Siddhi specific autocompleter
         if (!config.readOnly && config.autoCompletion) {
-            SiddhiEditor.langTools.addCompleter(CompletionEngine.SiddhiCompleter);
+            SiddhiEditor.langTools.addCompleter(editor.completionEngine.SiddhiCompleter);
             loadMetaData(ACE_CONSTANT.EXTENSION, "extensions");
             loadMetaData(ACE_CONSTANT.INBUILT, "system");
         }
@@ -91,7 +93,7 @@
          * @param event Event object
          */
         function editorChangeHandler(event) {
-            CompletionEngine.streamList.clear();        // Clear the exiting streams
+            editor.completionEngine.streamList.clear();        // Clear the exiting streams
             var position = editor.getCursorPosition();
             if (event.data.text == "\n") {
                 // If the current input is new line , update the line numbers of semantic error
