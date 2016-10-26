@@ -19,11 +19,32 @@
  *  This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
  **/
 (function () {
-    // Adding SiddhiEditor namespace
+    /*
+     * Annotations, Annotation Names and relevant tokens
+     */
+    var ACE_CONSTANT = {
+        LANG_TOOL: "ace/ext/language_tools",
+        SIDDHI_MODE: "ace/mode/siddhi",
+        THEME: "ace/theme/crimson_editor",
+        ACE_RANGE: "ace/range",
+        TOKEN_TOOLTIP: "js/ace-editor/token-tooltip",
+        INBUILT: "siddhi-inbuilt.json",
+        EXTENSION: "siddhi-extensions.json"
+    };
+    var ANTLR_CONSTANT = {
+        ROOT: "js/client-side-siddhi-parser/",
+        ERROR_LISTENER: "AceErrorListener",
+        SIDDHI_LISTENER: "CustomSiddhiListener",
+        SIDDHI_PARSER: "gen/SiddhiQLParser",
+        SIDDHI_LEXER: "gen/SiddhiQLLexer",
+        INDEX: "antlr4/index"
+    };
+
+    // Adding SiddhiEditor to global scope
     var SiddhiEditor = window.SiddhiEditor || {};
     window.SiddhiEditor = SiddhiEditor;
 
-    // ANTLE4 JS runtime integration code segment goes here..
+    // ANTLR4 JS runtime integration code segment goes here..
     var antlr4 = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.INDEX);                                                   // ANTLR4 JS runtime
     var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
@@ -39,16 +60,15 @@
      * Initialize the editor
      *
      * @param {Object} config The configuration object to be used in the initialization
+     * @return ace editor instance
      */
     SiddhiEditor.init = function (config) {
-        var foundSemanticErrors = false;
         var editor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
-        SiddhiEditor.editor = editor;                       // Saving editor instance in SiddhiEditor namespace for later use
 
         editor.realTimeValidation = config.realTimeValidation;
         editor.tokenTooltip = new TokenTooltip(editor);
         editor.setReadOnly(config.readOnly);
-        // Setting the editor options ...
+        // Setting the editor options
         editor.session.setMode(ACE_CONSTANT.SIDDHI_MODE);   // Language mode located at ace_editor/mode-siddhi.js
         editor.setTheme(ACE_CONSTANT.THEME);                // Theme located at ace_editor/theme/crimson_editor.js
         editor.getSession().setUseWrapMode(true);
@@ -74,14 +94,16 @@
         editor.state.syntaxErrorList = [];      // To save the syntax Errors with line numbers
         editor.state.semanticErrorList = [];    // To save semanticErrors with line numbers
         editor.state.lastEdit = 0;              // Last edit time
+        editor.state.foundSemanticErrors = false;
 
+        // Exposing the relevant completion engine via the editor instance
         editor.completionEngine = new CompletionEngine();
 
         // Adding Siddhi specific autocompleter
         if (!config.readOnly && config.autoCompletion) {
             SiddhiEditor.langTools.addCompleter(editor.completionEngine.SiddhiCompleter);
             editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.EXTENSION, "extensions");
-            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.INBUILT, "system");
+            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.INBUILT, "inBuilt");
         }
 
         // Attaching editor's onChange event handler
@@ -99,7 +121,7 @@
                 // If the current input is new line , update the line numbers of semantic error
                 for (var index = 0; index < editor.state.semanticErrorList.length; index++) {
                     if (editor.state.semanticErrorList[index].row > position.row ||
-                            (editor.state.semanticErrorList[index].row == position.row && position.column == 0)) {
+                        (editor.state.semanticErrorList[index].row == position.row && position.column == 0)) {
                         editor.state.semanticErrorList[index].row++;
                     }
                 }
@@ -109,7 +131,7 @@
                 // If current line is deleted , update the line numbers of errors
                 for (index = 0; index < editor.state.semanticErrorList.length; index++) {
                     if (editor.state.semanticErrorList[index].row > position.row ||
-                            (editor.state.semanticErrorList[index].row == position.row && position.column == 0)) {
+                        (editor.state.semanticErrorList[index].row == position.row && position.column == 0)) {
                         editor.state.semanticErrorList[index].row--;
                     }
                 }
@@ -139,7 +161,7 @@
 
             // parser() is the root level grammar rule. This line generates a parser tree.
             // when generating the new parserTree, the ErrorListener
-            // (client_side_Siddhi_parser/antlr4/error/ErrorListener.js -> ConsoleErrorListener.syntaxError()) will be invoked automatically.
+            // (client-side-siddhi-parser/antlr4/error/ErrorListener.js -> ConsoleErrorListener.syntaxError()) will be invoked automatically.
             // within that method , the syntax errors are stored in  editor.state.syntaxErrorList
             var tree = parser.parse();
 
@@ -156,11 +178,10 @@
             // Default walker will traverse through the parserTree and generate events . Those events are listen by the parserListener and update the statementsList with line numbers.
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, tree);
 
-            if (parser._syntaxErrors == 0 &&
-                config.realTimeValidation && (editor.state.previousParserTree != tree.toStringTree(tree, parser))) {
+            if (parser._syntaxErrors == 0 && config.realTimeValidation &&
+                (editor.state.previousParserTree != tree.toStringTree(tree, parser))) {
                 // If there are no syntax errors and there is a change in parserTree => check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
-
                 setTimeout(checkForSemanticErrors, 3000);
             }
             editor.state.previousParserTree = tree.toStringTree(tree, parser);  // Save the current parser tree
@@ -171,7 +192,7 @@
          * This method send server calls to check the semantic errors
          */
         function checkForSemanticErrors() {
-            foundSemanticErrors = false;
+            editor.state.foundSemanticErrors = false;
 
             if (Date.now() - editor.state.lastEdit >= 3000) {
                 // If the user has not typed anything after 3 seconds from his last change, then send the query for semantic check
@@ -185,11 +206,11 @@
                     for (var i = 0; i < editor.statementsList.length; i++) {
                         query += editor.statementsList[i].state + "  \n";
                         submitToServerForSemanticErrorCheck(query, false, editor.statementsList[i].line, editor.statementsList[i].state);
-                        if (foundSemanticErrors)
+                        if (editor.state.foundSemanticErrors) {
                             break;
+                        }
                     }
                 }
-
             }
         }
 
@@ -223,7 +244,7 @@
             //     return;
             // }
             //
-            // var path = "validate_siddhi_queries_ajaxprocessor.jsp";
+            // var path = "validate-siddhi-queries-ajaxprocessor.jsp";
             // if (errorCheck) {
             //     var responseText = jQuery.ajax({
             //             type: "POST",
@@ -239,7 +260,7 @@
             //     if (responseText === "success") {
             //         //if no semantic errors => show again the errors . But this time the semantic errors will not be listed
             //
-            //         SiddhiEditor.editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
+            //         editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
             //         return true;
             //     } else
             //         return false;
@@ -257,7 +278,7 @@
             //
             //                 if (resultText == "success") {
             //                     //show the errors . Since the semantic error list is cleared by now=> No semantic errors will be shown here.
-            //                     SiddhiEditor.editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
+            //                     editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
             //                     return;
             //                 } else {
             //                     //update the semanticErrorList
@@ -272,7 +293,7 @@
             //                     foundErrors = true;
             //
             //                     //show the errors
-            //                     SiddhiEditor.editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
+            //                     editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
             //                     return;
             //                 }
             //             }
@@ -289,7 +310,7 @@
             });
 
             //update the state of the foundError.=> stop sending another server call
-            foundSemanticErrors = true;
+            editor.state.foundSemanticErrors = true;
 
             //show the errors
             editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));

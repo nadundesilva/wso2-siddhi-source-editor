@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var ErrorListener = require("../antlr4/error/ErrorListener").ErrorListener;
+
+var ErrorListener = require("./antlr4/error/ErrorListener").ErrorListener;
 var loggerContext = "AceErrorListener";
+
 function AceErrorListener(editor) {
     ErrorListener.call(this);
     this.editor = editor;
     return this;
 }
-
 AceErrorListener.prototype = Object.create(ErrorListener.prototype);
 AceErrorListener.prototype.constructor = AceErrorListener;
 
-//
-// {@inheritDoc}
-//
-// <p>
-// This implementation prints messages to {@link System//err} containing the
-// values of {@code line}, {@code charPositionInLine}, and {@code msg} using
-// the following format.</p>
-//
-// <pre>
-// line <em>line</em>:<em>charPositionInLine</em> <em>msg</em>
-// </pre>
-//
 AceErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, line, column, msg, e) {
     if (this.editor.realTimeValidation)
         this.editor.state.syntaxErrorList.push({

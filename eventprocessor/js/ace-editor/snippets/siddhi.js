@@ -97,13 +97,3 @@ snippet partition\n\
 	exports.scope = "siddhi";
 
 });
-
-/*
- partition with ( <attribute name> of <stream name>, <attribute name> of <stream name>, ... )
- begin
-     <query>
-     <query>
-     ...
- end;
-
- */

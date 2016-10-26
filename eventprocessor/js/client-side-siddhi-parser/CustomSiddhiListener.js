@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var SiddhiQLListener = require('./SiddhiQLListener').SiddhiQLListener;
+var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
 var loggerContext = "CustomSiddhiListener";
 
 function CustomSiddhiListener(editor) {
@@ -136,7 +136,6 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
         }
         this.editor.completionEngine.streamList.addStream(tempStream);
     }
-    updateTable(ctx, ";", this.editor.statementsList);
 };
 
 function updateTable(ctx, seperator, statementsList) {
