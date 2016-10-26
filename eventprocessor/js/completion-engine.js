@@ -268,62 +268,6 @@
             }
         };
 
-        //'extension' json object contains the custom function,streamProcessor and windowProcessor extensions available for
-        // the current Siddhi Session. Currently the extensions listed in the documentation are listed below.
-        // But this data structure should be dynamically pull down from the backend services.
-        /*
-         * SCHEMA
-         * ------
-         *    extensions={
-         *       namespace1:{
-         *                  functions:{
-         *                              function1:[  // array is used here to allow multiple representations of the same function
-         *                                          {
-         *                                              Description: "description of the function1",
-         *                                              argNames: ["p1"],
-         *                                              argTypes: [["float", "double"]],
-         *                                              returnType: ["float", "double"]
-         *                                          }
-         *                              ],
-         *                              function2:[
-         *                                          {
-         *                                              //representation of the function2
-         *                                          }
-         *                              ]
-         *                  },
-         *                  streamProcessors:{
-         *                         // Same as in function section
-         *                  }  ,
-         *                  windowProcessors:{
-         *                          // same as in function section
-         *                  }
-         *       },
-         *
-         *       namespace2:{
-         *                  functions:{
-         *
-         *                  },
-         *
-         *                  streamProcessors:{
-         *                         // Same as in function section
-         *                  }
-         *                  ,
-         *
-         *                  windowProcessors:{
-         *                          // same as in function section
-         *                  }
-         *       }
-         *
-         *
-         *    }
-         *
-         *
-         * */
-        self.extensions = {};
-
-        // System json object contains the inbuilt function,streamProcessor and windowProcessor  available for the current Siddhi Session
-        self.system = {};
-
         /*************************************************************************************************************************
          *                                          Integration functions for Completion-Engine module
          *************************************************************************************************************************/
@@ -1079,6 +1023,18 @@
         };
 
         /**
+         * Load meta data from a json file
+         *
+         * @param jsonFile JSON file from which the meta data should be loaded
+         * @param type The type of meta data to be loaded
+         */
+        self.loadGeneralMetaData = function(jsonFile, type) {
+            jQuery.getJSON("js/" + jsonFile, function (data) {
+                CompletionEngine[type] = data;
+            });
+        };
+
+        /**
          * Get the current stream alias list
          *
          * @returns {Array}
@@ -1115,16 +1071,16 @@
         function getExtensionNamesSpaces(objType1, objType2) {
             var tempList = [];
 
-            for (var propertyName in this.extensions) {
-                if (this.extensions.hasOwnProperty(propertyName)) {
+            for (var propertyName in CompletionEngine.extensions) {
+                if (CompletionEngine.extensions.hasOwnProperty(propertyName)) {
                     if (SiddhiEditor.debug) {
                         console.warn(loggerContext + ":" + "getExtensionNamesSpaces" + "->");
-                        console.log(this.extensions[propertyName][objType1], objType1, propertyName);
-                        console.log("RESULTS", objType1 && !isEmpty(this.extensions[propertyName][objType1]));
+                        console.log(CompletionEngine.extensions[propertyName][objType1], objType1, propertyName);
+                        console.log("RESULTS", objType1 && !isEmpty(CompletionEngine.extensions[propertyName][objType1]));
                     }
 
-                    if ((objType1 && !isEmpty(this.extensions[propertyName][objType1])) ||
-                            (objType2 && !isEmpty(this.extensions[propertyName][objType2]))) {
+                    if ((objType1 && !isEmpty(CompletionEngine.extensions[propertyName][objType1])) ||
+                            (objType2 && !isEmpty(CompletionEngine.extensions[propertyName][objType2]))) {
                         tempList.push(propertyName);
                     } else if (!objType1 && !objType2) {
                         tempList.push(propertyName);
@@ -1142,8 +1098,8 @@
          */
         function getExtensionFunctionNames(ns) {
             var tempList = [];
-            for (var propertyName in this.extensions[ns].functions) {
-                if (this.extensions[ns].functions.hasOwnProperty(propertyName))
+            for (var propertyName in CompletionEngine.extensions[ns].functions) {
+                if (CompletionEngine.extensions[ns].functions.hasOwnProperty(propertyName))
                     tempList.push(propertyName);
             }
             return tempList;
@@ -1157,13 +1113,107 @@
          */
         function getExtensionWindowProcessors(ns) {
             var tempList = [];
-            for (var propertyName in this.extensions[ns].windowProcessors) {
-                if (this.extensions[ns].windowProcessors.hasOwnProperty(propertyName))
+            for (var propertyName in CompletionEngine.extensions[ns].windowProcessors) {
+                if (CompletionEngine.extensions[ns].windowProcessors.hasOwnProperty(propertyName))
                     tempList.push(propertyName);
             }
             return tempList;
         }
+
+        /**
+         * Get the list of  extension stream processors of given namespace
+         *
+         * @param {string} ns : namespace
+         * @returns {Array} : list of stream processor names
+         */
+        function getExtensionStreamProcessors(ns) {
+            var tempList = [];
+            for (var propertyName in CompletionEngine.extensions[ns].streamProcessors) {
+                if (CompletionEngine.extensions[ns].streamProcessors.hasOwnProperty(propertyName))
+                    tempList.push(propertyName);
+            }
+            return tempList;
+        }
+
+        /**
+         * Get the list of inbuilt function names
+         * @returns {Array} : list of function names
+         */
+        function getSystemFunctionNames() {
+            var tempList = [];
+            for (var propertyName in CompletionEngine.system.functions) {
+                if (CompletionEngine.system.functions.hasOwnProperty(propertyName))
+                    tempList.push(propertyName);
+            }
+            return tempList;
+        }
+
+        /**
+         * This function will call a given function by it's name within given context
+         *
+         * @param {string} functionName : name of the function
+         * @param {Array} args :   arguments array that would be passed to the function
+         * @returns {*}
+         */
+        function executeFunctionByName(functionName, args) {
+            return this[functionName].call(this, args);
+        }
     };
+
+    /*
+     * extension' json object contains the custom function,streamProcessor and windowProcessor extensions available for
+     * the current Siddhi Session. Currently the extensions listed in the documentation are listed below.
+     * But this data structure should be dynamically pull down from the backend services.
+     *
+     * SCHEMA
+     * ------
+     *    extensions={
+     *       namespace1:{
+     *                  functions:{
+     *                              function1:[  // array is used here to allow multiple representations of the same function
+     *                                          {
+     *                                              Description: "description of the function1",
+     *                                              argNames: ["p1"],
+     *                                              argTypes: [["float", "double"]],
+     *                                              returnType: ["float", "double"]
+     *                                          }
+     *                              ],
+     *                              function2:[
+     *                                          {
+     *                                              //representation of the function2
+     *                                          }
+     *                              ]
+     *                  },
+     *                  streamProcessors:{
+     *                         // Same as in function section
+     *                  }  ,
+     *                  windowProcessors:{
+     *                          // same as in function section
+     *                  }
+     *       },
+     *
+     *       namespace2:{
+     *                  functions:{
+     *
+     *                  },
+     *
+     *                  streamProcessors:{
+     *                         // Same as in function section
+     *                  }
+     *                  ,
+     *
+     *                  windowProcessors:{
+     *                          // same as in function section
+     *                  }
+     *       }
+     *
+     *
+     *    }
+     */
+    CompletionEngine.extensions = {};
+
+    // System json object contains the inbuilt function,streamProcessor and windowProcessor  available for the current Siddhi Session
+    CompletionEngine.system = {};
 
     //Constructor of the Stream class is exposed to global scope
     CompletionEngine.Stream = Stream;
@@ -1189,18 +1239,6 @@
     }
 
     /**
-     * This function will call a given function by it's name within given context
-     *
-     * @param {string} functionName : name of the function
-     * @param {string} context : object refer to 'this' variable
-     * @param {Array} args :   arguments array that would be passed to the function
-     * @returns {*}
-     */
-    function executeFunctionByName(functionName, args) {
-        return this[functionName].call(this, args);
-    }
-
-    /**
      * Check whether a given object has properties or not
      *
      * @param {object} map : object
@@ -1213,34 +1251,6 @@
             }
         }
         return true;
-    }
-
-    /**
-     * Get the list of  extension stream processors of given namespace
-     *
-     * @param {string} ns : namespace
-     * @returns {Array} : list of stream processor names
-     */
-    function getExtensionStreamProcessors(ns) {
-        var tempList = [];
-        for (var propertyName in this.extensions[ns].streamProcessors) {
-            if (this.extensions[ns].streamProcessors.hasOwnProperty(propertyName))
-                tempList.push(propertyName);
-        }
-        return tempList;
-    }
-
-    /**
-     * Get the list of inbuilt function names
-     * @returns {Array} : list of function names
-     */
-    function getSystemFunctionNames() {
-        var tempList = [];
-        for (var propertyName in this.system.functions) {
-            if (this.system.functions.hasOwnProperty(propertyName))
-                tempList.push(propertyName);
-        }
-        return tempList;
     }
 
 

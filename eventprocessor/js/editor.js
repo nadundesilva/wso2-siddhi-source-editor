@@ -80,8 +80,8 @@
         // Adding Siddhi specific autocompleter
         if (!config.readOnly && config.autoCompletion) {
             SiddhiEditor.langTools.addCompleter(editor.completionEngine.SiddhiCompleter);
-            loadMetaData(ACE_CONSTANT.EXTENSION, "extensions");
-            loadMetaData(ACE_CONSTANT.INBUILT, "system");
+            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.EXTENSION, "extensions");
+            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.INBUILT, "system");
         }
 
         // Attaching editor's onChange event handler
@@ -297,18 +297,6 @@
         }
 
         return editor;
-
-        /**
-         * Load meta data from a json file
-         *
-         * @param jsonFile JSON file from which the meta data should be loaded
-         * @param type The type of meta data to be loaded
-         */
-        function loadMetaData(jsonFile, type) {
-            jQuery.getJSON("js/" + jsonFile, function (data) {
-                editor.completionEngine[type] = data;
-            });
-        }
     };
 
     /**
