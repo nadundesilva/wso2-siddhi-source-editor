@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 (function () {
     var loggerContext = "CompletionEngine";
 

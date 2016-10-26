@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-var SiddhiQLGrammarListener = require('./SiddhiQLListener').SiddhiQLListener;
+var SiddhiQLListener = require('./SiddhiQLListener').SiddhiQLListener;
 var loggerContext = "CustomSiddhiListener";
 
 function CustomSiddhiListener(editor) {
-    SiddhiQLGrammarListener.call(this);     // inherit default listener
+    SiddhiQLListener.call(this);     // inherit default listener
     this.editor = editor;
     return this;
 }
-CustomSiddhiListener.prototype = Object.create(SiddhiQLGrammarListener.prototype);
+CustomSiddhiListener.prototype = Object.create(SiddhiQLListener.prototype);
 CustomSiddhiListener.prototype.constructor = CustomSiddhiListener;
 
 
@@ -36,7 +36,7 @@ CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
 
 
 CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
-    var tempStream = new window.CompletionEngine.Stream();
+    var tempStream = new CompletionEngine.Stream();
     tempStream.setStreamFromDefineStatement(ctx);
     this.editor.completionEngine.streamList.addStream(tempStream);
     updateTable(ctx, " ;", this.editor.statementsList);
@@ -49,19 +49,6 @@ CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
     this.editor.completionEngine.tableList.addTable(tempTable);
     updateTable(ctx, " ;", this.editor.statementsList);
 };
-
-
-function updateTable(ctx, seperator, statementsList) {
-    statementsList.push({
-        state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + seperator,
-        line: ctx.start.line
-    });
-
-    if (SiddhiEditor.debug) {
-        console.warn(loggerContext + ":" + "updateTable" + "->");
-        console.log("StatementList", statementsList);
-    }
-}
 
 CustomSiddhiListener.prototype.exitError = function (ctx) {
     updateTable(ctx, " ", this.editor.statementsList);
@@ -81,7 +68,7 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
     if (ctx.query_output() && ctx.query_output().children &&
             ctx.query_output().target() && ctx.query_output().target().children &&
             ctx.query_output().target().stop.type == 95) {
-        var tempStream = new this.editor.completionEngine.STREAM();
+        var tempStream = new CompletionEngine.Stream();
 
         if (ctx.query_output() && ctx.query_output().target() && ctx.query_output().target().children) {
             var tableList = this.editor.completionEngine.tableList.getTableIDList();
@@ -151,5 +138,17 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
     }
     updateTable(ctx, ";", this.editor.statementsList);
 };
+
+function updateTable(ctx, seperator, statementsList) {
+    statementsList.push({
+        state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + seperator,
+        line: ctx.start.line
+    });
+
+    if (SiddhiEditor.debug) {
+        console.warn(loggerContext + ":" + "updateTable" + "->");
+        console.log("StatementList", statementsList);
+    }
+}
 
 exports.CustomSiddhiListener = CustomSiddhiListener;

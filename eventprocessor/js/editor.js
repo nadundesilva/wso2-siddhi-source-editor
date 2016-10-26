@@ -223,7 +223,7 @@
             //     return;
             // }
             //
-            // var path = "../eventprocessor/validate_siddhi_queries_ajaxprocessor.jsp";
+            // var path = "validate_siddhi_queries_ajaxprocessor.jsp";
             // if (errorCheck) {
             //     var responseText = jQuery.ajax({
             //             type: "POST",
