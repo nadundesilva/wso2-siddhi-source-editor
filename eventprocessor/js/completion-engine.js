@@ -23,8 +23,15 @@
     var WINDOW_PROCESSORS = "windowProcessors";
 
     // Following keyword lists are repeated in many functions
-    var logicalOperatorList = ["IN", "AND", "OR", "NOT", "isNull(arg)", "IS NULL", "CONTAINS"];
-    var dataTypes = ["int", "float", "double", "bool", "time", "object", "string", "long"];
+    var logicalOperatorList = [
+        {value: "IN"}, {value: "AND"},
+        {value: "OR"}, {value: "NOT"},
+        {value: "isNull(arg)"}, {value: "IS NULL"}, {value: "CONTAINS"}
+    ];
+    var dataTypes = [
+        {value: "int"}, {value: "float"}, {value: "double"}, {value: "bool"}, {value: "time"},
+        {value: "object"}, {value: "string"}, {value: "long"}
+    ];
 
     // Set of regular expressions
     var identifier = "[a-zA-Z_][a-zA-Z_0-9]*";
@@ -50,9 +57,9 @@
      *          ------------------------------------------------
      *                 {
      *                    regex : "regularExpression",
-     *                    next : ["list" ,"of", "keywords"]
+     *                    next : [{value: "list", description:"description"} , {value: "of", description:"of"}, {value: "keywords", description:"keywords"}]
      *                 }
-     *
+     *          "description" attribute is optional.
      *
      *          if the suggestions list dynamically calculated (Ex : suggestions list after the 'from' keyword)
      *          ----------------------------------------------
@@ -72,11 +79,27 @@
     var ruleBase = [
         {
             regex: "@(p(l(a(n?)?)?)?)((?![)]).)*$",
-            next: ['Plan:name(\'Name of the plan\')', 'Plan:description(\'Description of the plan\')', 'Plan:trace(\'true|false\')', 'Plan:statistics(\'true|false\')', 'Import(\'StreamName\')', 'Export(\'StreamName\')']
+            next: [
+                {value: 'Plan:name(\'Name of the plan\')'},
+                {value: 'Plan:description(\'Description of the plan\')'},
+                {value: 'Plan:trace(\'true|false\')'},
+                {value: 'Plan:statistics(\'true|false\')'},
+                {value: 'Import(\'StreamName\')'},
+                {value: 'Export(\'StreamName\')'}
+            ]
         },
         {
             regex: "@\\w*((?![)]).)*$",
-            next: ['Config(async=true)', 'info(name=\'stream_id\')', 'Plan:name(\'Name of the plan\')', 'Plan:description(\'Description of the plan\')', 'Plan:trace(\'true|false\')', 'Plan:statistics(\'true|false\')', 'Import(\'StreamName\')', 'Export(\'StreamName\')']
+            next: [
+                {value: 'Config(async=true)'},
+                {value: 'info(name=\'stream_id\')'},
+                {value: 'Plan:name(\'Name of the plan\')'},
+                {value: 'Plan:description(\'Description of the plan\')'},
+                {value: 'Plan:trace(\'true|false\')'},
+                {value: 'Plan:statistics(\'true|false\')'},
+                {value: 'Import(\'StreamName\')'},
+                {value: 'Export(\'StreamName\')'}
+            ]
         },
         {
             regex: "\\0$",
@@ -100,7 +123,7 @@
         },
         {
             regex: "(\\w+)\\[\\s*(\\d+|last|last-\\d+)\\s*\\]\\.$",
-            next: "$eventReferenceHandler"
+            next: "$streamReferenceHandler"
         },
         {
             regex: "(\\w+)\\.$",
@@ -112,7 +135,7 @@
         },
         {
             regex: "insert\\s+((?!(into|;)).)*$",
-            next: ["into", "events", "all", "current", "expired"]
+            next: [{value: "into"}, {value: "events"}, {value: "all"}, {value: "current"}, {value: "expired"}]
         },
         {
             regex: "insert(.)*into((?!(;)).)*$",
@@ -124,7 +147,7 @@
         },
         {
             regex: "from.*(delete|update)\\s+" + identifier + "\\s+for((?!on).)*$",
-            next: ["all", "current", "expired", "events", "on"]   //all , current, expired , events .
+            next: [{value: "all"}, {value: "current"}, {value: "expired"}, {value: "events"}, {value: "on"}]   //all , current, expired , events .
         },
         {
             regex: "from.*(delete|update)\\s+(" + identifier + ").*on.*((?!;).)*$",
@@ -132,7 +155,7 @@
         },
         {
             regex: "partition\\s+$",
-            next: ["with"]
+            next: [{value: "with"}]
         },
         {
             regex: "partition\\s+with\\s+[(](\\s*" + identifier + "\\s+of\\s+" + identifier + "\\s*[,])*\\s*$",
@@ -140,7 +163,7 @@
         },
         {
             regex: "partition\\s+with\\s+[(](\\s*" + identifier + "\\s+of\\s+" + identifier + "\\s*[,])*\\s*" + identifier + "\\s+$",
-            next: ["of"]
+            next: [{value: "of"}]
         },
         {
             regex: "partition\\s+with\\s+[(](\\s*" + identifier + "\\s+of\\s+" + identifier + "\\s*[,])*\\s*" + identifier + "\\s+of\\s+$",
@@ -148,15 +171,15 @@
         },
         {
             regex: "define\\s*((?!(stream|table|function)).)*$",
-            next: ["stream", "table", "function"]
+            next: [{value: "stream"}, {value: "table"}, {value: "function"}]
         },
         {
             regex: "define\\s+function\\s+" + identifier + "\\s+$",
-            next: [" [language_name] "]
+            next: [{value: " [language_name] "}]
         },
         {
             regex: "define\\s+function\\s+" + identifier + "\\s+\\[\\s*\\w+\\s*\\]\\s+$",
-            next: ["return"]
+            next: [{value: "return"}]
         },
         {
             regex: "define\\s+function\\s+" + identifier + "\\s+\\[\\s*\\w+\\s*\\]\\s+return\\s+$",
@@ -164,7 +187,7 @@
         },
         {
             regex: "define\\s+function\\s+" + identifier + "\\s+\\[\\s*\\w+\\s*\\]\\s+return\\s+" + oneDataType + "\\s+$",
-            next: ["{ \"Function Body\"  }"]
+            next: [{value: "{ \"Function Body\"  }"}]
         },
         {
             regex: "define\\s+(stream|table)\\s+" + identifier + "\\s*[(](\\s*" + identifier + "\\s+\\w+\\s*[,])*\\s*" + identifier + "\\s+((?!(int|string|float|object|time|bool|[,]|;))" + anyChar + ")*$",
@@ -196,11 +219,14 @@
         },
         {
             regex: "from(.)*output\\s+" + outputRate + "$",             //insert, delete , update
-            next: ["snapshot", "all", "last", "first", "every"]
+            next: [{value: "snapshot"}, {value: "all"}, {value: "last"}, {value: "first"}, {value: "every"}]
         },
         {
             regex: "from(.)*output.*every" + outputRateEvery + "$",             //insert, delete , update
-            next: ["events", "min", "hours", "weeks", "days", "months", "years", "insert", "delete", "update"]
+            next: [
+                {value: "events"}, {value: "min"}, {value: "hours"}, {value: "weeks"}, {value: "days"},
+                {value: "months"}, {value: "years"}, {value: "insert"}, {value: "delete"}, {value: "update"}
+            ]
         }
     ];
 
@@ -238,11 +264,11 @@
         //
         //  representation
         //  --------------
-        //  eventStore ={
+        //  streamStore ={
         //    e1 : streamB,
         //    e2 : streamA
         //  }
-        self.eventStore = {};
+        self.streamStore = {};
 
         // CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
         // {
@@ -261,9 +287,7 @@
 
                 // This completer will be using the wordList array
                 // context-handler functions will be updated the the worldList based on the context around the cursor position
-                callback(null, self.wordList.map(function (ea) {
-                    return {definition: ea.value, value: ea.word, score: ea.score, meta: "intelli"};
-                }));
+                callback(null, self.wordList);
             }
         };
 
@@ -375,7 +399,7 @@
             var tempStatements = text.split(";");
             text = tempStatements[tempStatements.length - 1]; //get the last statement.
 
-            this.eventStore = {};           //clear the global tables for event references and stream alias
+            this.streamStore = {};           //clear the global tables for event references and stream alias
             this.streamAliasList = {};
 
             text = text.replace(/\s/g, " "); //Replace all the white spaces with single space each.
@@ -397,7 +421,7 @@
                 if (ruleBase[a].hasOwnProperty("cfg")) {
                     if (executeFunctionByName.call(this, ruleBase[a].cfg, [text])) {
                         if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
-                            this.wordList = makeCompletions(ruleBase[a].next)
+                            this.wordList = makeCompletions(ruleBase[a].next);
                         } else {
                             this.wordList = executeFunctionByName.call(this, ruleBase[a].next, [text]);
                         }
@@ -461,7 +485,7 @@
          *************************************************************************************************************************/
 
         self.$initialList = function () {
-            var intialArray = ["define", "from", "partition", "@"];
+            var intialArray = [{value: "define"}, {value: "from"}, {value: "partition"}, {value: "@"}];
             return makeCompletions(intialArray)
         };
 
@@ -472,8 +496,8 @@
             ];
             var streams = this.streamList.getStreamIDList();
 
-            this.$eventReference(args[0]);
-            var refList = getEventReferences();
+            this.$streamReference(args[0]);
+            var refList = getStreamReferences();
             refList = refList.map(function (d) {
                 return d + ".";
             });
@@ -484,10 +508,29 @@
                 return d + ".";
             });
 
-            essentialKeyWords = makeCompletions(essentialKeyWords, 2);
-            streams = makeCompletions(streams, 3);
-            refList = makeCompletions(refList, 4);
-            aliasList = makeCompletions(aliasList, 5);
+            essentialKeyWords = makeCompletions(essentialKeyWords.map(function(keyword) {
+                return {
+                    value: keyword
+                };
+            }), 2);
+            streams = makeCompletions(streams.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }), 3);
+            refList = makeCompletions(refList.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }), 4);
+            aliasList = makeCompletions(aliasList.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }), 5);
 
             var tempList = [];
             tempList = tempList.concat(essentialKeyWords);
@@ -498,8 +541,12 @@
         };
 
         self.$selectPhraseAttributesList = function (args) {
+            var tempList = [];
             // Stream Alias yet to be handled , both in 'stream as e' form and "e1=stream"
-            var keyWords = ["as", "insert", "group by", "having", "output", "update", "delete"];
+            var keywords = [
+                {value: "as"}, {value: "insert"}, {value: "group by"}, {value: "having"},
+                {value: "output"}, {value: "update"}, {value: "delete"}
+            ];
 
             var sysFunctions = getSystemFunctionNames();
             sysFunctions = sysFunctions.map(function (d) {
@@ -531,8 +578,8 @@
                 return d + ".";
             });
 
-            this.$eventReference(result[0]);
-            var refList = getEventReferences();
+            this.$streamReference(result[0]);
+            var refList = getStreamReferences();
             refList = refList.map(function (d) {
                 return d + ".";
             });
@@ -559,16 +606,51 @@
                 return d + ".";
             });
 
-            streamIds = makeCompletions(streamIds, 5);
-            list = makeCompletions(list, 8);
-            refList = makeCompletions(refList, 7);
-            aliasList = makeCompletions(aliasList, 6);
-            tableList = makeCompletions(tableList, 4);
-            ns = makeCompletions(ns, 3);
-            keyWords = makeCompletions(keyWords, 1);
-            sysFunctions = makeCompletions(sysFunctions, 2);
+            streamIds = makeCompletions(streamIds.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }), 5);
+            list = makeCompletions(list.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream Attribute"
+                };
+            }), 8);
+            refList = makeCompletions(refList.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }), 7);
+            aliasList = makeCompletions(aliasList.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }), 6);
+            tableList = makeCompletions(tableList.map(function(table) {
+                return {
+                    value: table,
+                    type: "Event Table"
+                };
+            }), 4);
+            ns = makeCompletions(ns.map(function(namespace) {
+                return {
+                    value: namespace,
+                    type: "Extension Namespace"
+                };
+            }), 3);
+            keywords = makeCompletions(keywords, 1);
+            sysFunctions = makeCompletions(sysFunctions.map(function(sysFunction) {
+                return {
+                    value: sysFunction,
+                    type: "Function"
+                };
+            }), 2);
 
-            var tempList = (keyWords.concat(ns));
+            tempList = (keywords.concat(ns));
             tempList = tempList.concat(streamIds);
             tempList = tempList.concat(tableList);
             tempList = tempList.concat(refList);
@@ -588,11 +670,19 @@
                 "lossyFrequent(supportThreshold, errorBound)", "lossyFrequent(supportThreshold, errorBound, attribute)",
                 "externalTimeBatch(timeStamp, windowTime, startTime, timeOut)", "timeLength(windowTime, windowLength)",
                 "uniqueExternalTimeBatch(attribute, timeStamp, windowTime, startTime, timeout, replaceTimestampWithBatchEndTime)"
-            ];
+            ].map(function (window) {
+                return {
+                    value: window,
+                    type: "Window"
+                }
+            });
 
             var namespaceArray = getExtensionNamesSpaces(WINDOW_PROCESSORS);
             namespaceArray = namespaceArray.map(function (d) {
-                return d + ":";
+                return {
+                    value: d + ":",
+                    type: "Extension Namespace"
+                };
             });
 
             defaultArray = defaultArray.concat(namespaceArray);
@@ -600,7 +690,7 @@
         };
 
         self.$processorPhrase = function (args) {
-            var defaultArray = ["window."];
+            var defaultArray = [{value: "window."}];
 
             // If built in streamProcessors exist , they should be included
 
@@ -611,7 +701,12 @@
                 return d + ":";
             });
 
-            defaultArray = defaultArray.concat(makeCompletions(nsArray, 1));
+            defaultArray = defaultArray.concat(makeCompletions(nsArray.map(function(ns) {
+                return {
+                    value: ns,
+                    type: "Extension Namespace"
+                };
+            }), 1));
             return (defaultArray);
         };
 
@@ -619,9 +714,13 @@
             var tempList = [];
             var streamList = this.streamList.getStreamIDList();
             for (var s = 0; s < streamList.length; s++) {
-
                 var attributeList = this.streamList.getAttributeList(streamList[s]);
-                tempList = tempList.concat(makeCompletions(attributeList, s));
+                tempList = tempList.concat(makeCompletions(attributeList.map(function(attribute) {
+                    return {
+                        value: attribute,
+                        type: "Stream Attribute"
+                    };
+                }), s));
             }
             return tempList;
         };
@@ -641,24 +740,39 @@
                     }
                 }
             }
-            return makeCompletions(tempList);
+            return makeCompletions(tempList.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }));
         };
 
         self.$TableSuggestions = function (args) {
-            return makeCompletions(this.tableList.getTableIDList());
+            return makeCompletions(this.tableList.getTableIDList().map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }));
         };
 
         self.$UDPhrase = function (args) {
-            var tempList = ["for", "on"];
+            var tempList = [{value: "for"}, {value: "on"}];
             tempList = makeCompletions(tempList, 1);
 
-            var tableList = this.tableList.getTableIDList();
+            var tableList = this.tableList.getTableIDList().map(function (table) {
+                return {
+                    value: table,
+                    type: "Event Table"
+                };
+            });
             tempList = tempList.concat(makeCompletions(tableList, 2));
             return tempList;
         };
 
         self.$UDConditionPhrase = function (args) {
-            var keywords = ["IS NULL", "NOT", "AND", "OR"];
+            var keywords = [{value: "IS NULL"}, {value: "NOT"}, {value: "AND"}, {value: "OR"}];
 
             var result = args[1].exec(args[0]);
             var streamNames = this.streamList.getStreamIDList();
@@ -677,7 +791,10 @@
                 }
             }
             streamList = streamList.map(function (d) {
-                return d + "."
+                return {
+                    value: d + ".",
+                    type: "Stream"
+                }
             });
 
             var updatePhrase = /(update|delete)(.*)on/i.exec(result[0]);
@@ -691,7 +808,17 @@
                 }
             }
             tableList = tableList.map(function (d) {
-                return d + "."
+                return  {
+                    value: d + ".",
+                    type: "Event Table"
+                }
+            });
+
+            attributeList = attributeList.map(function(attribute) {
+                return {
+                    value: attribute,
+                    type: "Stream Attribute"
+                };
             });
 
             var tempList = [];
@@ -703,7 +830,7 @@
         };
 
         self.$selectPhraseGroupBy = function (args) {
-            var keywords = ["output", "having", "insert", "delete", "update"];
+            var keywords = [{value: "output"}, {value: "having"}, {value: "insert"}, {value: "delete"}, {value: "update"}];
             var result = args[1].exec(args[0]);
             var regex = /from(.*)group/i;
             var fromPhrase = regex.exec(result[0]);
@@ -730,13 +857,23 @@
                 return d + ".";
             });
 
-            list = list.concat(makeCompletions(streamNames), 2);
-            list = list.concat(makeCompletions(templist, 3));
+            list = list.concat(makeCompletions(streamNames.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            })), 2);
+            list = list.concat(makeCompletions(templist.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream Attribute"
+                };
+            }), 3));
             return list;
         };
 
         self.$selectPhraseHaving = function (args) {
-            var keywords = ["output", "insert", "delete", "update"];
+            var keywords = [{value: "output"}, {value: "insert"}, {value: "delete"}, {value: "update"}];
             keywords = keywords.concat(logicalOperatorList);
             var result = args[1].exec(args[0]);
             var regx = /from(.*)having/i;
@@ -760,17 +897,33 @@
             }
 
             streamNames = streamNames.map(function (d) {
-                return d + ".";
+                return {
+                    value: d + ".",
+                    type: "Stream"
+                };
             });
 
             var namespaces = getExtensionNamesSpaces(FUNCTIONS);
             namespaces = namespaces.map(function (d) {
-                return d + ":"
+                return {
+                    value: d + ":",
+                    type: "Extension Namespace"
+                }
             });
 
             var sysFunctions = getSystemFunctionNames();
             sysFunctions = sysFunctions.map(function (d) {
-                return d + "(args)"
+                return {
+                    value: d + "(args)",
+                    type: "Function"
+                }
+            });
+
+            tempList = tempList.map(function (d) {
+                return {
+                    value: d,
+                    type: "Stream"
+                }
             });
 
             list = list.concat(makeCompletions(keywords, 2));
@@ -783,7 +936,6 @@
         };
 
         self.$filterPhrase = function (args) {
-            var keyword = logicalOperatorList;
             var fromRegexp = /from((?:.(?!from))+)$/i;
             var result = fromRegexp.exec(args[0]);
 
@@ -795,8 +947,8 @@
             var temp = "";
             var flag = true;
 
-            this.eventStore = {};
-            this.$eventReference(result[0]);
+            this.streamStore = {};
+            this.$streamReference(result[0]);
             for (var i = result[0].length - 1; i >= 0; i--) {
                 if (start == 0) {
                     if (/\W/.test(result[0].charAt(i))) {
@@ -820,21 +972,31 @@
             }
 
             var tempArray = [];
-            tempArray = tempArray.concat(makeCompletions(keyword, 1));
+            tempArray = tempArray.concat(makeCompletions(logicalOperatorList, 1));
             if (SiddhiEditor.debug) {
                 console.warn(loggerContext + ":" + "$filterPhrase" + "->");
                 console.log("Event LIST ", temp);
             }
 
-            if (this.eventStore.hasOwnProperty(temp)) {
-                tempArray = ["last"];
+            if (this.streamStore.hasOwnProperty(temp)) {
+                tempArray = [{value: "last"}];
                 tempArray = makeCompletions(tempArray, 2)
             } else {
-                var refList = getEventReferences();
-                refList = makeCompletions(refList, 2);
+                var refList = getStreamReferences();
+                refList = makeCompletions(refList.map(function(stream) {
+                    return {
+                        value: stream,
+                        type: "Stream"
+                    };
+                }), 2);
 
                 var attrList = this.streamList.getAttributeList(temp);
-                attrList = makeCompletions(attrList, 3);
+                attrList = makeCompletions(attrList.map(function(attribute) {
+                    return {
+                        value: attribute,
+                        type: "Stream Attribute"
+                    };
+                }), 3);
                 tempArray = tempArray.concat(refList);
                 tempArray = tempArray.concat(attrList);
             }
@@ -851,22 +1013,39 @@
             if (windowRegex.test(result[0])) {
                 var windowResult = windowRegex.exec(result[0]);
                 ns = windowResult[1];
-                tempArray = getExtensionWindowProcessors(ns);
+                tempArray = getExtensionWindowProcessors(ns).map(function(windowProcessor) {
+                    return {
+                        value: windowProcessor,
+                        type: "Window Processor Extension"
+                    };
+                });
             } else if (streamRegex.test(result[0])) {
                 var streamFunctionPhrase = streamRegex.exec(result[0]);
                 ns = streamFunctionPhrase[1];
-                tempArray = getExtensionStreamProcessors(ns);
+                tempArray = getExtensionStreamProcessors(ns).map(function(windowProcessor) {
+                    return {
+                        value: windowProcessor,
+                        type: "Stream Processor Extension"
+                    };
+                });
 
             } else if (functionRegex.test(result[0])) {
                 var functionPhrase = functionRegex.exec(result[0]);
                 ns = functionPhrase[1];
-                tempArray = getExtensionFunctionNames(ns);
+                tempArray = getExtensionFunctionNames(ns).map(function(windowProcessor) {
+                    return {
+                        value: windowProcessor,
+                        type: "Function"
+                    };
+                });
             }
 
-            tempArray = tempArray.map(function (d) {
-                return d + "(argList)"
-            });
-            return makeCompletions(tempArray);
+            return makeCompletions(tempArray.map(function (d) {
+                return {
+                    value: d.value + "(argList)",
+                    type: type
+                };
+            }));
         };
 
         self.$resolveVariable = function (args) {
@@ -877,20 +1056,30 @@
                 console.log("result ", result);
             }
 
-            this.$eventReference(args[0]);
+            this.$streamReference(args[0]);
             this.$streamAlias(args[0]);
 
             if (this.tableList.hasTable(result[1])) {
-                tempList = this.tableList.getAttributeList(result[1]);
+                tempList = this.tableList.getAttributeList(result[1]).map(function(attribute) {
+                    return {
+                        value: attribute,
+                        type: "Event Table Attribute"
+                    };
+                });
             } else {
-                if (this.eventStore.hasOwnProperty(result[1])) {
-                    result[1] = this.eventStore[result[1]];
+                if (this.streamStore.hasOwnProperty(result[1])) {
+                    result[1] = this.streamStore[result[1]];
                 }
                 if (this.streamAliasList.hasOwnProperty(result[1])) {
                     result[1] = this.streamAliasList[result[1]];
                 }
                 if (this.streamList.hasStream(result[1])) {
-                    tempList = this.streamList.getAttributeList(result[1])
+                    tempList = this.streamList.getAttributeList(result[1]).map(function(stream) {
+                        return {
+                            value: stream,
+                            type: "Stream"
+                        };
+                    })
                 }
             }
             return makeCompletions(tempList, 1);
@@ -923,18 +1112,23 @@
             return aliases;
         };
 
-        self.$eventReferenceHandler = function (args) {
+        self.$streamReferenceHandler = function (args) {
             var results = args[1].exec(args[0]);
 
-            this.$eventReference(args[0]);
+            this.$streamReference(args[0]);
             this.$streamAlias(args[0]);
 
-            var ref = this.eventStore[results[1]];
-            var tempList = this.streamList.getAttributeList(ref);
-            return makeCompletions(tempList);
+            var ref = this.streamStore[results[1]];
+            var streamList = this.streamList.getAttributeList(ref);
+            return makeCompletions(streamList.map(function(stream) {
+                return {
+                    value: stream,
+                    type: "Stream"
+                };
+            }));
         };
 
-        self.$eventReference = function (str) {
+        self.$streamReference = function (str) {
             var fromRegxp = /from((?:.(?!from))+)$/i;
             var fromPhrase = fromRegxp.exec(str);
             var eventRef = /(\w+\s*=\s*\w+)/;
@@ -944,7 +1138,7 @@
                 if (tokenArray[i].indexOf('=') > 0 && tokenArray[i].indexOf('==') < 0 && tokenArray[i].indexOf('<=') < 0 && tokenArray[i].indexOf('>=') < 0) {
                     var keyValue = tokenArray[i].split("=");
                     if (SiddhiEditor.debug) {
-                        console.warn(loggerContext + ":" + "$eventReference" + "->");
+                        console.warn(loggerContext + ":" + "$streamReference" + "->");
                         console.log("keyValue", keyValue);
                     }
 
@@ -966,11 +1160,10 @@
                         //    }
                         //}
 
-                        this.eventStore[ref] = value;
+                        this.streamStore[ref] = value;
                     }
                 }
             }
-
         };
 
         /**
@@ -1004,10 +1197,10 @@
          *
          * @returns {Array}
          */
-        function getEventReferences() {
+        function getStreamReferences() {
             var aliasList = [];
-            for (var propertyName in this.eventStore) {
-                if (this.eventStore.hasOwnProperty(propertyName))
+            for (var propertyName in this.streamStore) {
+                if (this.streamStore.hasOwnProperty(propertyName))
                     aliasList.push(propertyName)
             }
             return aliasList;
@@ -1017,7 +1210,7 @@
          * Get the list of namespaces which has artifacts in  objType1 or objType2 categories
          *
          * @param {string} objType1 windowProcessors|functions|streamProcessors
-         * @param {string} objType2 windowProcessors|functions|streamProcessors
+         * @param {string} [objType2] windowProcessors|functions|streamProcessors
          * @returns {Array} list of namespaces.
          */
         function getExtensionNamesSpaces(objType1, objType2) {
@@ -1050,8 +1243,12 @@
         function getExtensionFunctionNames(namespace) {
             var tempList = [];
             for (var propertyName in CompletionEngine.extensions[namespace].functions) {
-                if (CompletionEngine.extensions[namespace].functions.hasOwnProperty(propertyName))
-                    tempList.push(propertyName);
+                if (CompletionEngine.extensions[namespace].functions.hasOwnProperty(propertyName)) {
+                    tempList.push({
+                        value: propertyName,
+                        description: CompletionEngine.extensions[namespace].functions[propertyName].description
+                    });
+                }
             }
             return tempList;
         }
@@ -1065,8 +1262,12 @@
         function getExtensionWindowProcessors(namespace) {
             var tempList = [];
             for (var propertyName in CompletionEngine.extensions[namespace].windowProcessors) {
-                if (CompletionEngine.extensions[namespace].windowProcessors.hasOwnProperty(propertyName))
-                    tempList.push(propertyName);
+                if (CompletionEngine.extensions[namespace].windowProcessors.hasOwnProperty(propertyName)) {
+                    tempList.push({
+                        value: propertyName,
+                        description: CompletionEngine.extensions[namespace].windowProcessors[propertyName].description
+                    });
+                }
             }
             return tempList;
         }
@@ -1080,8 +1281,12 @@
         function getExtensionStreamProcessors(namespace) {
             var tempList = [];
             for (var propertyName in CompletionEngine.extensions[namespace].streamProcessors) {
-                if (CompletionEngine.extensions[namespace].streamProcessors.hasOwnProperty(propertyName))
-                    tempList.push(propertyName);
+                if (CompletionEngine.extensions[namespace].streamProcessors.hasOwnProperty(propertyName)) {
+                    tempList.push({
+                        value: propertyName,
+                        description: CompletionEngine.extensions[namespace].streamProcessors[propertyName].description
+                    });
+                }
             }
             return tempList;
         }
@@ -1094,8 +1299,12 @@
         function getSystemFunctionNames() {
             var tempList = [];
             for (var propertyName in CompletionEngine.inBuilt.functions) {
-                if (CompletionEngine.inBuilt.functions.hasOwnProperty(propertyName))
-                    tempList.push(propertyName);
+                if (CompletionEngine.inBuilt.functions.hasOwnProperty(propertyName)) {
+                    tempList.push({
+                        value: propertyName,
+                        description: CompletionEngine.inBuilt.functions[propertyName].description
+                    });
+                }
             }
             return tempList;
         }
@@ -1178,7 +1387,7 @@
     /**
      * Transform the list of regular strings into list of completion objects with given priority
      *
-     * @param {Array} suggestions list of  suggestions
+     * @param {Object[]} suggestions list of  suggestions
      * @param {int} [priority] priority value for the suggestions in current list
      * @returns {Array|*} list of completion objects that would be required in getAutoCompleter()
      */
@@ -1186,8 +1395,19 @@
         if (isNaN(priority)) {
             priority = 1;
         }
-        return suggestions.map(function (d) {
-            return {word: d, score: priority}
+        return suggestions.map(function (suggestion) {
+            var returnSuggestion = {
+                caption: (suggestion.caption == undefined ? suggestion.value : suggestion.caption),
+                value: suggestion.value,
+                score: priority
+            };
+            if (suggestion.type != undefined) {
+                returnSuggestion.meta = suggestion.type;
+            }
+            if (suggestion.description != undefined) {
+                returnSuggestion.description = suggestion.description;
+            }
+            return returnSuggestion;
         });
     }
 
