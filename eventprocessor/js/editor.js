@@ -23,13 +23,13 @@
      * Annotations, Annotation Names and relevant tokens
      */
     var ACE_CONSTANT = {
-        LANG_TOOL: "ace/ext/language_tools",
+        LANG_TOOLS: "ace/ext/language_tools",
         SIDDHI_MODE: "ace/mode/siddhi",
         THEME: "ace/theme/crimson_editor",
         ACE_RANGE: "ace/range",
         TOKEN_TOOLTIP: "js/ace-editor/token-tooltip",
         INBUILT: "siddhi-inbuilt.json",
-        EXTENSION: "siddhi-extensions.json"
+        EXTENSIONS: "siddhi-extensions.json"
     };
     var ANTLR_CONSTANT = {
         ROOT: "js/client-side-siddhi-parser/",
@@ -52,8 +52,8 @@
     var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
     var TokenTooltip = require(ACE_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                                                // Required for token tooltips
 
-    SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOL);                    // Required for auto completion
-    SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                  // Required for extracting part of the query
+    SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);          // Required for auto completion
+    SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;         // Required for extracting part of the query
     SiddhiEditor.debug = false;
 
     /**
@@ -83,9 +83,9 @@
         editor.setOptions({
             enableBasicAutocompletion: !config.readOnly && config.autoCompletion,
             enableSnippets: !config.readOnly && config.autoCompletion,
-            enableLiveAutocompletion: false,
+            enableLiveAutocompletion: true,
             autoScrollEditorIntoView: true,
-            enableMultiselect: true
+            enableMultiselect: false
         });
 
         // State variables for error checking and highlighting
@@ -96,13 +96,11 @@
         editor.state.lastEdit = 0;              // Last edit time
         editor.state.foundSemanticErrors = false;
 
-        // Exposing the relevant completion engine via the editor instance
         editor.completionEngine = new CompletionEngine();
 
         // Adding Siddhi specific autocompleter
         if (!config.readOnly && config.autoCompletion) {
-            SiddhiEditor.langTools.addCompleter(editor.completionEngine.SiddhiCompleter);
-            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.EXTENSION, "extensions");
+            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.EXTENSIONS, "extensions");
             editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.INBUILT, "inBuilt");
         }
 
@@ -175,7 +173,8 @@
 
             var parserListener = new CustomSiddhiListener(editor);
 
-            // Default walker will traverse through the parserTree and generate events . Those events are listen by the parserListener and update the statementsList with line numbers.
+            // Default walker will traverse through the parserTree and generate events.
+            // Those events are listen by the parserListener and update the statementsList with line numbers.
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, tree);
 
             if (parser._syntaxErrors == 0 && config.realTimeValidation &&

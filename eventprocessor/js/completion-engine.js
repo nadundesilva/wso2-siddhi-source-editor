@@ -278,47 +278,25 @@
          * @returns {Array|*} suitable completer list for current context
          */
         self.adjustAutoCompletionHandlers = function (editor) {
-            // NOTE:  adjustAutoCompletionHandlers() method will be called in      js/ace_editor/ext-language_tools.js. as follows
-            //
-            //  Autocomplete.startCommand = {
-            //           name: "startAutocomplete",
-            //           exec: function(editor) {
-            //                     if (!editor.completer)
-            //                        editor.completer = new Autocomplete();
-            //
-            //  ------>            editor.completionEngine.adjustAutoCompletionHandlers(editor);
-            //
-            //                     editor.completer.autoInsert = false;
-            //                     editor.completer.autoSelect = true;
-            //                     editor.completer.showPopup(editor);
-            //                     editor.completer.cancelContextMenu();
-            //                 },
-            //           bindKey: "Ctrl-Space|Ctrl-Shift-Space|Alt-Space"
-            //      };
-            //
+            // adjustAutoCompletionHandlers() method will be called in js/ace_editor/ext-language_tools.js in basicAutoComplete and liveAutoComplete
             // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
-
             var completerList = [];
             if (this.checkTheBeginning(editor)) {
                 //if the cursor is positioned at the beginning of new statement(query), then show the suggestions from the
                 //SiddhiCompleter and snippetCompleter
-
                 completerList = [SiddhiEditor.langTools.snippetCompleter, this.SiddhiCompleter];
             } else {
                 //if the cursor is placed in the middle of the statement
-
                 if (this.checkVariableResolveness(editor)) {
                     //if the last token is the dot operator => only the attributes of the object/namespace should be listed
                     //so that just show the suggestions from the SiddhiCompleter
                     completerList = [this.SiddhiCompleter];
-                }
-                else {
+                } else {
                     //if the cursor is in the middle of a query and not preceded by a dot operator
                     //show the keywords, and suggestions from the SiddhiCompleter.
                     completerList = [SiddhiEditor.langTools.keyWordCompleter, this.SiddhiCompleter];
                 }
             }
-
             editor.completers = completerList;
         };
 

@@ -1624,7 +1624,7 @@ Autocomplete.startCommand = {
         if (!editor.completer)
             editor.completer = new Autocomplete();
 
-        editor.completionEngine.adjustAutoCompletionHandlers(editor);//THIS is essential to change the completer based on the context
+        editor.completionEngine.adjustAutoCompletionHandlers(editor);   //This is essential to change the completer based on the context
 
         editor.completer.autoInsert = false;
         editor.completer.autoSelect = true;
@@ -1876,6 +1876,8 @@ var doLiveAutocomplete = function(e) {
     var editor = e.editor;
     var text = e.args || "";
     var hasCompleter = editor.completer && editor.completer.activated;
+    editor.completionEngine.adjustAutoCompletionHandlers(editor);   //This is essential to change the completer based on the context
+
     if (e.command.name === "backspace") {
         if (hasCompleter && !getCompletionPrefix(editor))
             editor.completer.detach();
