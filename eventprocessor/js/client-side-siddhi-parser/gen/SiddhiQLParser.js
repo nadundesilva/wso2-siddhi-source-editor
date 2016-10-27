@@ -2,8 +2,6 @@
 // jshint ignore: start
 var antlr4 = require('../antlr4/index');
 var SiddhiQLListener = require('./SiddhiQLListener').SiddhiQLListener;
-var SiddhiQLVisitor = require('./SiddhiQLVisitor').SiddhiQLVisitor;
-
 
 	//import org.wso2.siddhi.query.compiler.exception.SiddhiParserException;
 
@@ -842,14 +840,6 @@ ParseContext.prototype.exitRule = function(listener) {
 	}
 };
 
-ParseContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitParse(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -909,14 +899,6 @@ ErrorContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitError(this);
 	}
-};
-
-ErrorContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitError(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -1060,14 +1042,6 @@ Execution_planContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitExecution_plan(this);
 	}
-};
-
-Execution_planContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitExecution_plan(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -1429,14 +1403,6 @@ Execution_elementContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Execution_elementContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitExecution_element(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -1511,14 +1477,6 @@ Definition_stream_finalContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitDefinition_stream_final(this);
 	}
-};
-
-Definition_stream_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_stream_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -1631,14 +1589,6 @@ Definition_streamContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Definition_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -1737,14 +1687,6 @@ Definition_table_finalContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitDefinition_table_final(this);
 	}
-};
-
-Definition_table_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_table_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -1857,14 +1799,6 @@ Definition_tableContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Definition_tableContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_table(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -1963,14 +1897,6 @@ Definition_window_finalContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitDefinition_window_final(this);
 	}
-};
-
-Definition_window_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_window_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -2095,14 +2021,6 @@ Definition_windowContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Definition_windowContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_window(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2214,14 +2132,6 @@ Definition_function_finalContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Definition_function_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_function_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2315,14 +2225,6 @@ Definition_functionContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Definition_functionContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_function(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2398,14 +2300,6 @@ Function_nameContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Function_nameContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitFunction_name(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2465,14 +2359,6 @@ Language_nameContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Language_nameContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitLanguage_name(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2530,14 +2416,6 @@ Function_bodyContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitFunction_body(this);
 	}
-};
-
-Function_bodyContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitFunction_body(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -2601,14 +2479,6 @@ Definition_trigger_finalContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitDefinition_trigger_final(this);
 	}
-};
-
-Definition_trigger_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_trigger_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -2704,14 +2574,6 @@ Definition_triggerContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Definition_triggerContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDefinition_trigger(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2792,14 +2654,6 @@ Trigger_nameContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Trigger_nameContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitTrigger_name(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -2868,14 +2722,6 @@ AnnotationContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitAnnotation(this);
 	}
-};
-
-AnnotationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAnnotation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -2978,14 +2824,6 @@ Plan_annotationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Plan_annotationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPlan_annotation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -3077,14 +2915,6 @@ Annotation_elementContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitAnnotation_element(this);
 	}
-};
-
-Annotation_elementContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAnnotation_element(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -3210,14 +3040,6 @@ PartitionContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitPartition(this);
 	}
-};
-
-PartitionContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPartition(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -3366,14 +3188,6 @@ Partition_finalContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Partition_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPartition_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -3453,14 +3267,6 @@ Partition_with_streamContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitPartition_with_stream(this);
 	}
-};
-
-Partition_with_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPartition_with_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -3562,14 +3368,6 @@ Condition_rangesContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Condition_rangesContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitCondition_ranges(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -3650,14 +3448,6 @@ Condition_rangeContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Condition_rangeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitCondition_range(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -3723,14 +3513,6 @@ Query_finalContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitQuery_final(this);
 	}
-};
-
-Query_finalContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitQuery_final(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -3827,14 +3609,6 @@ QueryContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitQuery(this);
 	}
-};
-
-QueryContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitQuery(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -3941,14 +3715,6 @@ Query_inputContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Query_inputContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitQuery_input(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -4050,14 +3816,6 @@ Standard_streamContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitStandard_stream(this);
 	}
-};
-
-Standard_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitStandard_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -4170,14 +3928,6 @@ Join_streamContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitJoin_stream(this);
 	}
-};
-
-Join_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitJoin_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -4339,14 +4089,6 @@ Join_sourceContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Join_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitJoin_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -4430,14 +4172,6 @@ Pattern_streamContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Pattern_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPattern_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -4518,14 +4252,6 @@ Every_pattern_source_chainContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitEvery_pattern_source_chain(this);
 	}
-};
-
-Every_pattern_source_chainContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitEvery_pattern_source_chain(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -4684,14 +4410,6 @@ Pattern_source_chainContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitPattern_source_chain(this);
 	}
-};
-
-Pattern_source_chainContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPattern_source_chain(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -4884,14 +4602,6 @@ Pattern_sourceContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Pattern_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPattern_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -4987,14 +4697,6 @@ Logical_stateful_sourceContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitLogical_stateful_source(this);
 	}
-};
-
-Logical_stateful_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitLogical_stateful_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -5098,14 +4800,6 @@ Pattern_collection_stateful_sourceContext.prototype.exitRule = function(listener
 	}
 };
 
-Pattern_collection_stateful_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitPattern_collection_stateful_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -5173,14 +4867,6 @@ Standard_stateful_sourceContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitStandard_stateful_source(this);
 	}
-};
-
-Standard_stateful_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitStandard_stateful_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -5255,14 +4941,6 @@ Basic_sourceContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Basic_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitBasic_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -5334,14 +5012,6 @@ Basic_source_stream_handlersContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitBasic_source_stream_handlers(this);
 	}
-};
-
-Basic_source_stream_handlersContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitBasic_source_stream_handlers(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -5419,14 +5089,6 @@ Basic_source_stream_handlerContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitBasic_source_stream_handler(this);
 	}
-};
-
-Basic_source_stream_handlerContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitBasic_source_stream_handler(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -5511,14 +5173,6 @@ Sequence_streamContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitSequence_stream(this);
 	}
-};
-
-Sequence_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSequence_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -5612,14 +5266,6 @@ Sequence_source_chainContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitSequence_source_chain(this);
 	}
-};
-
-Sequence_source_chainContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSequence_source_chain(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -5812,14 +5458,6 @@ Sequence_sourceContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Sequence_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSequence_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -5903,14 +5541,6 @@ Sequence_collection_stateful_sourceContext.prototype.exitRule = function(listene
     if(listener instanceof SiddhiQLListener ) {
         listener.exitSequence_collection_stateful_source(this);
 	}
-};
-
-Sequence_collection_stateful_sourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSequence_collection_stateful_source(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -6021,14 +5651,6 @@ Anonymous_streamContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Anonymous_streamContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAnonymous_stream(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -6130,14 +5752,6 @@ FilterContext.prototype.exitRule = function(listener) {
 	}
 };
 
-FilterContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitFilter(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -6209,14 +5823,6 @@ Stream_functionContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Stream_functionContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitStream_function(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -6280,14 +5886,6 @@ WindowContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitWindow(this);
 	}
-};
-
-WindowContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitWindow(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -6372,14 +5970,6 @@ Query_sectionContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitQuery_section(this);
 	}
-};
-
-Query_sectionContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitQuery_section(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -6569,14 +6159,6 @@ Group_byContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Group_byContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitGroup_by(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -6655,14 +6237,6 @@ HavingContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitHaving(this);
 	}
-};
-
-HavingContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitHaving(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -6764,14 +6338,6 @@ Query_outputContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitQuery_output(this);
 	}
-};
-
-Query_outputContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitQuery_output(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -6946,14 +6512,6 @@ Output_event_typeContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Output_event_typeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitOutput_event_type(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -7088,14 +6646,6 @@ Output_rateContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Output_rateContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitOutput_rate(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -7208,14 +6758,6 @@ Output_rate_typeContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Output_rate_typeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitOutput_rate_type(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -7284,14 +6826,6 @@ Within_timeContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitWithin_time(this);
 	}
-};
-
-Within_timeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitWithin_time(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -7365,14 +6899,6 @@ Output_attributeContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitOutput_attribute(this);
 	}
-};
-
-Output_attributeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitOutput_attribute(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -7451,14 +6977,6 @@ AttributeContext.prototype.exitRule = function(listener) {
 	}
 };
 
-AttributeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAttribute(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -7516,14 +7034,6 @@ ExpressionContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitExpression(this);
 	}
-};
-
-ExpressionContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitExpression(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -7611,14 +7121,6 @@ Multiplication_math_operationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Multiplication_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitMultiplication_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 function Greaterthan_lessthan_math_operationContext(parser, ctx) {
 	Math_operationContext.call(this, parser);
@@ -7655,14 +7157,6 @@ Greaterthan_lessthan_math_operationContext.prototype.exitRule = function(listene
     if(listener instanceof SiddhiQLListener ) {
         listener.exitGreaterthan_lessthan_math_operation(this);
 	}
-};
-
-Greaterthan_lessthan_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitGreaterthan_lessthan_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -7708,14 +7202,6 @@ Basic_math_operationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Basic_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitBasic_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 function In_math_operationContext(parser, ctx) {
 	Math_operationContext.call(this, parser);
@@ -7749,14 +7235,6 @@ In_math_operationContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitIn_math_operation(this);
 	}
-};
-
-In_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitIn_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -7793,14 +7271,6 @@ Addition_math_operationContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitAddition_math_operation(this);
 	}
-};
-
-Addition_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAddition_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -7841,14 +7311,6 @@ And_math_operationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-And_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAnd_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 function Or_math_operationContext(parser, ctx) {
 	Math_operationContext.call(this, parser);
@@ -7887,14 +7349,6 @@ Or_math_operationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Or_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitOr_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 function Equality_math_operationContext(parser, ctx) {
 	Math_operationContext.call(this, parser);
@@ -7931,14 +7385,6 @@ Equality_math_operationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Equality_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitEquality_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 function Not_math_operationContext(parser, ctx) {
 	Math_operationContext.call(this, parser);
@@ -7968,14 +7414,6 @@ Not_math_operationContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitNot_math_operation(this);
 	}
-};
-
-Not_math_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitNot_math_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -8272,14 +7710,6 @@ Function_operationContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Function_operationContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitFunction_operation(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -8365,14 +7795,6 @@ Attribute_listContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitAttribute_list(this);
 	}
-};
-
-Attribute_listContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAttribute_list(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -8548,14 +7970,6 @@ Null_checkContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Null_checkContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitNull_check(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -8639,14 +8053,6 @@ Stream_referenceContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitStream_reference(this);
 	}
-};
-
-Stream_referenceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitStream_reference(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -8753,14 +8159,6 @@ Attribute_referenceContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitAttribute_reference(this);
 	}
-};
-
-Attribute_referenceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAttribute_reference(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -8882,14 +8280,6 @@ Attribute_indexContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Attribute_indexContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAttribute_index(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -8971,14 +8361,6 @@ Function_idContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Function_idContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitFunction_id(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -9036,14 +8418,6 @@ Function_namespaceContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitFunction_namespace(this);
 	}
-};
-
-Function_namespaceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitFunction_namespace(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9105,14 +8479,6 @@ Stream_idContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Stream_idContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitStream_id(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -9170,14 +8536,6 @@ Stream_aliasContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitStream_alias(this);
 	}
-};
-
-Stream_aliasContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitStream_alias(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9244,14 +8602,6 @@ Property_nameContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitProperty_name(this);
 	}
-};
-
-Property_nameContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitProperty_name(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9326,14 +8676,6 @@ Attribute_nameContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Attribute_nameContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAttribute_name(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -9391,14 +8733,6 @@ Property_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitProperty_value(this);
 	}
-};
-
-Property_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitProperty_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9459,14 +8793,6 @@ SourceContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitSource(this);
 	}
-};
-
-SourceContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSource(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9536,14 +8862,6 @@ TargetContext.prototype.exitRule = function(listener) {
 	}
 };
 
-TargetContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitTarget(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -9601,14 +8919,6 @@ EventContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitEvent(this);
 	}
-};
-
-EventContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitEvent(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9672,14 +8982,6 @@ NameContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitName(this);
 	}
-};
-
-NameContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitName(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -9826,14 +9128,6 @@ CollectContext.prototype.exitRule = function(listener) {
 	}
 };
 
-CollectContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitCollect(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -9950,14 +9244,6 @@ Attribute_typeContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Attribute_typeContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitAttribute_type(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -10042,14 +9328,6 @@ JoinContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitJoin(this);
 	}
-};
-
-JoinContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitJoin(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -10185,14 +9463,6 @@ Constant_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Constant_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitConstant_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -10297,14 +9567,6 @@ IdContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitId(this);
 	}
-};
-
-IdContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitId(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -10621,14 +9883,6 @@ KeywordContext.prototype.exitRule = function(listener) {
 	}
 };
 
-KeywordContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitKeyword(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -10721,14 +9975,6 @@ Time_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitTime_value(this);
 	}
-};
-
-Time_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitTime_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -11039,14 +10285,6 @@ Year_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Year_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitYear_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11110,14 +10348,6 @@ Month_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitMonth_value(this);
 	}
-};
-
-Month_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitMonth_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -11185,14 +10415,6 @@ Week_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Week_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitWeek_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11256,14 +10478,6 @@ Day_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitDay_value(this);
 	}
-};
-
-Day_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitDay_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -11331,14 +10545,6 @@ Hour_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Hour_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitHour_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11402,14 +10608,6 @@ Minute_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitMinute_value(this);
 	}
-};
-
-Minute_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitMinute_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -11477,14 +10675,6 @@ Second_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Second_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSecond_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11550,14 +10740,6 @@ Millisecond_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Millisecond_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitMillisecond_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11617,14 +10799,6 @@ Signed_double_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitSigned_double_value(this);
 	}
-};
-
-Signed_double_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSigned_double_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -11700,14 +10874,6 @@ Signed_long_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Signed_long_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSigned_long_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11781,14 +10947,6 @@ Signed_float_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Signed_float_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSigned_float_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -11860,14 +11018,6 @@ Signed_int_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitSigned_int_value(this);
 	}
-};
-
-Signed_int_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitSigned_int_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
@@ -11947,14 +11097,6 @@ Bool_valueContext.prototype.exitRule = function(listener) {
 	}
 };
 
-Bool_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitBool_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
-};
-
 
 
 
@@ -12019,14 +11161,6 @@ String_valueContext.prototype.exitRule = function(listener) {
     if(listener instanceof SiddhiQLListener ) {
         listener.exitString_value(this);
 	}
-};
-
-String_valueContext.prototype.accept = function(visitor) {
-    if ( visitor instanceof SiddhiQLVisitor ) {
-        return visitor.visitString_value(this);
-    } else {
-        return visitor.visitChildren(this);
-    }
 };
 
 
