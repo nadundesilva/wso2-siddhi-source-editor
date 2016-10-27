@@ -87,7 +87,7 @@
             next: "$TableSuggestions"
         },
         {
-            regex: "from\\s+" + queryInput + "#window\\.$",
+            regex: "from\\s+" + queryInput + "#window\\.(.)*(?!\\s+)$",
             next: "$windowPhrase"
         },
         {
@@ -347,8 +347,9 @@
                 var annotation = new RegExp("@\\s*" + annotationBody, "i");                     //annotation element
                 var planAnnotations = new RegExp("@\\s*plan\\s*:\\s*" + annotationBody, "i");   //Regular expression for plan-annotations.
 
-                if (newStatement.test(txt) || annotation.test(txt) || planAnnotations.test(txt) || blockCommentEnd.test(txt) || lineComment.test(txt) || begin.test(txt) || spaces.test(txt) || txt == "" || startingWord.test(txt)) {
-
+                if (newStatement.test(txt) || annotation.test(txt) || planAnnotations.test(txt) ||
+                        blockCommentEnd.test(txt) || lineComment.test(txt) || begin.test(txt) ||
+                        spaces.test(txt) || txt == "" || startingWord.test(txt)) {
                     if (SiddhiEditor.debug) {
                         console.warn(loggerContext + ":" + "checkTheBeginning" + "->");
                         console.log("New statement is suitable for current position");

@@ -32,22 +32,11 @@ ace.define("ace/mode/siddhi_highlight_rules", ["require", "exports", "module", "
 
         var builtInTypes = "int|string|bool|float|double|object|long";
 
-        var builtInFunctions = "coalesce|convert|instanceOfBoolean|instanceOfDouble|instanceOfFloat|instanceOfInteger|" +
-            "instanceOfLong|instanceOfString|UUID|maximum|minimum|cast|ifThenElse";
-
-        var builtInWindows = "time|timeBatch|length|lengthBatch|externalTime|cron|firstUnique|" +
-            "unique|sort|frequent|lossyFrequent|externalTimeBatch|timeLength|uniqueExternalTimeBatch";
-
-        var builtInAggregateFunctions = "count|min|max|avg|sum";
-
         var keywordMapper = this.createKeywordMapper({
             "keyword": keywords,
             "constant.language": builtInConstants,
             "constant.language.boolean": builtInBooleanConstants,
-            "support.function": builtInFunctions,
-            "support.type": builtInTypes,
-            "window.function": builtInWindows,
-            "aggregate.function": builtInAggregateFunctions
+            "support.type": builtInTypes
         }, "identifier", true);
 
         this.$rules = {
