@@ -34,24 +34,25 @@ var DefaultErrorStrategy = require('./error/ErrorStrategy').DefaultErrorStrategy
 var ATNDeserializer = require('./atn/ATNDeserializer').ATNDeserializer;
 var ATNDeserializationOptions = require('./atn/ATNDeserializationOptions').ATNDeserializationOptions;
 
-function TraceListener() {
+function TraceListener(parser) {
 	ParseTreeListener.call(this);
+    this.parser = parser;
 	return this;
 }
 
 TraceListener.prototype = Object.create(ParseTreeListener);
 TraceListener.prototype.constructor = TraceListener;
 
-TraceListener.prototype.enterEveryRule = function(parser, ctx) {
-	console.log("enter   " + parser.ruleNames[ctx.ruleIndex] + ", LT(1)=" + parser._input.LT(1).text);
+TraceListener.prototype.enterEveryRule = function(ctx) {
+	console.log("enter   " + this.parser.ruleNames[ctx.ruleIndex] + ", LT(1)=" + this.parser._input.LT(1).text);
 };
 
-TraceListener.prototype.visitTerminal = function(parser, node) {
-	console.log("consume " + node.symbol + " rule " + parser.ruleNames[parser._ctx.ruleIndex]);
+TraceListener.prototype.visitTerminal = function( node) {
+	console.log("consume " + node.symbol + " rule " + this.parser.ruleNames[this.parser._ctx.ruleIndex]);
 };
 
-TraceListener.prototype.exitEveryRule = function(parser, ctx) {
-	console.log("exit    " + parser.ruleNames[ctx.ruleIndex] + ", LT(1)=" + parser._input.LT(1).text);
+TraceListener.prototype.exitEveryRule = function(ctx) {
+	console.log("exit    " + this.parser.ruleNames[ctx.ruleIndex] + ", LT(1)=" + this.parser._input.LT(1).text);
 };
 
 // this is all the parsing support code essentially; most of it is error
@@ -249,9 +250,10 @@ Parser.prototype.removeParseListeners = function() {
 // Notify any parse listeners of an enter rule event.
 Parser.prototype.triggerEnterRuleEvent = function() {
 	if (this._parseListeners !== null) {
+        var ctx = this._ctx;
 		this._parseListeners.map(function(listener) {
-			listener.enterEveryRule(this._ctx);
-			this._ctx.enterRule(listener);
+			listener.enterEveryRule(ctx);
+			ctx.enterRule(listener);
 		});
 	}
 };
@@ -264,9 +266,10 @@ Parser.prototype.triggerEnterRuleEvent = function() {
 Parser.prototype.triggerExitRuleEvent = function() {
 	if (this._parseListeners !== null) {
 		// reverse order walk of listeners
+        var ctx = this._ctx;
 		this._parseListeners.slice(0).reverse().map(function(listener) {
-			this._ctx.exitRule(listener);
-			listener.exitEveryRule(this._ctx);
+			ctx.exitRule(listener);
+			listener.exitEveryRule(ctx);
 		});
 	}
 };
@@ -319,7 +322,7 @@ Parser.prototype.compileParseTreePattern = function(pattern, patternRuleIndex, l
 	lexer = lexer || null;
 	if (lexer === null) {
 		if (this.getTokenStream() !== null) {
-			var tokenSource = this.getTokenStream().getTokenSource();
+			var tokenSource = this.getTokenStream().tokenSource;
 			if (tokenSource instanceof Lexer) {
 				lexer = tokenSource;
 			}
@@ -405,6 +408,7 @@ Parser.prototype.consume = function() {
 		} else {
 			node = this._ctx.addTokenNode(o);
 		}
+        node.invokingState = this.state;
 		if (hasListener) {
 			this._parseListeners.map(function(listener) {
 				listener.visitTerminal(node);
@@ -679,7 +683,7 @@ Parser.prototype.setTrace = function(trace) {
 		if (this._tracer !== null) {
 			this.removeParseListener(this._tracer);
 		}
-		this._tracer = new TraceListener();
+		this._tracer = new TraceListener(this);
 		this.addParseListener(this._tracer);
 	}
 };

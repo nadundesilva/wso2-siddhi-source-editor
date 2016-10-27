@@ -260,6 +260,7 @@ BufferedTokenStream.prototype.setTokenSource = function(tokenSource) {
 	this.index = -1;
 };
 
+
 // Given a starting index, return the index of the next token on channel.
 // Return i if tokens[i] is on channel. Return -1 if there are no tokens
 // on channel between i and EOF.
@@ -300,7 +301,7 @@ BufferedTokenStream.prototype.getHiddenTokensToRight = function(tokenIndex,
 		channel = -1;
 	}
 	this.lazyInit();
-	if (this.tokenIndex < 0 || tokenIndex >= this.tokens.length) {
+	if (tokenIndex < 0 || tokenIndex >= this.tokens.length) {
 		throw "" + tokenIndex + " not in 0.." + this.tokens.length - 1;
 	}
 	var nextOnChannel = this.nextTokenOnChannel(tokenIndex + 1,
