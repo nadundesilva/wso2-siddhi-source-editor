@@ -1787,7 +1787,7 @@ var snippetCompleter = {
                 completions.push({
                     caption: caption,
                     snippet: s.content,
-                    meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " : "snippet",
+                    meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " : "Snippet",
                     type: "snippet"
                 });
             }

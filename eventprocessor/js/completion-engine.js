@@ -288,6 +288,31 @@
                 // This completer will be using the wordList array
                 // context-handler functions will be updated the the worldList based on the context around the cursor position
                 callback(null, self.wordList);
+            },
+            getDocTooltip: function(item) {
+                if (item.description && !item.docHTML) {
+                    item.docHTML = "<div>" +
+                        "<b>" + item.caption + "</b><br>" +
+                        "<p>" + item.description + "</p>";
+                    if (item.parameters) {
+                        item.docHTML += "<ul>";
+                        for(var i = 0; i < item.parameters.length; i++) {
+                            if (item.parameters[i].multiple) {
+                                for(var j = 0; j < item.parameters.length; j++) {
+                                    item.docHTML += "<li>" + item.parameters[i].multiple[j].name +
+                                        (item.parameters[i].optional ? " (optional & multiple)" : "") + " - " +
+                                        item.parameters[i].multiple[j].type.join(" | ") + "</li>";
+                                }
+                            } else {
+                                item.docHTML += "<li>" + item.parameters[i].name +
+                                    (item.parameters[i].optional ? " (optional)" : "") + " - " +
+                                    item.parameters[i].type.join(" | ") + "</li>";
+                            }
+                        }
+                        item.docHTML += "</ul>";
+                    }
+                    item.docHTML += "</div>";
+                }
             }
         };
 
@@ -548,10 +573,7 @@
                 {value: "output"}, {value: "update"}, {value: "delete"}
             ];
 
-            var sysFunctions = getSystemFunctionNames();
-            sysFunctions = sysFunctions.map(function (d) {
-                return d + "(args)";
-            });
+            var sysFunctions = getInBuiltFunctionNames();
 
             var ns = getExtensionNamesSpaces(FUNCTIONS);
             ns = ns.map(function (d) {
@@ -643,12 +665,7 @@
                 };
             }), 3);
             keywords = makeCompletions(keywords, 1);
-            sysFunctions = makeCompletions(sysFunctions.map(function(sysFunction) {
-                return {
-                    value: sysFunction,
-                    type: "Function"
-                };
-            }), 2);
+            sysFunctions = makeCompletions(sysFunctions, 2);
 
             tempList = (keywords.concat(ns));
             tempList = tempList.concat(streamIds);
@@ -662,20 +679,7 @@
         };
 
         self.$windowPhrase = function () {
-            var defaultArray = [
-                "time(windowTime)", "timeBatch(windowTime)", "timeBatch(windowTime, startTime)",
-                "length(windowLength)", "lengthBatch(windowLength)", "externalTime(timeStamp, windowTime)",
-                "cron(cronExpression)", "firstUnique(attribute)", "unique(attribute)", "sort(windowLength)",
-                "sort(windowLength, attribute, order)", "frequent(eventCount)", "frequent(eventCount, attribute)",
-                "lossyFrequent(supportThreshold, errorBound)", "lossyFrequent(supportThreshold, errorBound, attribute)",
-                "externalTimeBatch(timeStamp, windowTime, startTime, timeOut)", "timeLength(windowTime, windowLength)",
-                "uniqueExternalTimeBatch(attribute, timeStamp, windowTime, startTime, timeout, replaceTimestampWithBatchEndTime)"
-            ].map(function (window) {
-                return {
-                    value: window,
-                    type: "Window"
-                }
-            });
+            var defaultArray = getInBuiltWindowProcessors();
 
             var namespaceArray = getExtensionNamesSpaces(WINDOW_PROCESSORS);
             namespaceArray = namespaceArray.map(function (d) {
@@ -1013,39 +1017,18 @@
             if (windowRegex.test(result[0])) {
                 var windowResult = windowRegex.exec(result[0]);
                 ns = windowResult[1];
-                tempArray = getExtensionWindowProcessors(ns).map(function(windowProcessor) {
-                    return {
-                        value: windowProcessor,
-                        type: "Window Processor Extension"
-                    };
-                });
+                tempArray = getExtensionWindowProcessors(ns);
             } else if (streamRegex.test(result[0])) {
                 var streamFunctionPhrase = streamRegex.exec(result[0]);
                 ns = streamFunctionPhrase[1];
-                tempArray = getExtensionStreamProcessors(ns).map(function(windowProcessor) {
-                    return {
-                        value: windowProcessor,
-                        type: "Stream Processor Extension"
-                    };
-                });
-
+                tempArray = getExtensionStreamProcessors(ns);
             } else if (functionRegex.test(result[0])) {
                 var functionPhrase = functionRegex.exec(result[0]);
                 ns = functionPhrase[1];
-                tempArray = getExtensionFunctionNames(ns).map(function(windowProcessor) {
-                    return {
-                        value: windowProcessor,
-                        type: "Function"
-                    };
-                });
+                tempArray = getExtensionFunctionNames(ns);
             }
 
-            return makeCompletions(tempArray.map(function (d) {
-                return {
-                    value: d.value + "(argList)",
-                    type: type
-                };
-            }));
+            return makeCompletions(tempArray);
         };
 
         self.$resolveVariable = function (args) {
@@ -1237,37 +1220,39 @@
         /**
          * Get the list of  extension functions of given namespace
          *
-         * @param {string} namespace : namespace
+         * @param {string} namespace : namespace of the functions
          * @returns {Array} : list of function names
          */
         function getExtensionFunctionNames(namespace) {
             var tempList = [];
-            for (var propertyName in CompletionEngine.extensions[namespace].functions) {
-                if (CompletionEngine.extensions[namespace].functions.hasOwnProperty(propertyName)) {
-                    tempList.push({
-                        value: propertyName,
-                        description: CompletionEngine.extensions[namespace].functions[propertyName].description
-                    });
-                }
-            }
+            for (var i = 0; i < CompletionEngine.extensions[namespace].functions.length; i++) {
+                tempList.push({
+                    value: CompletionEngine.extensions[namespace].functions[i].name,
+                    description: CompletionEngine.extensions[namespace].functions[i].description,
+                    parameters: CompletionEngine.extensions[namespace].functions[i].parameters,
+                    return: CompletionEngine.extensions[namespace].functions[i].return,
+                    type: "Function Extension"
+                });
+        }
             return tempList;
         }
 
         /**
          * Get the list of  extension window processors of given namespace
          *
-         * @param {string} namespace namespace
+         * @param {string} namespace namespace of the window processors
          * @returns {Array} list of window processor names
          */
         function getExtensionWindowProcessors(namespace) {
             var tempList = [];
-            for (var propertyName in CompletionEngine.extensions[namespace].windowProcessors) {
-                if (CompletionEngine.extensions[namespace].windowProcessors.hasOwnProperty(propertyName)) {
-                    tempList.push({
-                        value: propertyName,
-                        description: CompletionEngine.extensions[namespace].windowProcessors[propertyName].description
-                    });
-                }
+            for (var i = 0; i < CompletionEngine.extensions[namespace].windowProcessors.length; i++) {
+                tempList.push({
+                    value: CompletionEngine.extensions[namespace].windowProcessors[i].name,
+                    description: CompletionEngine.extensions[namespace].windowProcessors[i].description,
+                    parameters: CompletionEngine.extensions[namespace].windowProcessors[i].parameters,
+                    return: CompletionEngine.extensions[namespace].windowProcessors[i].return,
+                    type: "Window Processor Extension"
+                });
             }
             return tempList;
         }
@@ -1275,18 +1260,19 @@
         /**
          * Get the list of  extension stream processors of given namespace
          *
-         * @param {string} namespace namespace
+         * @param {string} namespace namespace of the stream processors
          * @returns {Array} list of stream processor names
          */
         function getExtensionStreamProcessors(namespace) {
             var tempList = [];
-            for (var propertyName in CompletionEngine.extensions[namespace].streamProcessors) {
-                if (CompletionEngine.extensions[namespace].streamProcessors.hasOwnProperty(propertyName)) {
-                    tempList.push({
-                        value: propertyName,
-                        description: CompletionEngine.extensions[namespace].streamProcessors[propertyName].description
-                    });
-                }
+            for (var i = 0; i < CompletionEngine.extensions[namespace].streamProcessors.length; i++) {
+                tempList.push({
+                    value: CompletionEngine.extensions[namespace].streamProcessors[i].name,
+                    description: CompletionEngine.extensions[namespace].streamProcessors[i].description,
+                    parameters: CompletionEngine.extensions[namespace].streamProcessors[i].parameters,
+                    return: CompletionEngine.extensions[namespace].streamProcessors[i].return,
+                    type: "Stream Processor Extension"
+                });
             }
             return tempList;
         }
@@ -1296,15 +1282,54 @@
          *
          * @returns {Array} list of function names
          */
-        function getSystemFunctionNames() {
+        function getInBuiltFunctionNames() {
             var tempList = [];
-            for (var propertyName in CompletionEngine.inBuilt.functions) {
-                if (CompletionEngine.inBuilt.functions.hasOwnProperty(propertyName)) {
-                    tempList.push({
-                        value: propertyName,
-                        description: CompletionEngine.inBuilt.functions[propertyName].description
-                    });
-                }
+            for (var i = 0; i < CompletionEngine.inBuilt.functions.length; i++) {
+                tempList.push({
+                    value: CompletionEngine.inBuilt.functions[i].name,
+                    description: CompletionEngine.inBuilt.functions[i].description,
+                    parameters: CompletionEngine.inBuilt.functions[i].parameters,
+                    return: CompletionEngine.inBuilt.functions[i].return,
+                    type: "Function"
+                });
+            }
+            return tempList;
+        }
+
+        /**
+         * Get the list of inbuilt window processor names
+         *
+         * @returns {Array} list of window processor names
+         */
+        function getInBuiltWindowProcessors() {
+            var tempList = [];
+            for (var i = 0; i < CompletionEngine.inBuilt.windowProcessors.length; i++) {
+                tempList.push({
+                    value: CompletionEngine.inBuilt.windowProcessors[i].name,
+                    description: CompletionEngine.inBuilt.windowProcessors[i].description,
+                    parameters: CompletionEngine.inBuilt.windowProcessors[i].parameters,
+                    return: CompletionEngine.inBuilt.windowProcessors[i].return,
+                    type: "Window Processor"
+                });
+            }
+            return tempList;
+        }
+
+        /**
+         * Get the list of inbuilt stream processor names
+         *
+         * @returns {Array} list of stream processor names
+         */
+        function getInBuiltStreamProcessors() {
+            var tempList = [];
+            for (var i = 0; i < CompletionEngine.inBuilt.streamProcessors.length; i++) {
+                tempList.push({
+                    value: CompletionEngine.inBuilt.streamProcessors[i].name,
+                    description: CompletionEngine.inBuilt.streamProcessors[i].description,
+                    parameters: CompletionEngine.inBuilt.streamProcessors[i].parameters,
+                    return: CompletionEngine.inBuilt.streamProcessors[i].return,
+                    type: "Stream Processor"
+                });
             }
             return tempList;
         }
@@ -1396,18 +1421,16 @@
             priority = 1;
         }
         return suggestions.map(function (suggestion) {
-            var returnSuggestion = {
+            return {
                 caption: (suggestion.caption == undefined ? suggestion.value : suggestion.caption),
                 value: suggestion.value,
-                score: priority
+                score: priority,
+                meta: suggestion.type,
+                name: suggestion.name,
+                description: suggestion.description,
+                parameters: suggestion.parameters,
+                return: suggestion.return
             };
-            if (suggestion.type != undefined) {
-                returnSuggestion.meta = suggestion.type;
-            }
-            if (suggestion.description != undefined) {
-                returnSuggestion.description = suggestion.description;
-            }
-            return returnSuggestion;
         });
     }
 
