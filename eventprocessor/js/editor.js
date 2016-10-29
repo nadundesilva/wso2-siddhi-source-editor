@@ -23,6 +23,7 @@
      * Annotations, Annotation Names and relevant tokens
      */
     var ACE_CONSTANT = {
+        SNIPPET_MANAGER: "ace/snippets",
         LANG_TOOLS: "ace/ext/language_tools",
         SIDDHI_MODE: "ace/mode/siddhi",
         THEME: "ace/theme/crimson_editor",
@@ -52,8 +53,9 @@
     var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
     var TokenTooltip = require(ACE_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                                                // Required for token tooltips
 
-    SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);          // Required for auto completion
-    SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;         // Required for extracting part of the query
+    SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
+    SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
+    SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
     SiddhiEditor.debug = false;
 
     /**
