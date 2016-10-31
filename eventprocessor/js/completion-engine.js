@@ -17,7 +17,7 @@
 (function () {
     var loggerContext = "CompletionEngine";
 
-    // Aliases for the attribute names used in 'CompletionEngine.extensions' and 'CompletionEngine.inBuilt' json objects
+    // Aliases for the attribute names used in 'processorSnippets.extensions' and 'processorSnippets.inBuilt' json objects
     var FUNCTIONS = "functions";
     var STREAM_PROCESSORS = "streamProcessors";
     var WINDOW_PROCESSORS = "windowProcessors";
@@ -156,7 +156,7 @@ snippet partition\n\
      *                    cfg : "CompletionEngine._checkNestedBrackets", // CONVENTION : function name is started with _
      *                    next : "CompletionEngine.$FunctionHandler"
      *                 }
-     ************/
+     */
     var ruleBase = [
         {
             regex: "@(p(l(a(n?)?)?)?)((?![)]).)*$",
@@ -311,6 +311,8 @@ snippet partition\n\
         }
     ];
 
+    loadMetaData();
+
     window.CompletionEngine = function () {
         var self = this;
 
@@ -371,34 +373,6 @@ snippet partition\n\
                 // This completer will be using the wordList array
                 // context-handler functions will be updated the the worldList based on the context around the cursor position
                 callback(null, self.wordList);
-            },
-            getDocTooltip: function(item) {
-                if (item.description && !item.docHTML) {
-                    item.docHTML = "<div>" +
-                        "<strong>" + item.caption + "</strong><br>" +
-                        "<p>" + item.description + "</p>";
-                    if (item.parameters) {
-                        item.docHTML += "<strong>Parameters - </strong><ul>";
-                        for(var i = 0; i < item.parameters.length; i++) {
-                            if (item.parameters[i].multiple) {
-                                for(var j = 0; j < item.parameters.length; j++) {
-                                    item.docHTML += "<li>" + item.parameters[i].multiple[j].name +
-                                        (item.parameters[i].optional ? " (optional & multiple)" : "") + " - " +
-                                        item.parameters[i].multiple[j].type.join(" | ") + "</li>";
-                                }
-                            } else {
-                                item.docHTML += "<li>" + item.parameters[i].name +
-                                    (item.parameters[i].optional ? " (optional)" : "") + " - " +
-                                    item.parameters[i].type.join(" | ") + "</li>";
-                            }
-                        }
-                        item.docHTML += "</ul>";
-                    }
-                    if (item.return) {
-                        item.docHTML += "<strong>Return Type - </strong>" + item.return.join(" | ");
-                    }
-                    item.docHTML += "</div>";
-                }
             }
         };
 
@@ -417,8 +391,8 @@ snippet partition\n\
                             caption: caption,
                             snippet: s.content,
                             meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " : (s.type != undefined ? s.type : "snippet"),
-                            description : s.description,
-                            type: "snippet"
+                            docHTML : s.description,
+                            type: (s.type != undefined ? s.type : "snippet")
                         });
                     }
                 }, this);
@@ -427,8 +401,8 @@ snippet partition\n\
             getDocTooltip: function(item) {
                 if (item.type == "snippet" && !item.docHTML) {
                     item.docHTML = [
-                        "<div>", "<strong>", lang.escapeHTML(item.caption), "</strong>", "<p>",
-                        lang.escapeHTML(item.snippet), "</p>", "</div>"
+                        "<div>", "<strong>", SiddhiEditor.lang.escapeHTML(item.caption), "</strong>", "<p>",
+                        SiddhiEditor.lang.escapeHTML(item.snippet), "</p>", "</div>"
                     ].join("");
                 }
             }
@@ -446,28 +420,23 @@ snippet partition\n\
          * @returns {Array|*} suitable completer list for current context
          */
         self.adjustAutoCompletionHandlers = function (editor) {
-            // adjustAutoCompletionHandlers() method will be called in js/ace_editor/ext-language_tools.js in basicAutoComplete and liveAutoComplete
             // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
             var completerList = [];
-
             // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
             if (this.checkVariableResolveness(editor)) {
                 // If the last token is the dot operator => only the attributes of the object/namespace should be listed
-                // So that just show the suggestions from the SiddhiCompleter
                 completerList = [this.SiddhiCompleter, this.SnippetCompleter];
             } else {
                 // If the cursor is in the middle of a query and not preceded by a dot operator
-                // Show the keywords, and suggestions from the SiddhiCompleter.
-                completerList = [this.SiddhiCompleter, SiddhiEditor.langTools.keyWordCompleter, this.SnippetCompleter];
+                completerList = [this.SiddhiCompleter, this.SnippetCompleter, SiddhiEditor.langTools.keyWordCompleter];
             }
+            editor.completers = completerList;
 
             if (this.checkTheBeginning(editor)) {
                 SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
             } else {
                 SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
             }
-
-            editor.completers = completerList;
         };
 
         /**
@@ -480,7 +449,7 @@ snippet partition\n\
             var objectNameRegex = /\w*\.$/i;
             var namespaceRegex = /\w*:$/i;
             var txt = editor.getValue();
-            return !!(objectNameRegex.test(txt) || namespaceRegex.test(txt));
+            return objectNameRegex.test(txt) || namespaceRegex.test(txt);
         };
 
         /**
@@ -1221,20 +1190,6 @@ snippet partition\n\
         };
 
         /**
-         * Load meta data from a json file
-         *
-         * @param jsonFile JSON file from which the meta data should be loaded
-         * @param type The type of meta data to be loaded
-         * @param callback callback function to be called after loading general meta data
-         */
-        self.loadGeneralMetaData = function (jsonFile, type, callback) {
-            jQuery.getJSON("js/" + jsonFile, function (data) {
-                CompletionEngine[type] = data;
-                callback();
-            });
-        };
-
-        /**
          * Get the current stream alias list
          *
          * @returns {Array}
@@ -1271,16 +1226,16 @@ snippet partition\n\
          */
         function getExtensionNamesSpaces(objType1, objType2) {
             var tempList = [];
-            for (var propertyName in CompletionEngine.extensions) {
-                if (CompletionEngine.extensions.hasOwnProperty(propertyName)) {
+            for (var propertyName in processorSnippets.extensions) {
+                if (processorSnippets.extensions.hasOwnProperty(propertyName)) {
                     if (SiddhiEditor.debug) {
                         console.warn(loggerContext + ":" + "getExtensionNamesSpaces" + "->");
-                        console.log(CompletionEngine.extensions[propertyName][objType1], objType1, propertyName);
-                        console.log("RESULTS", objType1 && !isEmpty(CompletionEngine.extensions[propertyName][objType1]));
+                        console.log(processorSnippets.extensions[propertyName][objType1], objType1, propertyName);
+                        console.log("RESULTS", objType1 && !isEmpty(processorSnippets.extensions[propertyName][objType1]));
                     }
 
-                    if ((objType1 && !isEmpty(CompletionEngine.extensions[propertyName][objType1])) ||
-                        (objType2 && !isEmpty(CompletionEngine.extensions[propertyName][objType2]))) {
+                    if ((objType1 && !isEmpty(processorSnippets.extensions[propertyName][objType1])) ||
+                        (objType2 && !isEmpty(processorSnippets.extensions[propertyName][objType2]))) {
                         tempList.push(propertyName);
                     } else if (!objType1 && !objType2) {
                         tempList.push(propertyName);
@@ -1297,7 +1252,7 @@ snippet partition\n\
          * @returns {Array} : list of function snippets
          */
         function getExtensionFunctionNames(namespace) {
-            return CompletionEngine.extensions[namespace].functions.map(function (processor) {
+            return processorSnippets.extensions[namespace].functions.map(function (processor) {
                 processor.type = "Function";
                 return processor;
             });
@@ -1310,7 +1265,7 @@ snippet partition\n\
          * @returns {Array} list of window processor snippets
          */
         function getExtensionWindowProcessors(namespace) {
-            return CompletionEngine.extensions[namespace].windowProcessors.map(function (processor) {
+            return processorSnippets.extensions[namespace].windowProcessors.map(function (processor) {
                 processor.type = "Window Processor";
                 return processor;
             });
@@ -1323,7 +1278,7 @@ snippet partition\n\
          * @returns {Array} list of stream processor snippets
          */
         function getExtensionStreamProcessors(namespace) {
-            return CompletionEngine.extensions[namespace].streamProcessors.map(function (processor) {
+            return processorSnippets.extensions[namespace].streamProcessors.map(function (processor) {
                 processor.type = "Stream Processor";
                 return processor;
             });
@@ -1335,7 +1290,7 @@ snippet partition\n\
          * @returns {Array} list of function snippets
          */
         function getInBuiltFunctionNames() {
-            return CompletionEngine.inBuilt.functions.map(function (processor) {
+            return processorSnippets.inBuilt.functions.map(function (processor) {
                 processor.type = "Function";
                 return processor;
             });
@@ -1347,7 +1302,7 @@ snippet partition\n\
          * @returns {Array} list of window processor snippets
          */
         function getInBuiltWindowProcessors() {
-            return CompletionEngine.inBuilt.windowProcessors.map(function (processor) {
+            return processorSnippets.inBuilt.windowProcessors.map(function (processor) {
                 processor.type = "Window Processor";
                 return processor;
             });
@@ -1359,7 +1314,7 @@ snippet partition\n\
          * @returns {Array} list of stream processor snippets
          */
         function getInBuiltStreamProcessors() {
-            return CompletionEngine.inBuilt.streamProcessors.map(function (processor) {
+            return processorSnippets.inBuilt.streamProcessors.map(function (processor) {
                 processor.type = "Stream Processor";
                 return processor;
             });
@@ -1389,95 +1344,226 @@ snippet partition\n\
                     value: suggestion.value,
                     score: (suggestions.priority == undefined ? 1 : suggestions.priority),
                     meta: suggestion.type,
-                    description: suggestion.description,
                     parameters: suggestion.parameters,
+                    description: suggestion.description,
                     return: suggestion.return
                 };
-                if (suggestion.parameters) {
-                    completion.value += "(";
-                    for (var j = 0; j < suggestion.parameters.length; j++) {
-                        if (j != 0) {
-                            completion.value += ", ";
-                        }
-                        completion.value += suggestion.parameters[j].name;
-                    }
-                    completion.value += ")";
-
+                if (completion.parameters) {
+                    addSnippets(generateSnippet({
+                        name: completion.caption,
+                        parameters: completion.parameters,
+                        description: completion.description,
+                        return: completion.return
+                    }));
+                    console.log(SiddhiEditor.SnippetManager.snippetMap);
+                } else {
+                    self.wordList.push(completion);
                 }
-                self.wordList.push(completion);
             }
         }
 
         /**
          * Add a new completions to the words list
          *
-         * @param {Object[]} suggestions list of  suggestions
+         * @param {Object[]|Object} suggestions list of  suggestions
          */
         function addSnippets(suggestions) {
-            for (var i = 0; i < suggestions.length; i++) {
-                SiddhiEditor.SnippetManager.register(suggestions[i], "siddhi");
-                self.suggestedSnippets.push(suggestions[i]);
+            if (suggestions.constructor === Array) {
+                for (var i = 0; i < suggestions.length; i++) {
+                    SiddhiEditor.SnippetManager.register(suggestions[i], "siddhi");
+                    self.suggestedSnippets.push(suggestions[i]);
+                }
+            } else {
+                SiddhiEditor.SnippetManager.register(suggestions, "siddhi");
+                self.suggestedSnippets.push(suggestions);
             }
         }
     };
 
-    /*
-     * extension' json object contains the custom function,streamProcessor and windowProcessor extensions available for
-     * the current Siddhi Session. Currently the extensions listed in the documentation are listed below.
-     * But this data structure should be dynamically pull down from the backend services.
-     *
-     * SCHEMA
-     * ------
-     *    extensions={
-     *       namespace1:{
-     *                  functions:{
-     *                              function1:[  // array is used here to allow multiple representations of the same function
-     *                                          {
-     *                                              Description: "description of the function1",
-     *                                              argNames: ["p1"],
-     *                                              argTypes: [["float", "double"]],
-     *                                              returnType: ["float", "double"]
-     *                                          }
-     *                              ],
-     *                              function2:[
-     *                                          {
-     *                                              //representation of the function2
-     *                                          }
-     *                              ]
-     *                  },
-     *                  streamProcessors:{
-     *                         // Same as in function section
-     *                  }  ,
-     *                  windowProcessors:{
-     *                          // same as in function section
-     *                  }
-     *       },
-     *
-     *       namespace2:{
-     *                  functions:{
-     *
-     *                  },
-     *
-     *                  streamProcessors:{
-     *                         // Same as in function section
-     *                  }
-     *                  ,
-     *
-     *                  windowProcessors:{
-     *                          // same as in function section
-     *                  }
-     *       }
-     *
-     *
-     *    }
-     */
-    CompletionEngine.extensions = {};
-
-    // System json object contains the inbuilt function,streamProcessor and windowProcessor  available for the current Siddhi Session
-    CompletionEngine.inBuilt = {};
-
     // Constructor of the Stream class is exposed to global scope
     CompletionEngine.Stream = Stream;
+
+    var processorSnippets = {
+        /*
+         * extension' json object contains the custom function,streamProcessor and windowProcessor extensions available for
+         * the current Siddhi Session. Currently the extensions listed in the documentation are listed below.
+         * But this data structure should be dynamically pull down from the backend services.
+         *
+         * SCHEMA
+         * ------
+         *    extensions={
+         *       namespace1:{
+         *                  functions:{
+         *                              function1:[  // array is used here to allow multiple representations of the same function
+         *                                          {
+         *                                              Description: "description of the function1",
+         *                                              argNames: ["p1"],
+         *                                              argTypes: [["float", "double"]],
+         *                                              returnType: ["float", "double"]
+         *                                          }
+         *                              ],
+         *                              function2:[
+         *                                          {
+         *                                              //representation of the function2
+         *                                          }
+         *                              ]
+         *                  },
+         *                  streamProcessors:{
+         *                         // Same as in function section
+         *                  }  ,
+         *                  windowProcessors:{
+         *                          // same as in function section
+         *                  }
+         *       },
+         *
+         *       namespace2:{
+         *                  functions:{
+         *
+         *                  },
+         *
+         *                  streamProcessors:{
+         *                         // Same as in function section
+         *                  }
+         *                  ,
+         *
+         *                  windowProcessors:{
+         *                          // same as in function section
+         *                  }
+         *       }
+         *
+         *
+         *    }
+         */
+        extensions: [],
+
+        // System json object contains the inbuilt function,streamProcessor and windowProcessor  available for the current Siddhi Session
+        inBuilt: []
+    };
+
+    /*
+     * Meta data JSON object structure (for extensions and inbuilt) :
+     *
+     *  {
+     *      processorType: [
+     *          {
+     *              "name": "name of the processor",
+     *              "description": "description about the processor",
+     *              "parameters": [
+     *                  {
+     *                      "name": "name of the first parameter",
+     *                      "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"],
+     *                      "optional": "boolean"
+     *                  },
+     *                  {
+     *                      "name": "name of the second parameter",
+     *                      "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"],
+     *                      "optional": "boolean"
+     *                  }
+     *                  {
+     *                      "multiple": [       // Set of parameters that can be repeated
+     *                          {
+     *                              "name": "name of the parameter that can be repeated",
+     *                              "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"]
+     *                          },
+     *                          {
+     *                              "name": "name of the second parameter that can be repeated",
+     *                              "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"]\
+     *                          }
+     *                      ],
+     *                      "optional": "boolean"
+     *                  }
+     *              ],
+     *              "return": ["possible", "types", "returned", "by", "the", "processor"]
+     *          }
+     *      ]
+     *  }
+     */
+    /**
+     * Load meta data from a json file
+     */
+    function loadMetaData() {
+        jQuery.getJSON("js/siddhi-inbuilt.json", function (data) {
+            for (var processorType in data) {
+                if (data.hasOwnProperty(processorType)) {
+                    for (var i = 0; i < data[processorType].length; i++) {
+                        data[processorType][i] = generateSnippet(data[processorType][i]);
+                    }
+                }
+            }
+            processorSnippets.inBuilt = data;
+        });
+        jQuery.getJSON("js/siddhi-extensions.json", function (data) {
+            for (var namespace in data) {
+                if (data.hasOwnProperty(namespace)) {
+                    for (var processorType in data[namespace]) {
+                        if (data[namespace].hasOwnProperty(processorType)) {
+                            for (var i = 0; i < data[namespace][processorType].length; i++) {
+                                data[namespace][processorType][i] = generateSnippet(data[namespace][processorType][i]);
+                            }
+                        }
+                    }
+                }
+            }
+            processorSnippets.extensions = data;
+        });
+    }
+
+    /**
+     * Prepare a snippet from the processor
+     *
+     * @param {Object} processor The processor object with relevant parameters
+     * @return snippet
+     */
+    function generateSnippet(processor) {
+        var snippetText = "snippet " + processor.name + "\n\t" +
+            processor.name + "(";
+        for (var j = 0; j < processor.parameters.length; j++) {
+            if (j != 0) {
+                snippetText += ", ";
+            }
+            snippetText += "${" + (j + 1) + ":" + processor.parameters[j].name + "}";
+        }
+        snippetText += ")\n";
+        var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
+
+        processor.caption = processor.name;
+        snippet.description = generateDescription(processor);
+        return snippet;
+    }
+
+    /**
+     * Generate description html string from meta data
+     *
+     * @param {Object} metaData Meta data object containing parameters, return and description
+     * @return {string} html string of the description generated from the meta data provided
+     */
+    function generateDescription(metaData) {
+        var description = "<div>" +
+            (metaData.caption ? "<strong>" + metaData.caption + "</strong><br>" : "") +
+            (metaData.description ? "<p>" + metaData.description + "</p>" : "");
+        if (metaData.parameters) {
+            description += "Parameters - <ul>";
+            for(var j = 0; j < metaData.parameters.length; j++) {
+                if (metaData.parameters[j].multiple) {
+                    for(var k = 0; k < metaData.parameters[j].multiple.length; k++) {
+                        description += "<li>" + metaData.parameters[j].multiple[k].name +
+                            (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
+                            metaData.parameters[j].multiple[k].type.join(" | ") + "</li>";
+                    }
+                } else {
+                    description += "<li>" + metaData.parameters[j].name +
+                        (metaData.parameters[j].optional ? " (optional)" : "") + " - " +
+                        metaData.parameters[j].type.join(" | ") + "</li>";
+                }
+            }
+            description += "</ul>";
+        }
+        if (metaData.return) {
+            description += "Return Type - " + metaData.return.join(" | ");
+        }
+        description += "</div>";
+        return description;
+    }
 
     /**
      * Check whether a given object has properties or not

@@ -1624,8 +1624,6 @@ Autocomplete.startCommand = {
         if (!editor.completer)
             editor.completer = new Autocomplete();
 
-        editor.completionEngine.adjustAutoCompletionHandlers(editor);   //This is essential to change the completer based on the context
-
         editor.completer.autoInsert = false;
         editor.completer.autoSelect = true;
         editor.completer.showPopup(editor);
@@ -1886,8 +1884,6 @@ var doLiveAutocomplete = function(e) {
         if (prefix && !hasCompleter) {
             if (!editor.completer)
                 editor.completer = new Autocomplete();
-
-            editor.completionEngine.adjustAutoCompletionHandlers(editor);   //This is essential to change the completer based on the context
 
             editor.completer.autoInsert = false;
             editor.completer.showPopup(editor);
