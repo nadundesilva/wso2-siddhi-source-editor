@@ -98,15 +98,20 @@
         editor.state.lastEdit = 0;              // Last edit time
         editor.state.foundSemanticErrors = false;
 
-        editor.completionEngine = new CompletionEngine();
+        // Adding the default text into the editor
+        editor.setValue("/* Enter a unique ExecutionPlan */\n" +
+            "@Plan:name('ExecutionPlan')\n\n" +
+            "/* Enter a unique description for ExecutionPlan */\n" +
+            "-- @Plan:description('ExecutionPlan')\n\n" +
+            "/* define streams/tables and write queries here ... */\n", 1);
+        editor.focus();
 
-        // Adding Siddhi specific autocompleter
-        if (!config.readOnly && config.autoCompletion) {
-        }
+        editor.completionEngine = new CompletionEngine();
 
         // Attaching editor's onChange event handler
         editor.getSession().on('change', editorChangeHandler);
 
+        // For adjusting the completer list as required
         editor.completionEngine.adjustAutoCompletionHandlers(editor);
         editor.commands.on('afterExec', function () {
             editor.completionEngine.adjustAutoCompletionHandlers(editor);

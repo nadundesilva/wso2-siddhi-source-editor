@@ -51,35 +51,19 @@
 <script src="js/editor.js"></script>
 <script src="js/completion-engine.js"></script>
 
-<pre id="editor1">
-/* Enter a unique ExecutionPlan */
-@Plan:name('ExecutionPlan')
+<pre id="editor1"></pre>
 
-/* Enter a unique description for ExecutionPlan */
--- @Plan:description('ExecutionPlan')
-
-/* define streams/tables and write queries here ... */
-</pre>
-
-<pre id="editor2">
-/* Enter a unique ExecutionPlan */
-@Plan:name('ExecutionPlan')
-
-/* Enter a unique description for ExecutionPlan */
--- @Plan:description('ExecutionPlan')
-
-/* define streams/tables and write queries here ... */
-</pre>
+<pre id="editor2"></pre>
 
 <script type="text/javascript">
     jQuery(document).ready(function () {
         SiddhiEditor.init({
-            divID: "editor1",
+            divID: "editor2",
             realTimeValidation: true,
             autoCompletion: true
         });
         SiddhiEditor.init({
-            divID: "editor2",
+            divID: "editor1",
             realTimeValidation: true,
             autoCompletion: true
         });
