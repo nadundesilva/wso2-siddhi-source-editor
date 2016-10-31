@@ -1515,13 +1515,32 @@ snippet partition\n\
      * @return snippet
      */
     function generateSnippet(processor) {
+        var snippetVariableCount = 0;
         var snippetText = "snippet " + processor.name + "\n\t" +
             processor.name + "(";
-        for (var j = 0; j < processor.parameters.length; j++) {
-            if (j != 0) {
+        for (var i = 0; i < processor.parameters.length; i++) {
+            var parameter = processor.parameters[i];
+            if (i != 0) {
                 snippetText += ", ";
             }
-            snippetText += "${" + (j + 1) + ":" + processor.parameters[j].name + "}";
+            if (parameter.multiple) {
+                var repeatAmount = 2;
+                for (var j = 0; j < repeatAmount; j++) {   // Adding the multiple attributes twice
+                    for (var k = 0; k < parameter.multiple.length; k++) {
+                        if (k != 0) {
+                            snippetText += ", ";
+                        }
+                        snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.multiple[k].name + j + "}";
+                        snippetVariableCount++;
+                    }
+                    if (j != repeatAmount - 1) {
+                        snippetText += ", ";
+                    }
+                }
+            } else {
+                snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.name + "}";
+                snippetVariableCount++;
+            }
         }
         snippetText += ")\n";
         var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
