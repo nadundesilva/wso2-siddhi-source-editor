@@ -102,12 +102,77 @@
 
         // Adding Siddhi specific autocompleter
         if (!config.readOnly && config.autoCompletion) {
-            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.EXTENSIONS, "extensions");
-            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.INBUILT, "inBuilt");
+            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.EXTENSIONS, "extensions", function () {
+                for (var namespace in CompletionEngine.extensions) {
+                    if (CompletionEngine.extensions.hasOwnProperty(namespace)) {
+                        for (var processorType in CompletionEngine.extensions[namespace]) {
+                            if (CompletionEngine.extensions[namespace].hasOwnProperty(processorType)) {
+                                for (var i = 0; i < CompletionEngine.extensions[namespace][processorType].length; i++) {
+                                    CompletionEngine.extensions[namespace][processorType][i] =
+                                        prepareSnippet(CompletionEngine.extensions[namespace][processorType][i]);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            editor.completionEngine.loadGeneralMetaData(ACE_CONSTANT.INBUILT, "inBuilt", function () {
+                for (var processorType in CompletionEngine.inBuilt) {
+                    if (CompletionEngine.inBuilt.hasOwnProperty(processorType)) {
+                        for (var i = 0; i < CompletionEngine.inBuilt[processorType].length; i++) {
+                            CompletionEngine.inBuilt[processorType][i] =
+                                prepareSnippet(CompletionEngine.inBuilt[processorType][i]);
+                        }
+                    }
+                }
+            });
         }
 
         // Attaching editor's onChange event handler
         editor.getSession().on('change', editorChangeHandler);
+
+        /**
+         * Prepare a snippet from the processor
+         *
+         * @param {Object} processor The processor object with relevant parameters
+         * @return snippet
+         */
+        function prepareSnippet(processor) {
+            var snippetText = "snippet " + processor.name + "\n\t" +
+                processor.name + "(";
+            for (var j = 0; j < processor.parameters.length; j++) {
+                if (j != 0) {
+                    snippetText += ", ";
+                }
+                snippetText += "${" + (j + 1) + ":" + processor.parameters[j].name + "}";
+            }
+            snippetText += ")\n";
+            var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
+
+            snippet.description = "<div>" + "<p>" + processor.description + "</p>";
+            if (processor.parameters) {
+                snippet.description += "Parameters - <ul>";
+                for(var j = 0; j < processor.parameters.length; j++) {
+                    if (processor.parameters[j].multiple) {
+                        for(var k = 0; k < processor.parameters[j].multiple.length; k++) {
+                            snippet.description += "<li>" + processor.parameters[j].multiple[k].name +
+                                (processor.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
+                                processor.parameters[j].multiple[k].type.join(" | ") + "</li>";
+                        }
+                    } else {
+                        snippet.description += "<li>" + processor.parameters[j].name +
+                            (processor.parameters[j].optional ? " (optional)" : "") + " - " +
+                            processor.parameters[j].type.join(" | ") + "</li>";
+                    }
+                }
+                snippet.description += "</ul>";
+            }
+            if (processor.return) {
+                snippet.description += "Return Type - " + processor.return.join(" | ");
+            }
+            snippet.description += "</div>";
+            return snippet;
+        }
 
         /**
          * Editor change handler

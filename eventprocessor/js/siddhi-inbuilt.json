@@ -385,7 +385,7 @@
           "multiple": [
             {
               "name": "attribute",
-              "type": "string"
+              "type": ["string"]
             }
           ],
           "optional": true
@@ -403,13 +403,13 @@
         },
         {
           "name": "errorBound",
-          "type": "double"
+          "type": ["double"]
         },
         {
           "multiple": [
             {
               "name": "attribute",
-              "type": "string"
+              "type": ["string"]
             }
           ],
           "optional": true

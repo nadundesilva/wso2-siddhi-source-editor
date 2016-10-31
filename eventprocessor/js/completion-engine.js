@@ -17,7 +17,7 @@
 (function () {
     var loggerContext = "CompletionEngine";
 
-    //Aliases for the attribute names used in 'CompletionEngine.extensions' and 'CompletionEngine.inBuilt' json objects
+    // Aliases for the attribute names used in 'CompletionEngine.extensions' and 'CompletionEngine.inBuilt' json objects
     var FUNCTIONS = "functions";
     var STREAM_PROCESSORS = "streamProcessors";
     var WINDOW_PROCESSORS = "windowProcessors";
@@ -51,7 +51,7 @@
     var outputRate = "((?!(every|" + queryActions + ")).)*";
     var outputRateEvery = "((?!(" + queryActions + ")).)*";
 
-    var generalSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n\
+    var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n\
 snippet defStream\n\
 	define stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n\
 snippet defTable\n\
@@ -191,7 +191,7 @@ snippet partition\n\
             next: "$TableSuggestions"
         },
         {
-            regex: "from\\s+" + queryInput + "#window\\.(.)*(?!\\s+)$",
+            regex: "from\\s+" + queryInput + "#window\\.$",
             next: "$windowPhrase"
         },
         {
@@ -360,6 +360,8 @@ snippet partition\n\
         // }
         self.wordList = [];
 
+        self.suggestedSnippets = [];
+
         // SiddhiCompleter is attached with ext-language module. So that Ace editor library will be using this module for generate suggestions
         self.SiddhiCompleter = {
             getCompletions: function (editor, session, pos, prefix, callback) {
@@ -400,6 +402,39 @@ snippet partition\n\
             }
         };
 
+        self.SnippetCompleter = {
+            getCompletions: function(editor, session, pos, prefix, callback) {
+                var snippetMap = SiddhiEditor.SnippetManager.snippetMap;
+                var completions = [];
+                SiddhiEditor.SnippetManager.getActiveScopes(editor).forEach(function(scope) {
+                    var snippets = snippetMap[scope] || [];
+                    for (var i = snippets.length; i--;) {
+                        var s = snippets[i];
+                        var caption = s.name || s.tabTrigger;
+                        if (!caption)
+                            continue;
+                        completions.push({
+                            caption: caption,
+                            snippet: s.content,
+                            meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " : (s.type != undefined ? s.type : "snippet"),
+                            description : s.description,
+                            type: "snippet"
+                        });
+                    }
+                }, this);
+                callback(null, completions);
+            },
+            getDocTooltip: function(item) {
+                if (item.type == "snippet" && !item.docHTML) {
+                    item.docHTML = [
+                        "<div>", "<strong>", lang.escapeHTML(item.caption), "</strong>", "<p>",
+                        lang.escapeHTML(item.snippet), "</p>", "</div>"
+                    ].join("");
+                }
+            }
+        };
+
+
         /*************************************************************************************************************************
          *                                          Integration functions for CompletionEngine
          *************************************************************************************************************************/
@@ -415,21 +450,21 @@ snippet partition\n\
             // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
             var completerList = [];
 
-            // If the cursor is placed in the middle of the statement
+            // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
             if (this.checkVariableResolveness(editor)) {
                 // If the last token is the dot operator => only the attributes of the object/namespace should be listed
                 // So that just show the suggestions from the SiddhiCompleter
-                completerList = [SiddhiEditor.langTools.snippetCompleter, this.SiddhiCompleter];
+                completerList = [this.SiddhiCompleter, this.SnippetCompleter];
             } else {
                 // If the cursor is in the middle of a query and not preceded by a dot operator
                 // Show the keywords, and suggestions from the SiddhiCompleter.
-                completerList = [SiddhiEditor.langTools.keyWordCompleter, SiddhiEditor.langTools.snippetCompleter, this.SiddhiCompleter];
+                completerList = [this.SiddhiCompleter, SiddhiEditor.langTools.keyWordCompleter, this.SnippetCompleter];
             }
 
             if (this.checkTheBeginning(editor)) {
-                SiddhiEditor.SnippetManager.register(generalSnippets);
+                SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
             } else {
-                SiddhiEditor.SnippetManager.unregister(generalSnippets);
+                SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
             }
 
             editor.completers = completerList;
@@ -523,7 +558,9 @@ snippet partition\n\
                 console.log("input text", text);
             }
 
-            self.wordList = [];     // Clear the previous suggestion list
+            self.wordList = [];                                                         // Clear the previous suggestion list
+            SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, "siddhi");   // Clear the previous snippet suggestions
+            self.suggestedSnippets = [];
             if (this.checkTheBeginning(editor)) {
                 this.$initialList();
             }
@@ -645,8 +682,6 @@ snippet partition\n\
                 {value: "output"}, {value: "update"}, {value: "delete"}
             ];
 
-            var sysFunctions = getInBuiltFunctionNames();
-
             var ns = getExtensionNamesSpaces(FUNCTIONS);
             ns = ns.map(function (d) {
                 return d + ":";
@@ -740,14 +775,11 @@ snippet partition\n\
                 keyword.priority = 1;
                 return keyword;
             }));
-            addCompletions(sysFunctions.map(function(keyword) {
-                keyword.priority = 2;
-                return keyword;
-            }));
+            addSnippets(getInBuiltFunctionNames());
         };
 
         self.$windowPhrase = function () {
-            addCompletions(getInBuiltWindowProcessors());
+            addSnippets(getInBuiltWindowProcessors());
 
             addCompletions(getExtensionNamesSpaces(WINDOW_PROCESSORS).map(function (d) {
                 return {
@@ -972,13 +1004,7 @@ snippet partition\n\
                 }
             }));
 
-            addCompletions(getInBuiltFunctionNames().map(function (d) {
-                return {
-                    value: d + "(args)",
-                    type: "Function",
-                    priority: 1
-                }
-            }));
+            addSnippets(getInBuiltFunctionNames());
 
             addCompletions(attributeList.map(function (d) {
                 return {
@@ -1064,15 +1090,15 @@ snippet partition\n\
             if (windowRegex.test(result[0])) {
                 var windowResult = windowRegex.exec(result[0]);
                 ns = windowResult[1];
-                addCompletions(getExtensionWindowProcessors(ns));
+                addSnippets(getExtensionWindowProcessors(ns));
             } else if (streamRegex.test(result[0])) {
                 var streamFunctionPhrase = streamRegex.exec(result[0]);
                 ns = streamFunctionPhrase[1];
-                addCompletions(getExtensionStreamProcessors(ns));
+                addSnippets(getExtensionStreamProcessors(ns));
             } else if (functionRegex.test(result[0])) {
                 var functionPhrase = functionRegex.exec(result[0]);
                 ns = functionPhrase[1];
-                addCompletions(getExtensionFunctionNames(ns));
+                addSnippets(getExtensionFunctionNames(ns));
             }
         };
 
@@ -1199,10 +1225,12 @@ snippet partition\n\
          *
          * @param jsonFile JSON file from which the meta data should be loaded
          * @param type The type of meta data to be loaded
+         * @param callback callback function to be called after loading general meta data
          */
-        self.loadGeneralMetaData = function (jsonFile, type) {
+        self.loadGeneralMetaData = function (jsonFile, type, callback) {
             jQuery.getJSON("js/" + jsonFile, function (data) {
                 CompletionEngine[type] = data;
+                callback();
             });
         };
 
@@ -1263,120 +1291,78 @@ snippet partition\n\
         }
 
         /**
-         * Get the list of  extension functions of given namespace
+         * Get the list of  extension function snippets of given namespace
          *
          * @param {string} namespace namespace of the functions
-         * @returns {Array} : list of function names
+         * @returns {Array} : list of function snippets
          */
         function getExtensionFunctionNames(namespace) {
-            var tempList = [];
-            for (var i = 0; i < CompletionEngine.extensions[namespace].functions.length; i++) {
-                tempList.push({
-                    value: CompletionEngine.extensions[namespace].functions[i].name,
-                    description: CompletionEngine.extensions[namespace].functions[i].description,
-                    parameters: CompletionEngine.extensions[namespace].functions[i].parameters,
-                    return: CompletionEngine.extensions[namespace].functions[i].return,
-                    type: "Function Extension"
-                });
-        }
-            return tempList;
+            return CompletionEngine.extensions[namespace].functions.map(function (processor) {
+                processor.type = "Function";
+                return processor;
+            });
         }
 
         /**
-         * Get the list of  extension window processors of given namespace
+         * Get the list of  extension window processor snippets of given namespace
          *
          * @param {string} namespace namespace of the window processors
-         * @returns {Array} list of window processor names
+         * @returns {Array} list of window processor snippets
          */
         function getExtensionWindowProcessors(namespace) {
-            var tempList = [];
-            for (var i = 0; i < CompletionEngine.extensions[namespace].windowProcessors.length; i++) {
-                tempList.push({
-                    value: CompletionEngine.extensions[namespace].windowProcessors[i].name,
-                    description: CompletionEngine.extensions[namespace].windowProcessors[i].description,
-                    parameters: CompletionEngine.extensions[namespace].windowProcessors[i].parameters,
-                    return: CompletionEngine.extensions[namespace].windowProcessors[i].return,
-                    type: "Window Processor Extension"
-                });
-            }
-            return tempList;
+            return CompletionEngine.extensions[namespace].windowProcessors.map(function (processor) {
+                processor.type = "Window Processor";
+                return processor;
+            });
         }
 
         /**
-         * Get the list of  extension stream processors of given namespace
+         * Get the list of  extension stream processor snippets of given namespace
          *
          * @param {string} namespace namespace of the stream processors
-         * @returns {Array} list of stream processor names
+         * @returns {Array} list of stream processor snippets
          */
         function getExtensionStreamProcessors(namespace) {
-            var tempList = [];
-            for (var i = 0; i < CompletionEngine.extensions[namespace].streamProcessors.length; i++) {
-                tempList.push({
-                    value: CompletionEngine.extensions[namespace].streamProcessors[i].name,
-                    description: CompletionEngine.extensions[namespace].streamProcessors[i].description,
-                    parameters: CompletionEngine.extensions[namespace].streamProcessors[i].parameters,
-                    return: CompletionEngine.extensions[namespace].streamProcessors[i].return,
-                    type: "Stream Processor Extension"
-                });
-            }
-            return tempList;
+            return CompletionEngine.extensions[namespace].streamProcessors.map(function (processor) {
+                processor.type = "Stream Processor";
+                return processor;
+            });
         }
 
         /**
-         * Get the list of inbuilt function names
+         * Get the list of inbuilt function snippets
          *
-         * @returns {Array} list of function names
+         * @returns {Array} list of function snippets
          */
         function getInBuiltFunctionNames() {
-            var tempList = [];
-            for (var i = 0; i < CompletionEngine.inBuilt.functions.length; i++) {
-                tempList.push({
-                    value: CompletionEngine.inBuilt.functions[i].name,
-                    description: CompletionEngine.inBuilt.functions[i].description,
-                    parameters: CompletionEngine.inBuilt.functions[i].parameters,
-                    return: CompletionEngine.inBuilt.functions[i].return,
-                    type: "Function"
-                });
-            }
-            return tempList;
+            return CompletionEngine.inBuilt.functions.map(function (processor) {
+                processor.type = "Function";
+                return processor;
+            });
         }
 
         /**
-         * Get the list of inbuilt window processor names
+         * Get the list of inbuilt window processor snippets
          *
-         * @returns {Array} list of window processor names
+         * @returns {Array} list of window processor snippets
          */
         function getInBuiltWindowProcessors() {
-            var tempList = [];
-            for (var i = 0; i < CompletionEngine.inBuilt.windowProcessors.length; i++) {
-                tempList.push({
-                    value: CompletionEngine.inBuilt.windowProcessors[i].name,
-                    description: CompletionEngine.inBuilt.windowProcessors[i].description,
-                    parameters: CompletionEngine.inBuilt.windowProcessors[i].parameters,
-                    return: CompletionEngine.inBuilt.windowProcessors[i].return,
-                    type: "Window Processor"
-                });
-            }
-            return tempList;
+            return CompletionEngine.inBuilt.windowProcessors.map(function (processor) {
+                processor.type = "Window Processor";
+                return processor;
+            });
         }
 
         /**
-         * Get the list of inbuilt stream processor names
+         * Get the list of inbuilt stream processor snippets
          *
-         * @returns {Array} list of stream processor names
+         * @returns {Array} list of stream processor snippets
          */
         function getInBuiltStreamProcessors() {
-            var tempList = [];
-            for (var i = 0; i < CompletionEngine.inBuilt.streamProcessors.length; i++) {
-                tempList.push({
-                    value: CompletionEngine.inBuilt.streamProcessors[i].name,
-                    description: CompletionEngine.inBuilt.streamProcessors[i].description,
-                    parameters: CompletionEngine.inBuilt.streamProcessors[i].parameters,
-                    return: CompletionEngine.inBuilt.streamProcessors[i].return,
-                    type: "Stream Processor"
-                });
-            }
-            return tempList;
+            return CompletionEngine.inBuilt.streamProcessors.map(function (processor) {
+                processor.type = "Stream Processor";
+                return processor;
+            });
         }
 
         /**
@@ -1419,6 +1405,18 @@ snippet partition\n\
 
                 }
                 self.wordList.push(completion);
+            }
+        }
+
+        /**
+         * Add a new completions to the words list
+         *
+         * @param {Object[]} suggestions list of  suggestions
+         */
+        function addSnippets(suggestions) {
+            for (var i = 0; i < suggestions.length; i++) {
+                SiddhiEditor.SnippetManager.register(suggestions[i], "siddhi");
+                self.suggestedSnippets.push(suggestions[i]);
             }
         }
     };
