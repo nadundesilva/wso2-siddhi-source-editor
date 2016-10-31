@@ -1540,7 +1540,7 @@ snippet partition\n\
     function generateDescription(metaData) {
         var description = "<div>" +
             (metaData.caption ? "<strong>" + metaData.caption + "</strong><br>" : "") +
-            (metaData.description ? "<p>" + metaData.description + "</p>" : "");
+            (metaData.description ? "<p>" + wordWrap(metaData.description, 100) + "</p>" : "");
         if (metaData.parameters) {
             description += "Parameters - <ul>";
             for(var j = 0; j < metaData.parameters.length; j++) {
@@ -1563,6 +1563,24 @@ snippet partition\n\
         }
         description += "</div>";
         return description;
+    }
+
+    function wordWrap(str, maxWidth) {
+        for (var i = maxWidth; i < str.length;) {
+            if (/\s/.test(str.charAt(i))) {
+                str = str.substring(0, i) + "\n" + str.substring(i + 1);
+                i += maxWidth + 1;
+            } else {
+                for (var j = i - 1; j > i - maxWidth; j--) {
+                    if (/\s/.test(str.charAt(j))) {
+                        str = str.substring(0, j) + "\n" + str.substring(j + 1);
+                        i = j + maxWidth + 1;
+                        break;
+                    }
+                }
+            }
+        }
+        return str;
     }
 
     /**
