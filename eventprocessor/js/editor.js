@@ -125,7 +125,7 @@
         function editorChangeHandler(event) {
             editor.completionEngine.streamList.clear();        // Clear the exiting streams
             var position = editor.getCursorPosition();
-            if (event.data.text == "\n") {
+            if (event.text == "\n") {
                 // If the current input is new line , update the line numbers of semantic error
                 for (var index = 0; index < editor.state.semanticErrorList.length; index++) {
                     if (editor.state.semanticErrorList[index].row > position.row ||
@@ -135,7 +135,7 @@
                 }
             }
 
-            if (event.data.action == "removeLines") {
+            if (event.action == "removeLines") {
                 // If current line is deleted , update the line numbers of errors
                 for (index = 0; index < editor.state.semanticErrorList.length; index++) {
                     if (editor.state.semanticErrorList[index].row > position.row ||

@@ -1349,7 +1349,6 @@
                         description: completion.description,
                         return: completion.return
                     }));
-                    console.log(SiddhiEditor.SnippetManager.snippetMap);
                 } else {
                     self.wordList.push(completion);
                 }
@@ -1376,6 +1375,7 @@
 
     // Constructor of the Stream class is exposed to global scope
     CompletionEngine.Stream = Stream;
+    CompletionEngine.Table = Table;
 
     var processorSnippets = {
         /*

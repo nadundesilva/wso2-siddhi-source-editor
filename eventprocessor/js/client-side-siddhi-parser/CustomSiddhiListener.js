@@ -44,7 +44,7 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
 
 
 CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
-    var tempTable = new this.editor.completionEngine.TABLE();
+    var tempTable = new CompletionEngine.Table();
     tempTable.setTableFromDefineStatement(ctx);
     this.editor.completionEngine.tableList.addTable(tempTable);
     updateTable(ctx, " ;", this.editor.statementsList);

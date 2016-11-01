@@ -1,19 +1,3 @@
-/*
- * Copyright (c) 2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 ace.define("ace/theme/crimson_editor",["require","exports","module","ace/lib/dom"], function(require, exports, module) {
 exports.isDark = false;
 exports.cssText = ".ace-crimson-editor .ace_gutter {\
@@ -61,29 +45,23 @@ color: rgb(224, 0, 0);\
 .ace-crimson-editor .ace_fold {\
 }\
 .ace-crimson-editor .ace_support.ace_function {\
-color: #170;\
+color: rgb(192, 0, 0);\
 }\
-.ace-crimson-editor .ace_aggregate.ace_function {\
-color: #170;\
-}\
-.ace-crimson-editor .ace_annotation.ace_plan{\
-color: #047d65;\
-}\
-.ace-crimson-editor .ace_annotation.ace_common{\
-color: #047d65;\
+.ace-crimson-editor .ace_support.ace_constant {\
+color: rgb(6, 150, 14);\
 }\
 .ace-crimson-editor .ace_support.ace_type,\
 .ace-crimson-editor .ace_support.ace_class {\
-color: #708;\
+color: rgb(109, 121, 222);\
 }\
 .ace-crimson-editor .ace_keyword.ace_operator {\
-color: #fd971f;\
+color: rgb(49, 132, 149);\
 }\
 .ace-crimson-editor .ace_string {\
-color: #a11;\
+color: rgb(128, 0, 128);\
 }\
 .ace-crimson-editor .ace_comment {\
-color: #cdab53;\
+color: rgb(76, 136, 107);\
 }\
 .ace-crimson-editor .ace_comment.ace_doc {\
 color: rgb(0, 102, 255);\
@@ -92,7 +70,7 @@ color: rgb(0, 102, 255);\
 color: rgb(128, 159, 191);\
 }\
 .ace-crimson-editor .ace_constant.ace_numeric {\
-color: #ff1493;\
+color: rgb(0, 0, 64);\
 }\
 .ace-crimson-editor .ace_variable {\
 color: rgb(0, 64, 128);\
