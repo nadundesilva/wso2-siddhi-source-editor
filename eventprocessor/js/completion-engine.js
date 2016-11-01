@@ -51,82 +51,76 @@
     var outputRate = "((?!(every|" + queryActions + ")).)*";
     var outputRateEvery = "((?!(" + queryActions + ")).)*";
 
-    var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n\
-snippet defStream\n\
-	define stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n\
-snippet defTable\n\
-	define table ${1:table_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n\
-snippet defFunction\n\
-	define function ${1:function_name}[${2:lang_name}] return ${3:return_type} { \n\
-	    ${4:function_body} \n\
-	};\n\
-snippet annot-IndexedBy\n\
-	@IndexedBy('${1:attribute_name}')\n\
-snippet annot-From\n\
-	@From(eventtable='${1:rdbms}',jdbc.url=${2:'jdbc:mysql://HOST:3306/DB}', username='${3:root}', password='${4:root}', driver.name='${5:com.mysql.jdbc.Driver}', datasource.name='${6:DATASOURCE}', table.name='${7:TABLENAME}', cache='${8:lru}', cache.size='${9:3000}')\n\
-snippet annot-PlanName\n\
-	@Plan:name(\"${1:Plan_Name}\")\n\
-snippet annot-PlanDesc\n\
-	@Plan:Description(\"${1:Plan_Description}\")\n\
-snippet annot-PlanStat\n\
-	@Plan:Statistics(\"${1:Plan_Statistics}\")\n\
-snippet annot-PlanTrace\n\
-	@Plan:Trace(\"${1:Plan_Trace}\")\n\
-snippet annot-Import\n\
-	@Import(\"${1:Stream_ID}\")\n\
-snippet annot-Export\n\
-	@Export(\"${1:Stream_ID}\")\n\
-snippet annot-Info\n\
-	@info(name = \"${1:Stream_ID}\")\n\
-snippet annot-Config\n\
-	@config(async = \'true\')\n\
-snippet #window.\n\
-	window.${1:namespace}:${2:window_name}(${3:args})\n\
-snippet query-filter\n\
-	from ${1:stream_name}[${2:filter_condition}]\n\
-	select ${3:attribute1}, ${4:attribute2} \n\
-	insert into ${5:output_stream}\n\
-	\n\
-snippet query-window\n\
-	from ${1:stream_name}#window.${2:namespace}:${3:window_name}(${4:args})\n\
-	select ${5:attribute1}, ${6:attribute2} \n\
-	insert into ${7:output_stream}\n\
-	\n\
-snippet query-window-filter\n\
-	from ${1:stream_name}[${2:filter_condition}]#window.${3:namespace}:${4:window_name}( ${5:args} )\n\
-	select ${6:attribute1} , ${7:attribute2} \n\
-	insert into ${8:output_stream}\n\
-	\n\
-snippet query-join\n\
-	from ${1:stream_name}[${2:filter_condition}]#window.${3:window_name}(${4:args}) as ${5:reference}\n\
-		join ${6:stream_name}[${7:filter_condition}]#window.${8:window_name}(${9:args}) as ${10:reference}\n\
-		on ${11:join_condition}\n\
-		within ${12: time_gap}\n\
-	select ${13:attribute1}, ${14:attribute2} \n\
-	insert into ${15:output_stream}\n\
-	\n\
-snippet query-pattern\n\
-	from every ${1:stream_reference}=${2:stream_name}[${3:filter_condition}] -> \n\
-		every ${4:stream_reference2}=${5:stream_name2}[${6:filter_condition2}]\n\
-		within ${7: time_gap}\n\
-	select  ${8:stream_reference}.${9:attribute1}, ${10:stream_reference}.${11:attribute1} \n\
-	insert into ${12:output_stream}\n\
-	\n\
-snippet query\n\
-	from ${1:stream_name}\n\
-	select ${2:attribute1} , ${3:attribute2} \n\
-	insert into ${4:output_stream}\n\
-	\n\
-snippet partition\n\
-	partition with (${1:attribute_name} of ${2:stream_name}, ${3:attribute2_name} of ${4:stream2_name})\n\
-	begin\n\
-		${5:query1}\n\
-		\n\
-		${6:query2}\n\
-		\n\
-		${7:query3}\n\
-	end;\n\
-");
+    var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n" +
+        "snippet defStream\n" +
+	        "\tdefine stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
+        "snippet defTable\n" +
+            "\tdefine table ${1:table_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
+        "snippet defFunction\n" +
+            "\tdefine function ${1:function_name}[${2:lang_name}] return ${3:return_type} { \n" +
+                "\t\t${4:function_body} \n" +
+            "\t};\n" +
+        "snippet annot-IndexedBy\n" +
+            "\t@IndexedBy('${1:attribute_name}')\n" +
+        "snippet annot-From\n" +
+            "\t@From(eventtable='${1:rdbms}', jdbc.url=${2:'jdbc:mysql://host:3306/db}', username='${3:root}', password='${4:root}', driver.name='${5:com.mysql.jdbc.Driver}', datasource.name='${6:datasource}', table.name='${7:tableName}', cache='${8:lru}', cache.size='${9:3000}')\n" +
+        "snippet annot-PlanName\n" +
+            "\t@Plan:name(\"${1:Plan_Name}\")\n" +
+        "snippet annot-PlanDesc\n" +
+            "\t@Plan:Description(\"${1:Plan_Description}\")\n" +
+        "snippet annot-PlanStat\n" +
+            "\t@Plan:Statistics(\"${1:Plan_Statistics}\")\n" +
+        "snippet annot-PlanTrace\n" +
+            "\t@Plan:Trace(\"${1:Plan_Trace}\")\n" +
+        "snippet annot-Import\n" +
+            "\t@Import(\"${1:Stream_ID}\")\n" +
+        "snippet annot-Export\n" +
+            "\t@Export(\"${1:Stream_ID}\")\n" +
+        "snippet annot-Info\n" +
+            "\t@info(name = \"${1:Stream_ID}\")\n" +
+        "snippet annot-Config\n" +
+            "\t@config(async = \'true\')\n" +
+        "snippet #window.\n" +
+            "\twindow.${1:namespace}:${2:window_name}(${3:args})\n" +
+        "snippet query-filter\n" +
+            "\tfrom ${1:stream_name}[${2:filter_condition}]\n" +
+            "\tselect ${3:attribute1}, ${4:attribute2}\n" +
+            "\tinsert into ${5:output_stream}\n" +
+        "snippet query-window\n" +
+            "\tfrom ${1:stream_name}#window.${2:namespace}:${3:window_name}(${4:args})\n" +
+            "\tselect ${5:attribute1}, ${6:attribute2}\n" +
+            "\tinsert into ${7:output_stream}\n" +
+        "snippet query-window-filter\n" +
+            "\tfrom ${1:stream_name}[${2:filter_condition}]#window.${3:namespace}:${4:window_name}(${5:args})\n" +
+            "\tselect ${6:attribute1} , ${7:attribute2}\n" +
+            "\tinsert into ${8:output_stream}\n" +
+        "snippet query-join\n" +
+            "\tfrom ${1:stream_name}[${2:filter_condition}]#window.${3:window_name}(${4:args}) as ${5:reference}\n" +
+                "\t\tjoin ${6:stream_name}[${7:filter_condition}]#window.${8:window_name}(${9:args}) as ${10:reference}\n" +
+                "\t\ton ${11:join_condition}\n" +
+                "\t\twithin ${12: time_gap}\n" +
+            "\tselect ${13:attribute1}, ${14:attribute2}\n" +
+            "\tinsert into ${15:output_stream}\n" +
+        "snippet query-pattern\n" +
+            "\tfrom every ${1:stream_reference}=${2:stream_name}[${3:filter_condition}] -> \n" +
+                "\t\tevery ${4:stream_reference2}=${5:stream_name2}[${6:filter_condition2}]\n" +
+                "\t\twithin ${7: time_gap}\n" +
+            "\tselect ${8:stream_reference}.${9:attribute1}, ${10:stream_reference}.${11:attribute1}\n" +
+            "insert into ${12:output_stream}\n" +
+        "snippet query\n" +
+            "\tfrom ${1:stream_name}\n" +
+            "\tselect ${2:attribute1} , ${3:attribute2}\n" +
+            "\tinsert into ${4:output_stream}\n" +
+        "snippet partition\n" +
+            "\tpartition with (${1:attribute_name} of ${2:stream_name}, ${3:attribute2_name} of ${4:stream2_name})\n" +
+            "\tbegin\n" +
+                "\t\t${5:query1}\n" +
+                "\t\t\n" +
+                "\t\t${6:query2}\n" +
+                "\t\t\n" +
+                "\t\t${7:query3}\n" +
+            "\tend;\n"
+    );
 
     /*
      *  'ruleBase' has a list of regular expressions to identify the different contexts and appropriate handlers to generate context aware suggestions.

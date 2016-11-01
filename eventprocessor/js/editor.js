@@ -103,7 +103,7 @@
             "@Plan:name('ExecutionPlan')\n\n" +
             "/* Enter a unique description for ExecutionPlan */\n" +
             "-- @Plan:description('ExecutionPlan')\n\n" +
-            "/* define streams/tables and write queries here ... */\n", 1);
+            "/* define streams/tables and write queries here ... */\n\n", 1);
         editor.focus();
 
         editor.completionEngine = new CompletionEngine();
