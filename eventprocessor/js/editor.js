@@ -19,6 +19,15 @@
  *  This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
  **/
 (function () {
+    // Adding SiddhiEditor to global scope
+    var SiddhiEditor = window.SiddhiEditor || {};
+    window.SiddhiEditor = SiddhiEditor;
+
+    // Finding the base url of the plugin
+    var scripts = document.getElementsByTagName("script");
+    var relativePathToCurrentJS  = scripts[scripts.length - 1].getAttribute("src");     // Get "src" attribute of the <script> tag for the current file (last tag in the array)
+    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/editor.js".length);
+
     /*
      * Annotations, Annotation Names and relevant tokens
      */
@@ -29,20 +38,16 @@
         THEME: "ace/theme/crimson_editor",
         ACE_RANGE: "ace/range",
         LANG_LIB: "ace/lib/lang",
-        TOKEN_TOOLTIP: "lib/ace-editor/token-tooltip"
+        TOKEN_TOOLTIP: SiddhiEditor.baseURL + "lib/ace-editor/token-tooltip"
     };
     var ANTLR_CONSTANT = {
-        ROOT: "js/antlr/",
+        ROOT: SiddhiEditor.baseURL + "js/antlr/",
         ERROR_LISTENER: "AceErrorListener",
         SIDDHI_LISTENER: "CustomSiddhiListener",
         SIDDHI_PARSER: "gen/SiddhiQLParser",
         SIDDHI_LEXER: "gen/SiddhiQLLexer"
     };
-    var ANTLR_RUNTIME_INDEX = "lib/antlr4-js-runtime/index";
-
-    // Adding SiddhiEditor to global scope
-    var SiddhiEditor = window.SiddhiEditor || {};
-    window.SiddhiEditor = SiddhiEditor;
+    var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "lib/antlr4-js-runtime/index";
 
     // ANTLR4 JS runtime integration code segment goes here..
     var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                   // ANTLR4 JS runtime

@@ -1476,7 +1476,7 @@
      * Load meta data from a json file
      */
     function loadMetaData() {
-        jQuery.getJSON("js/siddhi-inbuilt.json", function (data) {
+        jQuery.getJSON(SiddhiEditor.baseURL + "js/siddhi-inbuilt.json", function (data) {
             for (var processorType in data) {
                 if (data.hasOwnProperty(processorType)) {
                     for (var i = 0; i < data[processorType].length; i++) {
@@ -1486,7 +1486,7 @@
             }
             processorSnippets.inBuilt = data;
         });
-        jQuery.getJSON("js/siddhi-extensions.json", function (data) {
+        jQuery.getJSON(SiddhiEditor.baseURL + "js/siddhi-extensions.json", function (data) {
             for (var namespace in data) {
                 if (data.hasOwnProperty(namespace)) {
                     for (var processorType in data[namespace]) {
