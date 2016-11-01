@@ -31,7 +31,7 @@ CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
         console.warn(loggerContext + ":" + "exitDefinition_function" + "->");
         console.log("EXIT Function", ctx);
     }
-    updateTable(ctx, " ;", this.editor.statementsList);
+    updateStatementsList(ctx, " ;", this.editor.statementsList);
 };
 
 
@@ -39,7 +39,7 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
     var tempStream = new CompletionEngine.Stream();
     tempStream.setStreamFromDefineStatement(ctx);
     this.editor.completionEngine.streamList.addStream(tempStream);
-    updateTable(ctx, " ;", this.editor.statementsList);
+    updateStatementsList(ctx, " ;", this.editor.statementsList);
 };
 
 
@@ -47,20 +47,20 @@ CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
     var tempTable = new CompletionEngine.Table();
     tempTable.setTableFromDefineStatement(ctx);
     this.editor.completionEngine.tableList.addTable(tempTable);
-    updateTable(ctx, " ;", this.editor.statementsList);
+    updateStatementsList(ctx, " ;", this.editor.statementsList);
 };
 
 CustomSiddhiListener.prototype.exitError = function (ctx) {
-    updateTable(ctx, " ", this.editor.statementsList);
+    updateStatementsList(ctx, " ", this.editor.statementsList);
 };
 
 CustomSiddhiListener.prototype.exitExecution_element = function (ctx) {
-    updateTable(ctx, ";", this.editor.statementsList);
+    updateStatementsList(ctx, ";", this.editor.statementsList);
 };
 
 
 CustomSiddhiListener.prototype.exitPlan_annotation = function (ctx) {
-    updateTable(ctx, " ", this.editor.statementsList);
+    updateStatementsList(ctx, " ", this.editor.statementsList);
 };
 
 
@@ -138,14 +138,14 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
     }
 };
 
-function updateTable(ctx, seperator, statementsList) {
+function updateStatementsList(ctx, seperator, statementsList) {
     statementsList.push({
         state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + seperator,
         line: ctx.start.line
     });
 
     if (SiddhiEditor.debug) {
-        console.warn(loggerContext + ":" + "updateTable" + "->");
+        console.warn(loggerContext + ":" + "updateStatementsList" + "->");
         console.log("StatementList", statementsList);
     }
 }

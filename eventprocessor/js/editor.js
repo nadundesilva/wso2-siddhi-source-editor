@@ -25,7 +25,7 @@
 
     // Finding the base url of the plugin
     var scripts = document.getElementsByTagName("script");
-    var relativePathToCurrentJS  = scripts[scripts.length - 1].getAttribute("src");     // Get "src" attribute of the <script> tag for the current file (last tag in the array)
+    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");     // Get "src" attribute of the <script> tag for the current file (last tag in the array)
     SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/editor.js".length);
 
     /*
@@ -55,8 +55,8 @@
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
     var CustomSiddhiListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LISTENER).CustomSiddhiListener;      // Custom listener for Siddhi
     var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
-    var TokenTooltip = require(ACE_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                                                // Required for token tooltips
 
+    var TokenTooltip = require(ACE_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                        // Required for token tooltips
     SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
     SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
@@ -67,7 +67,7 @@
      * Initialize the editor
      *
      * @param {Object} config The configuration object to be used in the initialization
-     * @return ace editor instance
+     * @return {Object} ace editor instance
      */
     SiddhiEditor.init = function (config) {
         var editor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
@@ -125,7 +125,7 @@
         /**
          * Editor change handler
          *
-         * @param event Event object
+         * @param {Object} event Event object
          */
         function editorChangeHandler(event) {
             editor.completionEngine.streamList.clear();        // Clear the exiting streams

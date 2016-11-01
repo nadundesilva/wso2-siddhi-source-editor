@@ -51,6 +51,9 @@
     var outputRate = "((?!(every|" + queryActions + ")).)*";
     var outputRateEvery = "((?!(" + queryActions + ")).)*";
 
+    /*
+     * Snippets to be used in the ace editor at the start of a statement
+     */
     var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n" +
         "snippet defStream\n" +
 	        "\tdefine stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
@@ -123,7 +126,7 @@
     );
 
     /*
-     *  'ruleBase' has a list of regular expressions to identify the different contexts and appropriate handlers to generate context aware suggestions.
+     *   ruleBase has a list of regular expressions to identify the different contexts and appropriate handlers to generate context aware suggestions.
      *
      *   RULES HAVE DIFFERENT FORMAT
      *   ---------------------------
@@ -305,60 +308,70 @@
         }
     ];
 
+    // Loading meta data from the server
     loadMetaData();
 
     window.CompletionEngine = function () {
         var self = this;
 
-        //List of streams that would keep the meta data of the streams defined/inferred within the query.
+        // List of streams that would keep the meta data of the streams defined/inferred within the query.
         self.streamList = new StreamList();
 
-        //List of tables that would keep the meta data of the tables defined within the query.
+        // List of tables that would keep the meta data of the tables defined within the query.
         self.tableList = new TableList();
 
-        //List of functions that would keep the meta data of the functions defined within the query.
+        // List of functions that would keep the meta data of the functions defined within the query.
         self.functionList = new FunctionList();
 
-        //stream aliases in query are stored as a list of  aliasName:streamID .
-        // ex :
-        //  query
-        //  -----
-        //  from streamB as myStream join streamA as foo ...
-        //
-        //  representation
-        //  --------------
-        //  streamAliasList={
-        //    myStream : streamB,
-        //         foo : streamA
-        //  }
+        /*
+         * Stream aliases in query are stored as a list of  aliasName:streamID .
+         * ex :
+         *  query
+         *  -----
+         *  from streamB as myStream join streamA as foo ...
+         *
+         *  representation
+         *  --------------
+         *  streamAliasList = [
+         *      {
+         *          myStream : streamB,
+         *          foo : streamA
+         *      }
+         *  ]
+         */
         self.streamAliasList = {};
 
-        //Event references in a query are stored as a list of  aliasName:streamID .
-        // ex :
-        //  query
-        //  -----
-        //  from e1=streamB -> e2=streamA ...
-        //
-        //  representation
-        //  --------------
-        //  streamStore ={
-        //    e1 : streamB,
-        //    e2 : streamA
-        //  }
+        /*
+         * Event references in a query are stored as a list of  aliasName:streamID .
+         * ex :
+         *  query
+         *  -----
+         *  from e1=streamB -> e2=streamA ...
+         *
+         *  representation
+         *  --------------
+         *  streamStore ={
+         *    e1 : streamB,
+         *    e2 : streamA
+         *  }
+         */
         self.streamStore = {};
 
-        // CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
-        // {
-        //       definition:"suggestion name",
-        //       value : "suggestion value"
-        //       score : 2,
-        //       meta : "keyword"
-        // }
+        /*
+         * CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
+         * {
+         *       definition:"suggestion name",
+         *       value : "suggestion value"
+         *       score : 2,
+         *       meta : "keyword"
+         * }
+         */
         self.wordList = [];
 
+        // Snippets that had been added to the SnippetManager. This is stored so that they can be removed when the next suggestion need to be calculated
         self.suggestedSnippets = [];
 
-        // SiddhiCompleter is attached with ext-language module. So that Ace editor library will be using this module for generate suggestions
+        // SiddhiCompleter provides language specific suggestions
         self.SiddhiCompleter = {
             getCompletions: function (editor, session, pos, prefix, callback) {
                 self.calculateCompletions(editor);      // Calculate the suggestions list for current context
@@ -370,11 +383,12 @@
             }
         };
 
+        // SnippetCompleter provides language specific snippets
         self.SnippetCompleter = {
-            getCompletions: function(editor, session, pos, prefix, callback) {
+            getCompletions: function (editor, session, pos, prefix, callback) {
                 var snippetMap = SiddhiEditor.SnippetManager.snippetMap;
                 var completions = [];
-                SiddhiEditor.SnippetManager.getActiveScopes(editor).forEach(function(scope) {
+                SiddhiEditor.SnippetManager.getActiveScopes(editor).forEach(function (scope) {
                     var snippets = snippetMap[scope] || [];
                     for (var i = snippets.length; i--;) {
                         var s = snippets[i];
@@ -385,14 +399,14 @@
                             caption: caption,
                             snippet: s.content,
                             meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " : (s.type != undefined ? s.type : "snippet"),
-                            docHTML : s.description,
+                            docHTML: s.description,
                             type: (s.type != undefined ? s.type : "snippet")
                         });
                     }
                 }, this);
                 callback(null, completions);
             },
-            getDocTooltip: function(item) {
+            getDocTooltip: function (item) {
                 if (item.type == "snippet" && !item.docHTML) {
                     item.docHTML = [
                         "<div>", "<strong>", SiddhiEditor.lang.escapeHTML(item.caption), "</strong>", "<p>",
@@ -410,19 +424,16 @@
         /**
          * Dynamically select the completers suitable for current context
          *
-         * @param editor ace editor instance
+         * @param {Object} editor ace editor instance
          * @returns {Array|*} suitable completer list for current context
          */
         self.adjustAutoCompletionHandlers = function (editor) {
             // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
-            var completerList = [];
+            var completerList = [this.SiddhiCompleter, this.SnippetCompleter];
             // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-            if (this.checkVariableResolveness(editor)) {
-                // If the last token is the dot operator => only the attributes of the object/namespace should be listed
-                completerList = [this.SiddhiCompleter, this.SnippetCompleter];
-            } else {
+            if (this.isKeyWordCompleterRequired(editor)) {
                 // If the cursor is in the middle of a query and not preceded by a dot operator
-                completerList = [this.SiddhiCompleter, this.SnippetCompleter, SiddhiEditor.langTools.keyWordCompleter];
+                completerList.push(SiddhiEditor.langTools.keyWordCompleter);
             }
             editor.completers = completerList;
 
@@ -436,20 +447,20 @@
         /**
          * Check whether the cursor is positioned next to a dot operator or namespace operator
          *
-         * @param editor ace editor instance
+         * @param {Object} editor ace editor instance
          * @returns {boolean} true if the cursor is positioned just after the dot operator or namespace operator
          */
-        self.checkVariableResolveness = function (editor) {
+        self.isKeyWordCompleterRequired = function (editor) {
             var objectNameRegex = /\w*\.$/i;
             var namespaceRegex = /\w*:$/i;
             var txt = editor.getValue();
-            return objectNameRegex.test(txt) || namespaceRegex.test(txt);
+            return !(objectNameRegex.test(txt) || namespaceRegex.test(txt));
         };
 
         /**
          * Check whether the cursor is positioned at the beginning of a query
          *
-         * @param editor ace editor instance
+         * @param {Object} editor ace editor instance
          * @returns {boolean} true if the cursor is positioned at the beginning.
          */
         self.checkTheBeginning = function (editor) {
@@ -496,8 +507,7 @@
         /**
          * Calculate the list of suggestions based on the context around the cursor position
          *
-         * @param editor : ace editor instance
-         *
+         * @param {Object} editor ace editor instance
          */
         self.calculateCompletions = function (editor) {
             var pos = editor.getCursorPosition();   //cursor position
@@ -609,27 +619,27 @@
             this.$streamReference(args[0]);
             this.$streamAlias(args[0]);
 
-            addCompletions(essentialKeyWords.map(function(keyword) {
+            addCompletions(essentialKeyWords.map(function (keyword) {
                 return {
                     value: keyword,
                     priority: 2
                 };
             }));
-            addCompletions(this.streamList.getStreamIDList().map(function(stream) {
+            addCompletions(this.streamList.getStreamIDList().map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream",
                     priority: 3
                 };
             }));
-            addCompletions(getStreamReferences().map(function(stream) {
+            addCompletions(getStreamReferences().map(function (stream) {
                 return {
                     value: stream + ".",
                     type: "Stream",
                     priority: 4
                 };
             }));
-            addCompletions(getStreamAliasList().map(function(stream) {
+            addCompletions(getStreamAliasList().map(function (stream) {
                 return {
                     value: stream + ".",
                     type: "Stream",
@@ -692,49 +702,49 @@
                 console.log("generated list", list);
             }
 
-            addCompletions(streamIds.map(function(stream) {
+            addCompletions(streamIds.map(function (stream) {
                 return {
                     value: stream + ".",
                     type: "Stream",
                     priority: 5
                 };
             }));
-            addCompletions(list.map(function(stream) {
+            addCompletions(list.map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream Attribute",
                     priority: 8
                 };
             }));
-            addCompletions(refList.map(function(stream) {
+            addCompletions(refList.map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream",
                     priority: 7
                 };
             }));
-            addCompletions(aliasList.map(function(stream) {
+            addCompletions(aliasList.map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream",
                     priority: 6
                 };
             }));
-            addCompletions(tableList.map(function(table) {
+            addCompletions(tableList.map(function (table) {
                 return {
                     value: table,
                     type: "Event Table",
                     priority: 4
                 };
             }));
-            addCompletions(ns.map(function(namespace) {
+            addCompletions(ns.map(function (namespace) {
                 return {
                     value: namespace,
                     type: "Extension Namespace",
                     priority: 3
                 };
             }));
-            addCompletions(keywords.map(function(keyword) {
+            addCompletions(keywords.map(function (keyword) {
                 keyword.priority = 1;
                 return keyword;
             }));
@@ -758,7 +768,7 @@
                 [{value: "window.", priority: 2}]
             );
 
-            addCompletions(getExtensionNamesSpaces(WINDOW_PROCESSORS, STREAM_PROCESSORS).map(function(ns) {
+            addCompletions(getExtensionNamesSpaces(WINDOW_PROCESSORS, STREAM_PROCESSORS).map(function (ns) {
                 return {
                     value: ns + ":",
                     type: "Extension Namespace",
@@ -772,7 +782,7 @@
             var streamList = this.streamList.getStreamIDList();
             for (var s = 0; s < streamList.length; s++) {
                 var attributeList = this.streamList.getAttributeList(streamList[s]);
-                addCompletions(attributeList.map(function(attribute) {
+                addCompletions(attributeList.map(function (attribute) {
                     return {
                         value: attribute,
                         type: "Stream Attribute",
@@ -797,7 +807,7 @@
                     }
                 }
             }
-            addCompletions(tempList.map(function(stream) {
+            addCompletions(tempList.map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream"
@@ -806,7 +816,7 @@
         };
 
         self.$TableSuggestions = function (args) {
-            addCompletions(this.tableList.getTableIDList().map(function(stream) {
+            addCompletions(this.tableList.getTableIDList().map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream"
@@ -872,14 +882,14 @@
                 }
             }
             addCompletions(tableList.map(function (d) {
-                return  {
+                return {
                     value: d + ".",
                     type: "Event Table",
                     priority: 4
                 }
             }));
 
-            addCompletions(attributeList.map(function(attribute) {
+            addCompletions(attributeList.map(function (attribute) {
                 return {
                     value: attribute,
                     type: "Stream Attribute",
@@ -901,11 +911,11 @@
 
             var streamNames = this.streamList.getStreamIDList();
 
-            addCompletions(keywords.map(function(keyword) {
+            addCompletions(keywords.map(function (keyword) {
                 keyword.priority = 1;
                 return keyword;
             }));
-            addCompletions(streamNames.map(function(stream) {
+            addCompletions(streamNames.map(function (stream) {
                 return {
                     value: stream + ".",
                     type: "Stream",
@@ -915,7 +925,7 @@
             for (var index = 0; index < streamNames.length; index++) {
                 regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
                 if (fromPhrase[1].match(regex)) {
-                    addCompletions(this.streamList.getAttributeList(streamNames[index]).map(function(stream) {
+                    addCompletions(this.streamList.getAttributeList(streamNames[index]).map(function (stream) {
                         return {
                             value: stream,
                             type: "Stream Attribute",
@@ -1026,7 +1036,7 @@
             if (this.streamStore.hasOwnProperty(temp)) {
                 addCompletions([{value: "last", priority: 2}])
             } else {
-                addCompletions(getStreamReferences().map(function(stream) {
+                addCompletions(getStreamReferences().map(function (stream) {
                     return {
                         value: stream,
                         type: "Stream",
@@ -1034,7 +1044,7 @@
                     };
                 }));
 
-                addCompletions(this.streamList.getAttributeList(temp).map(function(attribute) {
+                addCompletions(this.streamList.getAttributeList(temp).map(function (attribute) {
                     return {
                         value: attribute,
                         type: "Stream Attribute",
@@ -1076,7 +1086,7 @@
             this.$streamAlias(args[0]);
 
             if (this.tableList.hasTable(result[1])) {
-                addCompletions(this.tableList.getAttributeList(result[1]).map(function(attribute) {
+                addCompletions(this.tableList.getAttributeList(result[1]).map(function (attribute) {
                     return {
                         value: attribute,
                         type: "Event Table Attribute",
@@ -1091,7 +1101,7 @@
                     result[1] = this.streamAliasList[result[1]];
                 }
                 if (this.streamList.hasStream(result[1])) {
-                    addCompletions(this.streamList.getAttributeList(result[1]).map(function(stream) {
+                    addCompletions(this.streamList.getAttributeList(result[1]).map(function (stream) {
                         return {
                             value: stream,
                             type: "Stream",
@@ -1137,7 +1147,7 @@
 
             var ref = this.streamStore[results[1]];
             var attributeList = this.streamList.getAttributeList(ref);
-            addCompletions(attributeList.map(function(stream) {
+            addCompletions(attributeList.map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream Attribute"
@@ -1319,7 +1329,7 @@
          *
          * @param {string} functionName name of the function
          * @param {Array} args arguments array that would be passed to the function
-         * @returns {*}
+         * @returns {*} return from the executed function
          */
         function executeFunctionByName(functionName, args) {
             return this[functionName].call(this, args);
@@ -1373,69 +1383,92 @@
         }
     };
 
-    // Constructor of the Stream class is exposed to global scope
+    // Constructors to expose to the global scope
     CompletionEngine.Stream = Stream;
     CompletionEngine.Table = Table;
 
     var processorSnippets = {
         /*
-         * extension' json object contains the custom function,streamProcessor and windowProcessor extensions available for
-         * the current Siddhi Session. Currently the extensions listed in the documentation are listed below.
-         * But this data structure should be dynamically pull down from the backend services.
+         * extensions object contains the custom function, streamProcessor and windowProcessor extensions available for
+         * the current Siddhi session. This data structure is dynamically pulled down from the backend services.
          *
          * SCHEMA
          * ------
-         *    extensions={
-         *       namespace1:{
-         *                  functions:{
-         *                              function1:[  // array is used here to allow multiple representations of the same function
-         *                                          {
-         *                                              Description: "description of the function1",
-         *                                              argNames: ["p1"],
-         *                                              argTypes: [["float", "double"]],
-         *                                              returnType: ["float", "double"]
-         *                                          }
-         *                              ],
-         *                              function2:[
-         *                                          {
-         *                                              //representation of the function2
-         *                                          }
-         *                              ]
-         *                  },
-         *                  streamProcessors:{
-         *                         // Same as in function section
-         *                  }  ,
-         *                  windowProcessors:{
-         *                          // same as in function section
+         *      extensions = {
+         *        namespace1: {
+         *          functions: {
+         *              function1: [  // array is used here to allow multiple representations of the same function
+         *                  {
+         *                      Description: "description of the function1",
+         *                      argNames: ["p1"],
+         *                      argTypes: [["float", "double"]],
+         *                      returnType: ["float", "double"]
          *                  }
+         *              ],
+         *              function2: [
+         *                  {
+         *                      //representation of the function2
+         *                  }
+         *              ]
+         *          },
+         *          streamProcessors: {
+         *              // Same as in function section
+         *          }  ,
+         *          windowProcessors: {
+         *              // same as in function section
+         *          }
          *       },
-         *
-         *       namespace2:{
-         *                  functions:{
-         *
-         *                  },
-         *
-         *                  streamProcessors:{
-         *                         // Same as in function section
-         *                  }
-         *                  ,
-         *
-         *                  windowProcessors:{
-         *                          // same as in function section
-         *                  }
+         *       namespace2: {
+         *          functions: {
+         *              // Same as in function section
+         *          },
+         *          streamProcessors: {
+         *              // Same as in function section
+         *          },
+         *       },
+         *       windowProcessors: {
+         *          // same as in function section
          *       }
-         *
-         *
          *    }
          */
         extensions: [],
 
-        // System json object contains the inbuilt function,streamProcessor and windowProcessor  available for the current Siddhi Session
+        /*
+         * inBuilt object contains the custom function, streamProcessor and windowProcessor extensions available for
+         * the current Siddhi session. This data structure is dynamically pulled down from the backend services.
+         *
+         * SCHEMA
+         * ------
+         *    inBuilt = {
+         *          functions: {
+         *              function1: [  // array is used here to allow multiple representations of the same function
+         *                  {
+         *                      Description: "description of the function1",
+         *                      argNames: ["p1"],
+         *                      argTypes: [["float", "double"]],
+         *                      returnType: ["float", "double"]
+         *                  }
+         *              ],
+         *              function2: [
+         *                  {
+         *                      //representation of the function2
+         *                  }
+         *              ]
+         *          },
+         *          streamProcessors: {
+         *              // Same as in function section
+         *          }  ,
+         *          windowProcessors: {
+         *              // same as in function section
+         *          }
+         *    }
+         */
         inBuilt: []
     };
 
     /*
      * Meta data JSON object structure (for extensions and inbuilt) :
+     * These are either inside the inBuilt JSON object and extensions.namespace JSON object
      *
      *  {
      *      processorType: [
@@ -1504,9 +1537,10 @@
 
     /**
      * Prepare a snippet from the processor
+     * Snippets are objects that can be passed into the ace editor to add snippets to the completions provided
      *
      * @param {Object} processor The processor object with relevant parameters
-     * @return snippet
+     * @return {Object} snippet
      */
     function generateSnippet(processor) {
         var snippetVariableCount = 0;
@@ -1546,6 +1580,7 @@
 
     /**
      * Generate description html string from meta data
+     * Descriptions are intended to be shown in the tooltips for a completions
      *
      * @param {Object} metaData Meta data object containing parameters, return and description
      * @return {string} html string of the description generated from the meta data provided
@@ -1556,9 +1591,9 @@
             (metaData.description ? "<p>" + wordWrap(metaData.description, 100) + "</p>" : "");
         if (metaData.parameters) {
             description += "Parameters - <ul>";
-            for(var j = 0; j < metaData.parameters.length; j++) {
+            for (var j = 0; j < metaData.parameters.length; j++) {
                 if (metaData.parameters[j].multiple) {
-                    for(var k = 0; k < metaData.parameters[j].multiple.length; k++) {
+                    for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
                         description += "<li>" + metaData.parameters[j].multiple[k].name +
                             (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
                             metaData.parameters[j].multiple[k].type.join(" | ") + "</li>";
@@ -1578,6 +1613,13 @@
         return description;
     }
 
+    /**
+     * Word wrap the the string with a maxWidth for each line
+     *
+     * @param {string} str The string to be word wrapped
+     * @param {int} maxWidth The maximum width for the lines
+     * @return {string} The word wrapped string
+     */
     function wordWrap(str, maxWidth) {
         for (var i = maxWidth; i < str.length;) {
             if (/\s/.test(str.charAt(i))) {
