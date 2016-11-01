@@ -29,23 +29,23 @@
         THEME: "ace/theme/crimson_editor",
         ACE_RANGE: "ace/range",
         LANG_LIB: "ace/lib/lang",
-        TOKEN_TOOLTIP: "js/ace-editor/token-tooltip"
+        TOKEN_TOOLTIP: "lib/ace-editor/token-tooltip"
     };
     var ANTLR_CONSTANT = {
-        ROOT: "js/client-side-siddhi-parser/",
+        ROOT: "js/antlr/",
         ERROR_LISTENER: "AceErrorListener",
         SIDDHI_LISTENER: "CustomSiddhiListener",
         SIDDHI_PARSER: "gen/SiddhiQLParser",
-        SIDDHI_LEXER: "gen/SiddhiQLLexer",
-        INDEX: "antlr4/index"
+        SIDDHI_LEXER: "gen/SiddhiQLLexer"
     };
+    var ANTLR_RUNTIME_INDEX = "lib/antlr4-js-runtime/index";
 
     // Adding SiddhiEditor to global scope
     var SiddhiEditor = window.SiddhiEditor || {};
     window.SiddhiEditor = SiddhiEditor;
 
     // ANTLR4 JS runtime integration code segment goes here..
-    var antlr4 = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.INDEX);                                                   // ANTLR4 JS runtime
+    var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                   // ANTLR4 JS runtime
     var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
     var CustomSiddhiListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LISTENER).CustomSiddhiListener;      // Custom listener for Siddhi

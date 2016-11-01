@@ -1,6 +1,6 @@
 // Generated from SiddhiQL.g4 by ANTLR 4.5
 // jshint ignore: start
-var antlr4 = require('../antlr4/index');
+var antlr4 = require('../../../lib/antlr4-js-runtime/index');
 
 
 	//import org.wso2.siddhi.query.compiler.exception.SiddhiParserException;

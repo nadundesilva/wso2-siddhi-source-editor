@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var ErrorListener = require("./antlr4/error/ErrorListener").ErrorListener;
+var ErrorListener = require("../../lib/antlr4-js-runtime/error/ErrorListener").ErrorListener;
 var loggerContext = "AceErrorListener";
 
 function AceErrorListener(editor) {
