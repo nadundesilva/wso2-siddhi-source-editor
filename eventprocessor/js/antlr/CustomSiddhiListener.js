@@ -31,7 +31,7 @@ CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
         console.warn(loggerContext + ":" + "exitDefinition_function" + "->");
         console.log("EXIT Function", ctx);
     }
-    updateStatementsList(ctx, " ;", this.editor.statementsList);
+    updateStatementsList(ctx, this.editor, " ;");
 };
 
 
@@ -39,7 +39,7 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
     var tempStream = new CompletionEngine.Stream();
     tempStream.setStreamFromDefineStatement(ctx);
     this.editor.completionEngine.streamList.addStream(tempStream);
-    updateStatementsList(ctx, " ;", this.editor.statementsList);
+    updateStatementsList(ctx, this.editor, " ;");
 };
 
 
@@ -47,20 +47,20 @@ CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
     var tempTable = new CompletionEngine.Table();
     tempTable.setTableFromDefineStatement(ctx);
     this.editor.completionEngine.tableList.addTable(tempTable);
-    updateStatementsList(ctx, " ;", this.editor.statementsList);
+    updateStatementsList(ctx, this.editor, " ;");
 };
 
 CustomSiddhiListener.prototype.exitError = function (ctx) {
-    updateStatementsList(ctx, " ", this.editor.statementsList);
+    updateStatementsList(ctx, this.editor, " ");
 };
 
 CustomSiddhiListener.prototype.exitExecution_element = function (ctx) {
-    updateStatementsList(ctx, ";", this.editor.statementsList);
+    updateStatementsList(ctx, this.editor, ";");
 };
 
 
 CustomSiddhiListener.prototype.exitPlan_annotation = function (ctx) {
-    updateStatementsList(ctx, " ", this.editor.statementsList);
+    updateStatementsList(ctx, this.editor, " ");
 };
 
 
@@ -90,7 +90,7 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
                 ctx.query_section().children[1].symbol.type === 14)) {
             if (ctx.query_input().standard_stream()) {
                 var inputStream = ctx.query_input().standard_stream().source().stream_id().name().stop.text;
-                tempStream.attributeNames = this.editor.completionEngine.streamList.getAttributeList(inputStream);
+                tempStream.attributeNames = this.editor.completionEngine.streamList.getAttributeNameList(inputStream);
 
                 if (SiddhiEditor.debug) {
                     console.warn(loggerContext + ":" + "exitQuery" + "->");
@@ -100,8 +100,8 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
                 var leftsource = ctx.query_input().join_stream().left_source.source().stop.text;
                 var rightsource = ctx.query_input().join_stream().right_source.source().stop.text;
 
-                var leftStreamAttributeList = this.editor.completionEngine.streamList.getAttributeList(leftsource);
-                var rightStreamAttributeList = this.editor.completionEngine.streamList.getAttributeList(rightsource);
+                var leftStreamAttributeList = this.editor.completionEngine.streamList.getAttributeNameList(leftsource);
+                var rightStreamAttributeList = this.editor.completionEngine.streamList.getAttributeNameList(rightsource);
                 leftStreamAttributeList = leftStreamAttributeList.map(function (d) {
                     return leftsource + "_" + d;
                 });
@@ -138,16 +138,70 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
     }
 };
 
-function updateStatementsList(ctx, seperator, statementsList) {
-    statementsList.push({
+CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
+    // Updating token tool tip for the WindowProcessor/StreamProcessor/Function
+    var snippets;
+    var namespaceCtx = ctx.function_namespace(0);
+    var functionCtx = ctx.function_id(0);
+
+    var processorName = functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
+    if (namespaceCtx) {
+        var namespace = namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
+        snippets = CompletionEngine.functionOperationSnippets.extensions[namespace];
+
+        // Adding namespace tool tip
+        updateTokenDescription(this.editor, namespaceCtx.stop.line - 1, namespaceCtx.stop.column + 1, "Extension namespace - " + namespace);
+    } else {
+        snippets = CompletionEngine.functionOperationSnippets.inBuilt;
+    }
+
+    // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
+    var snippet = snippets.windowProcessors[processorName];
+    if (!snippet) {
+        snippet = snippets.streamProcessors[processorName];
+    }
+    if (!snippet) {
+        snippet = snippets.functions[processorName];
+    }
+    if (!snippet) {
+        snippet = CompletionEngine.functionOperationSnippets.additional[processorName];
+    }
+    if (snippet) {
+        updateTokenDescription(this.editor, functionCtx.stop.line - 1, functionCtx.stop.column + 1, snippet.description);
+    }
+};
+
+CustomSiddhiListener.prototype.exitSource = function (ctx) {
+    var streamName = ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
+    var attributes = this.editor.completionEngine.streamList.getAttributeList(streamName);
+    var tooltip = "<strong>Stream</strong> - " + streamName + "<br>";
+    if (attributes && Object.keys(attributes).length > 0) {
+        tooltip += "<ul>";
+        for (var attribute in attributes) {
+            if (attributes.hasOwnProperty(attribute)) {
+                tooltip += "<li>" + attribute + " - " + attributes[attribute] + "</li>";
+            }
+        }
+        tooltip += "</ul>";
+    }
+    updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, tooltip);
+};
+
+function updateStatementsList(ctx, editor, seperator) {
+    editor.statementsList.push({
         state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + seperator,
         line: ctx.start.line
     });
 
     if (SiddhiEditor.debug) {
         console.warn(loggerContext + ":" + "updateStatementsList" + "->");
-        console.log("StatementList", statementsList);
+        console.log("StatementList", editor.statementsList);
     }
+}
+
+function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
+    var token = editor.session.getTokenAt(tokenRow, tokenColumn);
+    token.tooltip = tooltip;
 }
 
 exports.CustomSiddhiListener = CustomSiddhiListener;

@@ -1,7 +1,6 @@
 {
-  "functions": [
-    {
-      "name": "sum",
+  "functions": {
+    "sum": {
       "description": "Returns the sum for all the events.",
       "parameters": [
         {
@@ -11,8 +10,7 @@
       ],
       "return": ["long", "double"]
     },
-    {
-      "name": "avg",
+    "avg": {
       "description": "Returns the average for all the events.",
       "parameters": [
         {
@@ -22,8 +20,7 @@
       ],
       "return": ["double"]
     },
-    {
-      "name": "max",
+    "max": {
       "description": "Returns the maximum value for all the events.",
       "parameters": [
         {
@@ -33,8 +30,7 @@
       ],
       "return": ["int", "long", "double", "float"]
     },
-    {
-      "name": "min",
+    "min": {
       "description": "Returns the minimum value for all the events.",
       "parameters": [
         {
@@ -44,14 +40,12 @@
       ],
       "return": ["int", "long", "double", "float"]
     },
-    {
-      "name": "count",
+    "count": {
       "description": "Returns the count of all the events.",
       "parameters": [],
       "return": ["long"]
     },
-    {
-      "name": "stddev",
+    "stddev": {
       "description": "Returns the calculated standard deviation for all the events.",
       "parameters": [
         {
@@ -61,8 +55,7 @@
       ],
       "return": ["double"]
     },
-    {
-      "name": "distinctcount",
+    "distinctcount": {
       "description": "Returns the count of distinct occurrences for a given arg.",
       "parameters": [
         {
@@ -72,8 +65,7 @@
       ],
       "return": ["long"]
     },
-    {
-      "name": "maxForever",
+    "maxForever": {
       "description": "This is the attribute aggregator to store the maximum value for a given attribute throughout the lifetime of the query regardless of any windows in-front.",
       "parameters": [
         {
@@ -83,8 +75,7 @@
       ],
       "return": ["int", "long", "double", "float"]
     },
-    {
-      "name": "minForever",
+    "minForever": {
       "description": "This is the attribute aggregator to store the minimum value for a given attribute throughout the lifetime of the query regardless of any windows in-front.",
       "parameters": [
         {
@@ -94,8 +85,7 @@
       ],
       "return": ["int", "long", "double", "float"]
     },
-    {
-      "name": "coalesce",
+    "coalesce": {
       "description": "Returns the value of the first input parameter that is not null.",
       "parameters": [
         {
@@ -109,8 +99,7 @@
       ],
       "return": ["int", "long", "double", "float", "string", "bool", "object"]
     },
-    {
-      "name": "convert",
+    "convert": {
       "description": "Converts the first input parameter according to the convertedTo parameter.",
       "parameters": [
         {
@@ -120,8 +109,7 @@
       ],
       "return": ["int", "long", "double", "float", "string", "bool"]
     },
-    {
-      "name": "instanceOfBoolean",
+    "instanceOfBoolean": {
       "description": "Checks whether the parameter is an instance of Boolean or not.",
       "parameters": [
         {
@@ -131,8 +119,7 @@
       ],
       "return": ["bool"]
     },
-    {
-      "name": "instanceOfDouble",
+    "instanceOfDouble": {
       "description": "Checks whether the parameter is an instance of Double or not.",
       "parameters": [
         {
@@ -142,8 +129,7 @@
       ],
       "return": ["bool"]
     },
-    {
-      "name": "instanceOfFloat",
+    "instanceOfFloat": {
       "description": "Checks whether the parameter is an instance of Float or not.",
       "parameters": [
         {
@@ -153,8 +139,7 @@
       ],
       "return": ["bool"]
     },
-    {
-      "name": "instanceOfInteger",
+    "instanceOfInteger": {
       "description": "Checks whether the parameter is an instance of Integer or not.",
       "parameters": [
         {
@@ -164,8 +149,7 @@
       ],
       "return": ["bool"]
     },
-    {
-      "name": "instanceOfLong",
+    "instanceOfLong": {
       "description": "Checks whether the parameter is an instance of Long or not.",
       "parameters": [
         {
@@ -175,8 +159,7 @@
       ],
       "return": ["bool"]
     },
-    {
-      "name": "instanceOfString",
+    "instanceOfString": {
       "description": "Checks whether the parameter is an instance of String or not.",
       "parameters": [
         {
@@ -186,14 +169,12 @@
       ],
       "return": ["bool"]
     },
-    {
-      "name": "UUID",
+    "UUID": {
       "description": "Generates a UUID (Universally Unique Identifier).",
       "parameters": [],
       "return": ["string"]
     },
-    {
-      "name": "maximum",
+    "maximum": {
       "description": "Returns the maximum value of the input parameters.",
       "parameters": [
         {
@@ -203,8 +184,7 @@
       ],
       "return": ["int", "long", "double", "float"]
     },
-    {
-      "name": "minimum",
+    "minimum": {
       "description": "Returns the minimum value of the input parameters.",
       "parameters": [
         {
@@ -214,8 +194,7 @@
       ],
       "return": ["int", "long", "double", "float"]
     },
-    {
-      "name": "cast",
+    "cast": {
       "description": "Converts the first parameter according to the castTo parameter. Incompatible arguments cause Class Cast exceptions if further processed. This function is used with map extension that returns attributes of the object type. You can use this function to cast the object to an accurate and concrete type.",
       "parameters": [
         {
@@ -229,8 +208,7 @@
       ],
       "return": ["int", "long", "double", "float", "string", "bool", "object"]
     },
-    {
-      "name": "ifThenElse",
+    "ifThenElse": {
       "description": "Returns the the value of the arg1 parameter if the condition parameter is set to true, or returns the value of the arg2 parameter if the condition parameter is set to false.",
       "parameters": [
         {
@@ -248,12 +226,11 @@
       ],
       "return": ["int", "long", "double", "float", "string", "bool", "object"]
     }
-  ],
-  "streamProcessors": [
-  ],
-  "windowProcessors": [
-    {
-      "name": "time",
+  },
+  "streamProcessors": {
+  },
+  "windowProcessors": {
+    "time": {
       "description": "A sliding time window that holds events that arrived during the last windowTime period at a given time, and gets updated for each event arrival and expiry.",
       "parameters": [
         {
@@ -263,8 +240,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "timeBatch",
+    "timeBatch": {
       "description": "A batch (tumbling) time window that holds events that arrive during windowTime periods, and gets updated for each windowTime.",
       "parameters": [
         {
@@ -279,8 +255,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "length",
+    "length": {
       "description": "A sliding length window that holds the last windowLength events at a given time, and gets updated for each arrival and expiry.",
       "parameters": [
         {
@@ -290,8 +265,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "lengthBatch",
+    "lengthBatch": {
       "description": "A batch (tumbling) length window that holds a number of events specified as the windowLength. The window is updated each time a batch of events that equals the number specified as the windowLength arrives.",
       "parameters": [
         {
@@ -301,8 +275,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "externalTime",
+    "externalTime": {
       "description": "A sliding time window based on external time. It holds events that arrived during the last windowTime period from the external timestamp, and gets updated on every monotonically increasing timestamp.",
       "parameters": [
         {
@@ -316,8 +289,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "cron",
+    "cron": {
       "description": "This window returns events processed periodically as the output in time-repeating patterns, triggered based on time passing.",
       "parameters": [
         {
@@ -327,8 +299,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "firstUnique",
+    "firstUnique": {
       "description": "First unique window processor keeps only the first events that are unique according to the given unique attribute.",
       "parameters": [
         {
@@ -338,8 +309,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "unique",
+    "unique": {
       "description": "This window keeps only the latest events that are unique according to the given unique attribute.",
       "parameters": [
         {
@@ -349,8 +319,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "sort",
+    "sort": {
       "description": "This window holds a batch of events that equal the number specified as the windowLength and sorts them in the given order.",
       "parameters": [
         {
@@ -373,8 +342,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "frequent",
+    "frequent": {
       "description": "This window returns the latest events with the most frequently occurred value for a given attribute(s). Frequency calculation for this window processor is based on Misra-Gries counting algorithm.",
       "parameters": [
         {
@@ -393,8 +361,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "lossyFrequent",
+    "lossyFrequent": {
       "description": "This window identifies and returns all the events of which the current frequency exceeds the value specified for the supportThreshold parameter.",
       "parameters": [
         {
@@ -417,8 +384,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "externalTimeBatch",
+    "externalTimeBatch": {
       "description": "A batch (tumbling) time window based on external time, that holds events arrived during windowTime periods, and gets updated for every windowTime.",
       "parameters": [
         {
@@ -442,8 +408,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "timeLength",
+    "timeLength": {
       "description": "A sliding time window that, at a given time holds the last windowLength events that arrived during last windowTime period, and gets updated for every event arrival and expiry.",
       "parameters": [
         {
@@ -457,8 +422,7 @@
       ],
       "return": ["event"]
     },
-    {
-      "name": "uniqueExternalTimeBatch",
+    "uniqueExternalTimeBatch": {
       "description": "A batch (tumbling) time window based on external time that holds latest unique events that arrive during the windowTime periods, and gets updated for each windowTime.",
       "parameters": [
         {
@@ -491,5 +455,5 @@
       ],
       "return": ["event"]
     }
-  ]
+  }
 }

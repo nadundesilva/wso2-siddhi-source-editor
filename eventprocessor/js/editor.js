@@ -38,7 +38,7 @@
         THEME: "ace/theme/crimson_editor",
         ACE_RANGE: "ace/range",
         LANG_LIB: "ace/lib/lang",
-        TOKEN_TOOLTIP: SiddhiEditor.baseURL + "lib/ace-editor/token-tooltip"
+        TOKEN_TOOLTIP: SiddhiEditor.baseURL + "js/token-tooltip"
     };
     var ANTLR_CONSTANT = {
         ROOT: SiddhiEditor.baseURL + "js/antlr/",

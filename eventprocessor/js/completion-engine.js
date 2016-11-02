@@ -17,10 +17,24 @@
 (function () {
     var loggerContext = "CompletionEngine";
 
-    // Aliases for the attribute names used in 'processorSnippets.extensions' and 'processorSnippets.inBuilt' json objects
+    // Aliases for the attribute names used in 'CompletionEngine.functionOperationSnippets.extensions' and 'CompletionEngine.functionOperationSnippets.inBuilt' json objects
     var FUNCTIONS = "functions";
     var STREAM_PROCESSORS = "streamProcessors";
     var WINDOW_PROCESSORS = "windowProcessors";
+
+    // Set of regular expressions
+    var identifier = "[a-zA-Z_][a-zA-Z_0-9]*";
+    var anyChar = "(.|\\n)";
+    var oneDataType = "(int|long|double|bool|object|string|time)";
+    var queryActions = "insert|delete|update";
+    var querySelection = "select";
+    var queryOutput = "output";
+    var groupBY = "(group\\s+by)";
+    var having = "having";
+    var queryInput = "((?!(" + querySelection + "|" + queryOutput + "|" + queryActions + "|" + having + "|" + groupBY + ")).)*";
+    var querySection = "((?!(" + queryOutput + "|" + queryActions + ")).)*";
+    var outputRate = "((?!(every|" + queryActions + ")).)*";
+    var outputRateEvery = "((?!(" + queryActions + ")).)*";
 
     // Following keyword lists are repeated in many functions
     var logicalOperatorList = [
@@ -36,20 +50,6 @@
         {value: "int"}, {value: "float"}, {value: "double"}, {value: "bool"}, {value: "time"},
         {value: "object"}, {value: "string"}, {value: "long"}
     ];
-
-    // Set of regular expressions
-    var identifier = "[a-zA-Z_][a-zA-Z_0-9]*";
-    var anyChar = "(.|\\n)";
-    var oneDataType = "(int|long|double|bool|object|string|time)";
-    var queryActions = "insert|delete|update";
-    var querySelection = "select";
-    var queryOutput = "output";
-    var groupBY = "(group\\s+by)";
-    var having = "having";
-    var queryInput = "((?!(" + querySelection + "|" + queryOutput + "|" + queryActions + "|" + having + "|" + groupBY + ")).)*";
-    var querySection = "((?!(" + queryOutput + "|" + queryActions + ")).)*";
-    var outputRate = "((?!(every|" + queryActions + ")).)*";
-    var outputRateEvery = "((?!(" + queryActions + ")).)*";
 
     /*
      * Snippets to be used in the ace editor at the start of a statement
@@ -109,7 +109,7 @@
                 "\t\tevery ${4:stream_reference2}=${5:stream_name2}[${6:filter_condition2}]\n" +
                 "\t\twithin ${7: time_gap}\n" +
             "\tselect ${8:stream_reference}.${9:attribute1}, ${10:stream_reference}.${11:attribute1}\n" +
-            "insert into ${12:output_stream}\n" +
+            "\tinsert into ${12:output_stream}\n" +
         "snippet query\n" +
             "\tfrom ${1:stream_name}\n" +
             "\tselect ${2:attribute1} , ${3:attribute2}\n" +
@@ -693,7 +693,7 @@
 
                 if (fromPhrase[1].match(regex)) {
                     streamIds.push(streamNames[index]);
-                    list = list.concat(this.streamList.getAttributeList(streamNames[index]));
+                    list = list.concat(this.streamList.getAttributeNameList(streamNames[index]));
                 }
             }
 
@@ -781,7 +781,7 @@
             var tempList = [];
             var streamList = this.streamList.getStreamIDList();
             for (var s = 0; s < streamList.length; s++) {
-                var attributeList = this.streamList.getAttributeList(streamList[s]);
+                var attributeList = this.streamList.getAttributeNameList(streamList[s]);
                 addCompletions(attributeList.map(function (attribute) {
                     return {
                         value: attribute,
@@ -799,7 +799,7 @@
 
             var streamList = this.streamList.getStreamIDList();
             for (var i = 0; i < streamList.length; i++) {
-                var attributeList = this.streamList.getAttributeList(streamList[i]);
+                var attributeList = this.streamList.getAttributeNameList(streamList[i]);
                 for (var index = 0; index < attributeList.length; index++) {
                     if (attributeList[index] == identifierResult[1]) {
                         tempList.push(streamList[i]);
@@ -860,7 +860,7 @@
 
                 if (fromPhrase[1].match(regex)) {
                     streamList.push(streamNames[i]);
-                    attributeList = attributeList.concat(this.streamList.getAttributeList(streamNames[i]))
+                    attributeList = attributeList.concat(this.streamList.getAttributeNameList(streamNames[i]))
                 }
             }
             addCompletions(streamList.map(function (d) {
@@ -925,7 +925,7 @@
             for (var index = 0; index < streamNames.length; index++) {
                 regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
                 if (fromPhrase[1].match(regex)) {
-                    addCompletions(this.streamList.getAttributeList(streamNames[index]).map(function (stream) {
+                    addCompletions(this.streamList.getAttributeNameList(streamNames[index]).map(function (stream) {
                         return {
                             value: stream,
                             type: "Stream Attribute",
@@ -952,7 +952,7 @@
             for (var index = 0; index < streamNames.length; index++) {
                 var regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
                 if (fromPhrase[1].match(regex)) {
-                    attributeList = attributeList.concat(this.streamList.getAttributeList(streamNames[index]));
+                    attributeList = attributeList.concat(this.streamList.getAttributeNameList(streamNames[index]));
                 }
             }
 
@@ -1044,7 +1044,7 @@
                     };
                 }));
 
-                addCompletions(this.streamList.getAttributeList(temp).map(function (attribute) {
+                addCompletions(this.streamList.getAttributeNameList(temp).map(function (attribute) {
                     return {
                         value: attribute,
                         type: "Stream Attribute",
@@ -1086,7 +1086,7 @@
             this.$streamAlias(args[0]);
 
             if (this.tableList.hasTable(result[1])) {
-                addCompletions(this.tableList.getAttributeList(result[1]).map(function (attribute) {
+                addCompletions(this.tableList.getAttributeNameList(result[1]).map(function (attribute) {
                     return {
                         value: attribute,
                         type: "Event Table Attribute",
@@ -1101,7 +1101,7 @@
                     result[1] = this.streamAliasList[result[1]];
                 }
                 if (this.streamList.hasStream(result[1])) {
-                    addCompletions(this.streamList.getAttributeList(result[1]).map(function (stream) {
+                    addCompletions(this.streamList.getAttributeNameList(result[1]).map(function (stream) {
                         return {
                             value: stream,
                             type: "Stream",
@@ -1146,7 +1146,7 @@
             this.$streamAlias(args[0]);
 
             var ref = this.streamStore[results[1]];
-            var attributeList = this.streamList.getAttributeList(ref);
+            var attributeList = this.streamList.getAttributeNameList(ref);
             addCompletions(attributeList.map(function (stream) {
                 return {
                     value: stream,
@@ -1230,16 +1230,16 @@
          */
         function getExtensionNamesSpaces(objType1, objType2) {
             var tempList = [];
-            for (var propertyName in processorSnippets.extensions) {
-                if (processorSnippets.extensions.hasOwnProperty(propertyName)) {
+            for (var propertyName in CompletionEngine.functionOperationSnippets.extensions) {
+                if (CompletionEngine.functionOperationSnippets.extensions.hasOwnProperty(propertyName)) {
                     if (SiddhiEditor.debug) {
                         console.warn(loggerContext + ":" + "getExtensionNamesSpaces" + "->");
-                        console.log(processorSnippets.extensions[propertyName][objType1], objType1, propertyName);
-                        console.log("RESULTS", objType1 && !isEmpty(processorSnippets.extensions[propertyName][objType1]));
+                        console.log(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType1], objType1, propertyName);
+                        console.log("RESULTS", objType1 && !isEmpty(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType1]));
                     }
 
-                    if ((objType1 && !isEmpty(processorSnippets.extensions[propertyName][objType1])) ||
-                        (objType2 && !isEmpty(processorSnippets.extensions[propertyName][objType2]))) {
+                    if ((objType1 && !isEmpty(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType1])) ||
+                        (objType2 && !isEmpty(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType2]))) {
                         tempList.push(propertyName);
                     } else if (!objType1 && !objType2) {
                         tempList.push(propertyName);
@@ -1256,7 +1256,7 @@
          * @returns {Array} : list of function snippets
          */
         function getExtensionFunctionNames(namespace) {
-            return processorSnippets.extensions[namespace].functions.map(function (processor) {
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].functions).map(function (processor) {
                 processor.type = "Function";
                 return processor;
             });
@@ -1269,7 +1269,7 @@
          * @returns {Array} list of window processor snippets
          */
         function getExtensionWindowProcessors(namespace) {
-            return processorSnippets.extensions[namespace].windowProcessors.map(function (processor) {
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].windowProcessors).map(function (processor) {
                 processor.type = "Window Processor";
                 return processor;
             });
@@ -1282,7 +1282,7 @@
          * @returns {Array} list of stream processor snippets
          */
         function getExtensionStreamProcessors(namespace) {
-            return processorSnippets.extensions[namespace].streamProcessors.map(function (processor) {
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].streamProcessors).map(function (processor) {
                 processor.type = "Stream Processor";
                 return processor;
             });
@@ -1294,7 +1294,7 @@
          * @returns {Array} list of function snippets
          */
         function getInBuiltFunctionNames() {
-            return processorSnippets.inBuilt.functions.map(function (processor) {
+            return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.functions).map(function (processor) {
                 processor.type = "Function";
                 return processor;
             });
@@ -1306,7 +1306,7 @@
          * @returns {Array} list of window processor snippets
          */
         function getInBuiltWindowProcessors() {
-            return processorSnippets.inBuilt.windowProcessors.map(function (processor) {
+            return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors).map(function (processor) {
                 processor.type = "Window Processor";
                 return processor;
             });
@@ -1318,7 +1318,7 @@
          * @returns {Array} list of stream processor snippets
          */
         function getInBuiltStreamProcessors() {
-            return processorSnippets.inBuilt.streamProcessors.map(function (processor) {
+            return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors).map(function (processor) {
                 processor.type = "Stream Processor";
                 return processor;
             });
@@ -1353,12 +1353,17 @@
                     return: suggestion.return
                 };
                 if (completion.parameters) {
-                    addSnippets(generateSnippet({
-                        name: completion.caption,
+                    var snippet = generateSnippet({
                         parameters: completion.parameters,
                         description: completion.description,
                         return: completion.return
-                    }));
+                    }, completion.caption);
+                    addSnippets(snippet);
+
+                    // Adding to the additional snippets to be used in token tool tips
+                    if (!CompletionEngine.functionOperationSnippets.additional[completion.caption]) {
+                        CompletionEngine.functionOperationSnippets.additional[completion.caption] = snippet;
+                    }
                 } else {
                     self.wordList.push(completion);
                 }
@@ -1387,33 +1392,20 @@
     CompletionEngine.Stream = Stream;
     CompletionEngine.Table = Table;
 
-    var processorSnippets = {
+    CompletionEngine.functionOperationSnippets = {
         /*
          * extensions object contains the custom function, streamProcessor and windowProcessor extensions available for
          * the current Siddhi session. This data structure is dynamically pulled down from the backend services.
          *
-         * SCHEMA
-         * ------
          *      extensions = {
          *        namespace1: {
          *          functions: {
-         *              function1: [  // array is used here to allow multiple representations of the same function
-         *                  {
-         *                      Description: "description of the function1",
-         *                      argNames: ["p1"],
-         *                      argTypes: [["float", "double"]],
-         *                      returnType: ["float", "double"]
-         *                  }
-         *              ],
-         *              function2: [
-         *                  {
-         *                      //representation of the function2
-         *                  }
-         *              ]
+         *              function1: {function1 snippet object},
+         *              function2: {function2 snippet object},
          *          },
          *          streamProcessors: {
          *              // Same as in function section
-         *          }  ,
+         *          },
          *          windowProcessors: {
          *              // same as in function section
          *          }
@@ -1425,37 +1417,25 @@
          *          streamProcessors: {
          *              // Same as in function section
          *          },
-         *       },
-         *       windowProcessors: {
-         *          // same as in function section
+         *          windowProcessors: {
+         *              // same as in function section
+         *          }
          *       }
          *    }
          */
-        extensions: [],
+        extensions: {},
 
         /*
          * inBuilt object contains the custom function, streamProcessor and windowProcessor extensions available for
          * the current Siddhi session. This data structure is dynamically pulled down from the backend services.
          *
-         * SCHEMA
-         * ------
          *    inBuilt = {
          *          functions: {
-         *              function1: [  // array is used here to allow multiple representations of the same function
-         *                  {
-         *                      Description: "description of the function1",
-         *                      argNames: ["p1"],
-         *                      argTypes: [["float", "double"]],
-         *                      returnType: ["float", "double"]
-         *                  }
-         *              ],
-         *              function2: [
-         *                  {
-         *                      //representation of the function2
-         *                  }
-         *              ]
+         *              function1: {function1 snippet object},
+         *              function2: {function2 snippet object},
          *          },
          *          streamProcessors: {
+         *              // Same as in function section
          *              // Same as in function section
          *          }  ,
          *          windowProcessors: {
@@ -1463,7 +1443,16 @@
          *          }
          *    }
          */
-        inBuilt: []
+        inBuilt: {},
+
+        /* Additional function operations used by the completion engine
+         *
+         *    additional = {
+         *          functionOperation1Name : {snippet},
+         *          functionOperation2Name : {snippet}
+         *    {
+         */
+        additional: {}
     };
 
     /*
@@ -1512,26 +1501,34 @@
         jQuery.getJSON(SiddhiEditor.baseURL + "js/siddhi-inbuilt.json", function (data) {
             for (var processorType in data) {
                 if (data.hasOwnProperty(processorType)) {
-                    for (var i = 0; i < data[processorType].length; i++) {
-                        data[processorType][i] = generateSnippet(data[processorType][i]);
+                    var processors = {};
+                    for (var processor in data[processorType]) {
+                        if (data[processorType].hasOwnProperty(processor)) {
+                            processors[processor] = generateSnippet(data[processorType][processor], processor);
+                        }
                     }
+                    data[processorType] = processors;
                 }
             }
-            processorSnippets.inBuilt = data;
+            CompletionEngine.functionOperationSnippets.inBuilt = data;
         });
         jQuery.getJSON(SiddhiEditor.baseURL + "js/siddhi-extensions.json", function (data) {
             for (var namespace in data) {
                 if (data.hasOwnProperty(namespace)) {
                     for (var processorType in data[namespace]) {
                         if (data[namespace].hasOwnProperty(processorType)) {
-                            for (var i = 0; i < data[namespace][processorType].length; i++) {
-                                data[namespace][processorType][i] = generateSnippet(data[namespace][processorType][i]);
+                            var processors = {};
+                            for (var processor in data[namespace][processorType]) {
+                                if (data[namespace][processorType].hasOwnProperty(processor)) {
+                                    processors[processor] = generateSnippet(data[namespace][processorType][processor], processor);
+                                }
                             }
+                            data[namespace][processorType] = processors;
                         }
                     }
                 }
             }
-            processorSnippets.extensions = data;
+            CompletionEngine.functionOperationSnippets.extensions = data;
         });
     }
 
@@ -1539,15 +1536,16 @@
      * Prepare a snippet from the processor
      * Snippets are objects that can be passed into the ace editor to add snippets to the completions provided
      *
-     * @param {Object} processor The processor object with relevant parameters
+     * @param {Object} processorMetaData The processor object with relevant parameters
+     * @param {Object} [processorName] The name of the processor
      * @return {Object} snippet
      */
-    function generateSnippet(processor) {
+    function generateSnippet(processorMetaData, processorName) {
         var snippetVariableCount = 0;
-        var snippetText = "snippet " + processor.name + "\n\t" +
-            processor.name + "(";
-        for (var i = 0; i < processor.parameters.length; i++) {
-            var parameter = processor.parameters[i];
+        var snippetText = "snippet " + processorName + "\n\t" +
+            processorName + "(";
+        for (var i = 0; i < processorMetaData.parameters.length; i++) {
+            var parameter = processorMetaData.parameters[i];
             if (i != 0) {
                 snippetText += ", ";
             }
@@ -1573,8 +1571,8 @@
         snippetText += ")\n";
         var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
 
-        processor.caption = processor.name;
-        snippet.description = generateDescription(processor);
+        processorMetaData.caption = processorName;
+        snippet.description = generateDescription(processorMetaData);
         return snippet;
     }
 
@@ -1588,26 +1586,36 @@
     function generateDescription(metaData) {
         var description = "<div>" +
             (metaData.caption ? "<strong>" + metaData.caption + "</strong><br>" : "") +
-            (metaData.description ? "<p>" + wordWrap(metaData.description, 100) + "</p>" : "");
+            (metaData.description ? "<p>" + wordWrap(metaData.description, 100) + "</p>" : "<br>");
         if (metaData.parameters) {
-            description += "Parameters - <ul>";
-            for (var j = 0; j < metaData.parameters.length; j++) {
-                if (metaData.parameters[j].multiple) {
-                    for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
-                        description += "<li>" + metaData.parameters[j].multiple[k].name +
-                            (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
-                            metaData.parameters[j].multiple[k].type.join(" | ") + "</li>";
+            description += "Parameters - ";
+            if (metaData.parameters.length > 0) {
+                description += "<ul>";
+                for (var j = 0; j < metaData.parameters.length; j++) {
+                    if (metaData.parameters[j].multiple) {
+                        for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
+                            description += "<li>" + metaData.parameters[j].multiple[k].name +
+                                (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
+                                (metaData.parameters[j].multiple[k].type.length > 0 ? metaData.parameters[j].multiple[k].type.join(" | ") : "") + "</li>";
+                        }
+                    } else {
+                        description += "<li>" + metaData.parameters[j].name +
+                            (metaData.parameters[j].optional ? " (optional)" : "") +
+                            (metaData.parameters[j].type.length > 0 ? " - " + metaData.parameters[j].type.join(" | ") : "") + "</li>";
                     }
-                } else {
-                    description += "<li>" + metaData.parameters[j].name +
-                        (metaData.parameters[j].optional ? " (optional)" : "") + " - " +
-                        metaData.parameters[j].type.join(" | ") + "</li>";
                 }
+                description += "</ul>";
+            } else {
+                description += "none<br><br>";
             }
-            description += "</ul>";
         }
         if (metaData.return) {
-            description += "Return Type - " + metaData.return.join(" | ");
+            description += "Return Type - ";
+            if (metaData.return.length > 0) {
+                description += metaData.return.join(" | ");
+            } else {
+                description += "none";
+            }
         }
         description += "</div>";
         return description;
@@ -1661,24 +1669,26 @@
     // Stream class represent the abstraction of Stream
     function Stream() {
         this.id = "";
-        this.attributeNames = [];
-        this.attributeTypes = [];
+        this.attributes = {};
     }
 
     Stream.prototype.setStreamFromDefineStatement = function (ctx) {
         this.id = ctx.source().start.text;
         var counter = 0;
+        var attrName;
         while (attrName = ctx.attribute_name(counter)) {
-            this.attributeNames.push(ctx.attribute_name(counter).start.text);
-            this.attributeTypes.push(ctx.attribute_type(counter).start.text);
+            this.attributes[ctx.attribute_name(counter).start.text] = ctx.attribute_type(counter).start.text;
             counter++;
         }
     };
+    Stream.prototype.getAttributeList = function () {
+        return this.attributes;
+    };
     Stream.prototype.getAttributeNameList = function () {
-        return this.attributeNames;
+        return Object.keys(this.attributes);
     };
     Stream.prototype.getAttribute = function (i) {
-        return this.attributeNames[i];
+        return Object.keys(this.attributes)[i];
     };
 
     // StreamList Class represents the symbolic list for streams within the execution plan
@@ -1691,7 +1701,12 @@
     };
     StreamList.prototype.getAttributeList = function (id) {
         if (!this.streamList[id])
-            return [];
+            return {};
+        return this.streamList[id].getAttributeList();
+    };
+    StreamList.prototype.getAttributeNameList = function (id) {
+        if (!this.streamList[id])
+            return {};
         return this.streamList[id].getAttributeNameList();
     };
     StreamList.prototype.clear = function () {
@@ -1725,41 +1740,26 @@
     // Table prototype represents Stream Table
     function Table() {
         this.id = "";
-        this.attributeNames = [];
-        this.attributeTypes = [];
+        this.attributes = {};
     }
 
     Table.prototype.setTableFromDefineStatement = function (ctx) {
         this.id = ctx.source().start.text;
         var counter = 0;
-        while (attrName = ctx.attribute_name(counter)) {
-            this.attributeNames.push(ctx.attribute_name(counter).start.text);
-            this.attributeTypes.push(ctx.attribute_type(counter).start.text);
-            counter++;
-        }
-    };
-    Table.prototype.getAttributeNameList = function () {
-        return this.attributeNames;
-    };
-    Table.prototype.getAttribute = function (i) {
-        return this.attributeNames[i];
-    };
-    Table.prototype.setTableFromDefineStatement = function (ctx) {
-        this.id = ctx.source().start.text;
-        var counter = 0;
         var attrName;
-
         while (attrName = ctx.attribute_name(counter)) {
-            this.attributeNames.push(ctx.attribute_name(counter).start.text);
-            this.attributeTypes.push(ctx.attribute_type(counter).start.text);
+            this.attributes[ctx.attribute_name(counter).start.text] = ctx.attribute_type(counter).start.text;
             counter++;
         }
     };
     Table.prototype.getAttributeNameList = function () {
-        return this.attributeNames;
+        return Object.keys(this.attributes);
+    };
+    Table.prototype.getAttributeList = function () {
+        return this.attributes;
     };
     Table.prototype.getAttribute = function (i) {
-        return this.attributeNames[i];
+        return Object.keys(this.attributes)[i];
     };
 
     // TableList class represent the symbolic list of Stream tables
@@ -1770,8 +1770,15 @@
     TableList.prototype.addTable = function (tableObj) {
         this.tableList[tableObj.id] = tableObj;
     };
-    TableList.prototype.getAttributeList = function (id) {
+    TableList.prototype.getAttributeNameList = function (id) {
+        if (!this.tableList[id])
+            return {};
         return this.tableList[id].getAttributeNameList();
+    };
+    TableList.prototype.getAttributeList = function (id) {
+        if (!this.tableList[id])
+            return {};
+        return this.tableList[id].getAttributeList();
     };
     TableList.prototype.getTableIDList = function () {
         var temp = [];
