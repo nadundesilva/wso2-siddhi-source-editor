@@ -1586,7 +1586,7 @@
     function generateDescription(metaData) {
         var description = "<div>" +
             (metaData.caption ? "<strong>" + metaData.caption + "</strong><br>" : "") +
-            (metaData.description ? "<p>" + wordWrap(metaData.description, 100) + "</p>" : "<br>");
+            (metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>");
         if (metaData.parameters) {
             description += "Parameters - ";
             if (metaData.parameters.length > 0) {
@@ -1619,31 +1619,6 @@
         }
         description += "</div>";
         return description;
-    }
-
-    /**
-     * Word wrap the the string with a maxWidth for each line
-     *
-     * @param {string} str The string to be word wrapped
-     * @param {int} maxWidth The maximum width for the lines
-     * @return {string} The word wrapped string
-     */
-    function wordWrap(str, maxWidth) {
-        for (var i = maxWidth; i < str.length;) {
-            if (/\s/.test(str.charAt(i))) {
-                str = str.substring(0, i) + "\n" + str.substring(i + 1);
-                i += maxWidth + 1;
-            } else {
-                for (var j = i - 1; j > i - maxWidth; j--) {
-                    if (/\s/.test(str.charAt(j))) {
-                        str = str.substring(0, j) + "\n" + str.substring(j + 1);
-                        i = j + maxWidth + 1;
-                        break;
-                    }
-                }
-            }
-        }
-        return str;
     }
 
     /**

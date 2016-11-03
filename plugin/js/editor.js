@@ -27,6 +27,8 @@
     var scripts = document.getElementsByTagName("script");
     var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");     // Get "src" attribute of the <script> tag for the current file (last tag in the array)
     SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/editor.js".length);
+    SiddhiEditor.serverURL = "http://localhost:8080/";
+    SiddhiEditor.serverSideValidationDelay = 2000;
 
     /*
      * Annotations, Annotation Names and relevant tokens
@@ -124,40 +126,13 @@
 
         /**
          * Editor change handler
-         *
-         * @param {Object} event Event object
          */
-        function editorChangeHandler(event) {
+        function editorChangeHandler() {
             editor.completionEngine.streamList.clear();        // Clear the exiting streams
-            var position = editor.getCursorPosition();
-            if (event.text == "\n") {
-                // If the current input is new line , update the line numbers of semantic error
-                for (var index = 0; index < editor.state.semanticErrorList.length; index++) {
-                    if (editor.state.semanticErrorList[index].row > position.row ||
-                        (editor.state.semanticErrorList[index].row == position.row && position.column == 0)) {
-                        editor.state.semanticErrorList[index].row++;
-                    }
-                }
-            }
 
-            if (event.action == "removeLines") {
-                // If current line is deleted , update the line numbers of errors
-                for (index = 0; index < editor.state.semanticErrorList.length; index++) {
-                    if (editor.state.semanticErrorList[index].row > position.row ||
-                        (editor.state.semanticErrorList[index].row == position.row && position.column == 0)) {
-                        editor.state.semanticErrorList[index].row--;
-                    }
-                }
-            }
-
-            // setAnnotation() will display the error markers with messages
-            // syntaxErrors are recalculated again later using custom antlr4 listener -> Keyprinter
-            editor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
-
-            if (editor.state.syntaxErrorList.length > 0) {
-                // Remove the existing syntax errors
-                editor.state.syntaxErrorList.splice(0, editor.state.syntaxErrorList.length);
-            }
+            // Clearing all errors before finding the errors again
+            editor.state.semanticErrorList = [];
+            editor.state.syntaxErrorList = [];
 
             // Following code segment parse the input query using antlr4's parser and lexer
             var errorListener = new AceErrorListener(editor);
@@ -196,7 +171,7 @@
                 (editor.state.previousParserTree != tree.toStringTree(tree, parser))) {
                 // If there are no syntax errors and there is a change in parserTree => check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
-                setTimeout(checkForSemanticErrors, 3000);
+                setTimeout(checkForSemanticErrors, SiddhiEditor.serverSideValidationDelay);
             }
             editor.state.previousParserTree = tree.toStringTree(tree, parser);  // Save the current parser tree
             editor.state.lastEdit = Date.now();                                 // Keep user's last edit time
@@ -208,7 +183,7 @@
         function checkForSemanticErrors() {
             editor.state.foundSemanticErrors = false;
 
-            if (Date.now() - editor.state.lastEdit >= 3000) {
+            if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay) {
                 // If the user has not typed anything after 3 seconds from his last change, then send the query for semantic check
                 // check whether the query contains errors or not
                 var isValid = submitToServerForSemanticErrorCheck(editor.getValue(), true);
@@ -253,86 +228,76 @@
          * @returns {boolean} query is valid or not
          */
         function submitToServerForSemanticErrorCheck(executionPlan, errorCheck, line, checkingQuery) {
-            // if (executionPlan == "") {
-            //     console.log("Query expressions cannot be empty.");
-            //     return;
-            // }
-            //
-            // var path = "validate-siddhi-queries-ajaxprocessor.jsp";
-            // if (errorCheck) {
-            //     var responseText = jQuery.ajax({
-            //             type: "POST",
-            //             url: path,
-            //             async: false,
-            //             data: {executionPlan: executionPlan}
-            //
-            //         }
-            //     ).responseText;
-            //
-            //     editor.state.semanticErrorList.splice(0, editor.state.semanticErrorList.length);
-            //     responseText = responseText.trim();
-            //     if (responseText === "success") {
-            //         //if no semantic errors => show again the errors . But this time the semantic errors will not be listed
-            //
-            //         editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
-            //         return true;
-            //     } else
-            //         return false;
-            //
-            // } else {
-            //     jQuery.ajax({
-            //             type: "POST",
-            //             url: path,
-            //             async: true,
-            //             data: {executionPlan: executionPlan},
-            //             success: function (resultText) {
-            //                 resultText = resultText.trim();
-            //                 //Clear the existing semantic errors
-            //                 editor.state.semanticErrorList.splice(0, editor.state.semanticErrorList.length);
-            //
-            //                 if (resultText == "success") {
-            //                     //show the errors . Since the semantic error list is cleared by now=> No semantic errors will be shown here.
-            //                     editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
-            //                     return;
-            //                 } else {
-            //                     //update the semanticErrorList
-            //                     editor.state.semanticErrorList.push({
-            //                         row: line - 1,
-            //                         text: resultText,
-            //                         type: "error",
-            //                         inputText: checkingQuery
-            //                     });
-            //
-            //                     //update the state of the foundError.=> stop sending another server call
-            //                     foundErrors = true;
-            //
-            //                     //show the errors
-            //                     editor.session.setAnnotations(combine(editor.state.semanticErrorList, editor.state.syntaxErrorList));
-            //                     return;
-            //                 }
-            //             }
-            //         }
-            //     );
-            // }
+            if (executionPlan == "") {
+                return true;
+            }
 
-            // TODO : Remove the code below and implement server side validation
-            editor.state.semanticErrorList.push({
-                row: line - 1,
-                text: 'Server side not yet implemented',
-                type: "error",
-                inputText: checkingQuery
-            });
+            var ajaxConfig = {
+                type: "POST",
+                url: SiddhiEditor.serverURL + "siddhi-editor/validate",
+                data: executionPlan
+            };
+            if (errorCheck) {
+                ajaxConfig.async = false;
+                var response = JSON.parse(jQuery.ajax(ajaxConfig).responseText);
+                return response.status == "SUCCESS";
+            } else {
+                ajaxConfig.async = true;
+                ajaxConfig.success = function (response) {
+                    if (!editor.state.foundSemanticErrors && response.status != "SUCCESS") {
+                        // Update the semanticErrorList
+                        editor.state.semanticErrorList.push({
+                            row: line - 1,
+                            text: SiddhiEditor.utils.wordWrap(response.message, 100),
+                            type: "error",
+                            inputText: checkingQuery
+                        });
 
-            //update the state of the foundError.=> stop sending another server call
-            editor.state.foundSemanticErrors = true;
+                        // Update the state of the editor.state.foundSemanticErrors to stop sending another server call
+                        editor.state.foundSemanticErrors = true;
 
-            //show the errors
-            editor.session.setAnnotations(editor.state.semanticErrorList.concat(editor.state.syntaxErrorList));
-            // TODO : Remove the code above
+                        // Show the errors
+                        editor.session.setAnnotations(editor.state.semanticErrorList.concat(editor.state.syntaxErrorList));
+                    }
+                };
+                jQuery.ajax(ajaxConfig);
+            }
         }
 
         return editor;
     };
+
+    /**
+     * Utils used by the SiddhiEditor
+     */
+    SiddhiEditor.utils = (function() {
+        /**
+         * Word wrap the the string with a maxWidth for each line
+         *
+         * @param {string} str The string to be word wrapped
+         * @param {int} maxWidth The maximum width for the lines
+         * @return {string} The word wrapped string
+         */
+        this.wordWrap = function(str, maxWidth) {
+            for (var i = maxWidth; i < str.length;) {
+                if (/\s/.test(str.charAt(i))) {
+                    str = str.substring(0, i) + "\n" + str.substring(i + 1);
+                    i += maxWidth + 1;
+                } else {
+                    for (var j = i - 1; j > i - maxWidth; j--) {
+                        if (/\s/.test(str.charAt(j))) {
+                            str = str.substring(0, j) + "\n" + str.substring(j + 1);
+                            i = j + maxWidth + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            return str;
+        };
+
+        return this;
+    })();
 }());
 
 
