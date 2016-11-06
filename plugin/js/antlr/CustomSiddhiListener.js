@@ -36,7 +36,7 @@ CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
 
 
 CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
-    var tempStream = new CompletionEngine.Stream();
+    var tempStream = new SiddhiEditor.CompletionEngine.Stream();
     tempStream.setStreamFromDefineStatement(ctx);
     this.editor.completionEngine.streamList.addStream(tempStream);
     updateStatementsList(ctx, this.editor, " ;");
@@ -44,7 +44,7 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
 
 
 CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
-    var tempTable = new CompletionEngine.Table();
+    var tempTable = new SiddhiEditor.CompletionEngine.Table();
     tempTable.setTableFromDefineStatement(ctx);
     this.editor.completionEngine.tableList.addTable(tempTable);
     updateStatementsList(ctx, this.editor, " ;");
@@ -68,7 +68,7 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
     if (ctx.query_output() && ctx.query_output().children &&
             ctx.query_output().target() && ctx.query_output().target().children &&
             ctx.query_output().target().stop.type == 95) {
-        var tempStream = new CompletionEngine.Stream();
+        var tempStream = new SiddhiEditor.CompletionEngine.Stream();
 
         if (ctx.query_output() && ctx.query_output().target() && ctx.query_output().target().children) {
             var tableList = this.editor.completionEngine.tableList.getTableIDList();
@@ -147,12 +147,12 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
     var processorName = functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
     if (namespaceCtx) {
         var namespace = namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
-        snippets = CompletionEngine.functionOperationSnippets.extensions[namespace];
+        snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
 
         // Adding namespace tool tip
         updateTokenDescription(this.editor, namespaceCtx.stop.line - 1, namespaceCtx.stop.column + 1, "Extension namespace - " + namespace);
     } else {
-        snippets = CompletionEngine.functionOperationSnippets.inBuilt;
+        snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
     }
 
     // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
@@ -164,7 +164,7 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
         snippet = snippets.functions[processorName];
     }
     if (!snippet) {
-        snippet = CompletionEngine.functionOperationSnippets.additional[processorName];
+        snippet = SiddhiEditor.CompletionEngine.functionOperationSnippets.additional[processorName];
     }
     if (snippet) {
         updateTokenDescription(this.editor, functionCtx.stop.line - 1, functionCtx.stop.column + 1, snippet.description);

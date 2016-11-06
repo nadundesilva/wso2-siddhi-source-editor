@@ -39,8 +39,12 @@
         SIDDHI_MODE: "ace/mode/siddhi",
         THEME: "ace/theme/crimson_editor",
         ACE_RANGE: "ace/range",
-        LANG_LIB: "ace/lib/lang",
-        TOKEN_TOOLTIP: SiddhiEditor.baseURL + "js/token-tooltip"
+        LANG_LIB: "ace/lib/lang"
+    };
+    var SIDDHI_EDITOR_CONSTANT = {
+        ROOT: SiddhiEditor.baseURL + "js/",
+        TOKEN_TOOLTIP: "token-tooltip",
+        COMPLETION_ENGINE: "completion-engine"
     };
     var ANTLR_CONSTANT = {
         ROOT: SiddhiEditor.baseURL + "js/antlr/",
@@ -57,12 +61,13 @@
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
     var CustomSiddhiListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LISTENER).CustomSiddhiListener;      // Custom listener for Siddhi
     var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
+    var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                        // Required for token tooltips
 
-    var TokenTooltip = require(ACE_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                        // Required for token tooltips
     SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
     SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
     SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
+    SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
     SiddhiEditor.debug = false;
 
     /**
@@ -113,7 +118,7 @@
             "/* define streams/tables and write queries here ... */\n\n", 1);
         editor.focus();
 
-        editor.completionEngine = new CompletionEngine();
+        editor.completionEngine = new SiddhiEditor.CompletionEngine();
 
         // Attaching editor's onChange event handler
         editor.getSession().on('change', editorChangeHandler);
