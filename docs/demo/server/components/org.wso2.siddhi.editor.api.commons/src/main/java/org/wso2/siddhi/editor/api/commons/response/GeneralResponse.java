@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.notebook.commons.response;
+package org.wso2.siddhi.editor.api.commons.response;
 
 /**
  * Store the attributes of a general response

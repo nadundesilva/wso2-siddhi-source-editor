@@ -2,6 +2,7 @@
 .idea/
 .idea/*
 target/
+dependency-reduced-pom.xml
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -19,6 +20,3 @@ hs_err_pid*
 *.iml
 *.ipr
 *.iws
-
-# MSF4J
-dependency-reduced-pom.xml

@@ -37,19 +37,16 @@
     var outputRateEvery = "((?!(" + queryActions + ")).)*";
 
     // Following keyword lists are repeated in many functions
-    var logicalOperatorList = [
-        {value: "IN"},
-        {value: "AND"},
-        {value: "OR"},
-        {value: "NOT"},
-        {value: "isNull", parameters: [{name: "arg", type:["int", "long", "double", "float", "string", "bool", "object"]}], return: ["bool"]},
-        {value: "IS NULL"},
-        {value: "CONTAINS"}
-    ];
-    var dataTypes = [
-        {value: "int"}, {value: "float"}, {value: "double"}, {value: "bool"}, {value: "time"},
-        {value: "object"}, {value: "string"}, {value: "long"}
-    ];
+    var logicalOperatorList = ["IN", "AND", "OR", "NOT", "IS NULL", "CONTAINS"].map(function (operator) {
+        return {
+            value: operator
+        };
+    });
+    var dataTypes = ["int", "float", "double", "bool", "time", "object", "string", "long"].map(function (dataType) {
+        return {
+            value: dataType
+        };
+    });
 
     /*
      * Snippets to be used in the ace editor at the start of a statement
@@ -1350,14 +1347,15 @@
                     meta: suggestion.type,
                     parameters: suggestion.parameters,
                     description: suggestion.description,
-                    return: suggestion.return
+                    returnType: suggestion.returnType
                 };
                 if (completion.parameters) {
                     var snippet = generateSnippet({
-                        parameters: completion.parameters,
+                        name: completion.caption,
                         description: completion.description,
-                        return: completion.return
-                    }, completion.caption);
+                        parameters: completion.parameters,
+                        returnType: completion.returnType
+                    });
                     addSnippets(snippet);
 
                     // Adding to the additional snippets to be used in token tool tips
@@ -1498,37 +1496,47 @@
      * Load meta data from a json file
      */
     function loadMetaData() {
-        jQuery.getJSON(SiddhiEditor.baseURL + "js/siddhi-inbuilt.json", function (data) {
-            for (var processorType in data) {
-                if (data.hasOwnProperty(processorType)) {
-                    var processors = {};
-                    for (var processor in data[processorType]) {
-                        if (data[processorType].hasOwnProperty(processor)) {
-                            processors[processor] = generateSnippet(data[processorType][processor], processor);
+        jQuery.ajax({
+            type: "GET",
+            url: SiddhiEditor.serverURL + "siddhi-editor/meta-data",
+            success: function (response) {
+                if (response.status == "SUCCESS") {
+                    (function () {
+                        var snippets = {};
+                        for (var processorType in response.inBuilt) {
+                            if (response.inBuilt.hasOwnProperty(processorType)) {
+                                var snippet = {};
+                                for (var i = 0; i < response.inBuilt[processorType].length; i++) {
+                                    snippet[response.inBuilt[processorType][i].name] = generateSnippet(
+                                        response.inBuilt[processorType][i]
+                                    );
+                                }
+                                snippets[processorType] = snippet;
+                            }
                         }
-                    }
-                    data[processorType] = processors;
-                }
-            }
-            CompletionEngine.functionOperationSnippets.inBuilt = data;
-        });
-        jQuery.getJSON(SiddhiEditor.baseURL + "js/siddhi-extensions.json", function (data) {
-            for (var namespace in data) {
-                if (data.hasOwnProperty(namespace)) {
-                    for (var processorType in data[namespace]) {
-                        if (data[namespace].hasOwnProperty(processorType)) {
-                            var processors = {};
-                            for (var processor in data[namespace][processorType]) {
-                                if (data[namespace][processorType].hasOwnProperty(processor)) {
-                                    processors[processor] = generateSnippet(data[namespace][processorType][processor], processor);
+                        CompletionEngine.functionOperationSnippets.inBuilt = snippets;
+                    })();
+                    (function () {
+                        var snippets = {};
+                        for (var namespace in response.extensions) {
+                            if (response.extensions.hasOwnProperty(namespace)) {
+                                for (var processorType in response.extensions[namespace]) {
+                                    if (response.extensions[namespace].hasOwnProperty(processorType)) {
+                                        var snippet = {};
+                                        for (var i = 0; i < response.extensions[namespace][processorType].length; i++) {
+                                            snippets[response.extensions[namespace][processorType][i].name] = generateSnippet(
+                                                response.extensions[namespace][processorType][i]
+                                            );
+                                        }
+                                        snippets[namespace][processorType] = snippet;
+                                    }
                                 }
                             }
-                            data[namespace][processorType] = processors;
                         }
-                    }
+                        CompletionEngine.functionOperationSnippets.extensions = snippets;
+                    })();
                 }
             }
-            CompletionEngine.functionOperationSnippets.extensions = data;
         });
     }
 
@@ -1537,13 +1545,12 @@
      * Snippets are objects that can be passed into the ace editor to add snippets to the completions provided
      *
      * @param {Object} processorMetaData The processor object with relevant parameters
-     * @param {Object} [processorName] The name of the processor
      * @return {Object} snippet
      */
-    function generateSnippet(processorMetaData, processorName) {
+    function generateSnippet(processorMetaData) {
         var snippetVariableCount = 0;
-        var snippetText = "snippet " + processorName + "\n\t" +
-            processorName + "(";
+        var snippetText = "snippet " + processorMetaData.name + "\n\t" +
+            processorMetaData.name + "(";
         for (var i = 0; i < processorMetaData.parameters.length; i++) {
             var parameter = processorMetaData.parameters[i];
             if (i != 0) {
@@ -1571,7 +1578,6 @@
         snippetText += ")\n";
         var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
 
-        processorMetaData.caption = processorName;
         snippet.description = generateDescription(processorMetaData);
         return snippet;
     }
@@ -1585,7 +1591,7 @@
      */
     function generateDescription(metaData) {
         var description = "<div>" +
-            (metaData.caption ? "<strong>" + metaData.caption + "</strong><br>" : "") +
+            (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "") +
             (metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>");
         if (metaData.parameters) {
             description += "Parameters - ";
@@ -1609,10 +1615,10 @@
                 description += "none<br><br>";
             }
         }
-        if (metaData.return) {
+        if (metaData.returnType) {
             description += "Return Type - ";
-            if (metaData.return.length > 0) {
-                description += metaData.return.join(" | ");
+            if (metaData.returnType.length > 0) {
+                description += metaData.returnType.join(" | ");
             } else {
                 description += "none";
             }

@@ -16,29 +16,14 @@
  * under the License.
  */
 
-package org.wso2.carbon.notebook.commons.response;
+package org.wso2.siddhi.editor.api.commons.response;
 
 /**
- * Store the attributes of a error response
+ * Constants used for returning responses for API requests
  */
-public class ErrorResponse extends GeneralResponse {
-    private String message;
+public class Status {
+    public static final String SUCCESS = "SUCCESS";
+    public static final String ERROR = "ERROR";
 
-    public ErrorResponse(String message) {
-        super(Status.ERROR);
-        this.message = message;
-    }
-
-    public ErrorResponse(String status, String message) {
-        super(status);
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
+    public static final String STATUS = "status";
 }

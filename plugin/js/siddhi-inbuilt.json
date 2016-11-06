@@ -8,7 +8,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["long", "double"]
+      "returnType": ["long", "double"]
     },
     "avg": {
       "description": "Returns the average for all the events.",
@@ -18,7 +18,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["double"]
+      "returnType": ["double"]
     },
     "max": {
       "description": "Returns the maximum value for all the events.",
@@ -28,7 +28,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["int", "long", "double", "float"]
+      "returnType": ["int", "long", "double", "float"]
     },
     "min": {
       "description": "Returns the minimum value for all the events.",
@@ -38,12 +38,12 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["int", "long", "double", "float"]
+      "returnType": ["int", "long", "double", "float"]
     },
     "count": {
       "description": "Returns the count of all the events.",
       "parameters": [],
-      "return": ["long"]
+      "returnType": ["long"]
     },
     "stddev": {
       "description": "Returns the calculated standard deviation for all the events.",
@@ -53,7 +53,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["double"]
+      "returnType": ["double"]
     },
     "distinctcount": {
       "description": "Returns the count of distinct occurrences for a given arg.",
@@ -63,7 +63,7 @@
           "type": ["int", "long", "double", "float", "string"]
         }
       ],
-      "return": ["long"]
+      "returnType": ["long"]
     },
     "maxForever": {
       "description": "This is the attribute aggregator to store the maximum value for a given attribute throughout the lifetime of the query regardless of any windows in-front.",
@@ -73,7 +73,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["int", "long", "double", "float"]
+      "returnType": ["int", "long", "double", "float"]
     },
     "minForever": {
       "description": "This is the attribute aggregator to store the minimum value for a given attribute throughout the lifetime of the query regardless of any windows in-front.",
@@ -83,7 +83,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["int", "long", "double", "float"]
+      "returnType": ["int", "long", "double", "float"]
     },
     "coalesce": {
       "description": "Returns the value of the first input parameter that is not null.",
@@ -97,7 +97,7 @@
           ]
         }
       ],
-      "return": ["int", "long", "double", "float", "string", "bool", "object"]
+      "returnType": ["int", "long", "double", "float", "string", "bool", "object"]
     },
     "convert": {
       "description": "Converts the first input parameter according to the convertedTo parameter.",
@@ -107,7 +107,7 @@
           "type": ["int", "long", "double", "float", "string", "bool"]
         }
       ],
-      "return": ["int", "long", "double", "float", "string", "bool"]
+      "returnType": ["int", "long", "double", "float", "string", "bool"]
     },
     "instanceOfBoolean": {
       "description": "Checks whether the parameter is an instance of Boolean or not.",
@@ -117,7 +117,7 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["bool"]
+      "returnType": ["bool"]
     },
     "instanceOfDouble": {
       "description": "Checks whether the parameter is an instance of Double or not.",
@@ -127,7 +127,7 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["bool"]
+      "returnType": ["bool"]
     },
     "instanceOfFloat": {
       "description": "Checks whether the parameter is an instance of Float or not.",
@@ -137,7 +137,7 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["bool"]
+      "returnType": ["bool"]
     },
     "instanceOfInteger": {
       "description": "Checks whether the parameter is an instance of Integer or not.",
@@ -147,7 +147,7 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["bool"]
+      "returnType": ["bool"]
     },
     "instanceOfLong": {
       "description": "Checks whether the parameter is an instance of Long or not.",
@@ -157,7 +157,7 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["bool"]
+      "returnType": ["bool"]
     },
     "instanceOfString": {
       "description": "Checks whether the parameter is an instance of String or not.",
@@ -167,12 +167,12 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["bool"]
+      "returnType": ["bool"]
     },
     "UUID": {
       "description": "Generates a UUID (Universally Unique Identifier).",
       "parameters": [],
-      "return": ["string"]
+      "returnType": ["string"]
     },
     "maximum": {
       "description": "Returns the maximum value of the input parameters.",
@@ -182,7 +182,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["int", "long", "double", "float"]
+      "returnType": ["int", "long", "double", "float"]
     },
     "minimum": {
       "description": "Returns the minimum value of the input parameters.",
@@ -192,7 +192,7 @@
           "type": ["int", "long", "double", "float"]
         }
       ],
-      "return": ["int", "long", "double", "float"]
+      "returnType": ["int", "long", "double", "float"]
     },
     "cast": {
       "description": "Converts the first parameter according to the castTo parameter. Incompatible arguments cause Class Cast exceptions if further processed. This function is used with map extension that returns attributes of the object type. You can use this function to cast the object to an accurate and concrete type.",
@@ -206,7 +206,7 @@
           "type": ["string"]
         }
       ],
-      "return": ["int", "long", "double", "float", "string", "bool", "object"]
+      "returnType": ["int", "long", "double", "float", "string", "bool", "object"]
     },
     "ifThenElse": {
       "description": "Returns the the value of the arg1 parameter if the condition parameter is set to true, or returns the value of the arg2 parameter if the condition parameter is set to false.",
@@ -224,7 +224,7 @@
           "type": ["int", "long", "double", "float", "string", "bool", "object"]
         }
       ],
-      "return": ["int", "long", "double", "float", "string", "bool", "object"]
+      "returnType": ["int", "long", "double", "float", "string", "bool", "object"]
     }
   },
   "streamProcessors": {
@@ -238,7 +238,7 @@
           "type": ["int", "long", "time"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "timeBatch": {
       "description": "A batch (tumbling) time window that holds events that arrive during windowTime periods, and gets updated for each windowTime.",
@@ -253,7 +253,7 @@
           "optional": true
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "length": {
       "description": "A sliding length window that holds the last windowLength events at a given time, and gets updated for each arrival and expiry.",
@@ -263,7 +263,7 @@
           "type": ["int"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "lengthBatch": {
       "description": "A batch (tumbling) length window that holds a number of events specified as the windowLength. The window is updated each time a batch of events that equals the number specified as the windowLength arrives.",
@@ -273,7 +273,7 @@
           "type": ["windowLength"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "externalTime": {
       "description": "A sliding time window based on external time. It holds events that arrived during the last windowTime period from the external timestamp, and gets updated on every monotonically increasing timestamp.",
@@ -287,7 +287,7 @@
           "type": ["int", "long", "time"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "cron": {
       "description": "This window returns events processed periodically as the output in time-repeating patterns, triggered based on time passing.",
@@ -297,7 +297,7 @@
           "type": ["string"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "firstUnique": {
       "description": "First unique window processor keeps only the first events that are unique according to the given unique attribute.",
@@ -307,7 +307,7 @@
           "type": ["string"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "unique": {
       "description": "This window keeps only the latest events that are unique according to the given unique attribute.",
@@ -317,7 +317,7 @@
           "type": ["string"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "sort": {
       "description": "This window holds a batch of events that equal the number specified as the windowLength and sorts them in the given order.",
@@ -340,7 +340,7 @@
           "optional": true
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "frequent": {
       "description": "This window returns the latest events with the most frequently occurred value for a given attribute(s). Frequency calculation for this window processor is based on Misra-Gries counting algorithm.",
@@ -359,7 +359,7 @@
           "optional": true
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "lossyFrequent": {
       "description": "This window identifies and returns all the events of which the current frequency exceeds the value specified for the supportThreshold parameter.",
@@ -382,7 +382,7 @@
           "optional": true
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "externalTimeBatch": {
       "description": "A batch (tumbling) time window based on external time, that holds events arrived during windowTime periods, and gets updated for every windowTime.",
@@ -406,7 +406,7 @@
           "optional": true
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "timeLength": {
       "description": "A sliding time window that, at a given time holds the last windowLength events that arrived during last windowTime period, and gets updated for every event arrival and expiry.",
@@ -420,7 +420,7 @@
           "type": ["int"]
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     },
     "uniqueExternalTimeBatch": {
       "description": "A batch (tumbling) time window based on external time that holds latest unique events that arrive during the windowTime periods, and gets updated for each windowTime.",
@@ -453,7 +453,7 @@
           "optional": true
         }
       ],
-      "return": ["event"]
+      "returnType": ["event"]
     }
   }
 }

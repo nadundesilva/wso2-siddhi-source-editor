@@ -4,187 +4,187 @@
       "abs": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "acos": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "asin": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "atan": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "bin": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "ceil": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "conv": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "copySign": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "cos": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "cosh": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "cbrt": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "e": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "exp": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "floor": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "getExponent": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "hex": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "isInfinite": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "ln": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "log2": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "log10": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "log": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "max": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "min": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "oct": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "parseDouble": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "parseFloat": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "parseInt": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "parseLong": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "pi": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "signum": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "sin": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "sinh": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "sqrt": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "tanh": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "toDegrees": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "tan": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "toRadians": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       }
     },
     "streamProcessors": {
@@ -197,82 +197,82 @@
       "charAt": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "coalesce": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "concat": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "hex": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "length": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "lower": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "regexp": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "repeat": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "replaceAll": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "replaceFirst": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "reverse": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "strcmp": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "substr": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "trim": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "unhex": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "upper": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       }
     },
     "streamProcessors": {
@@ -285,34 +285,34 @@
       "intersects": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "within": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "withindistance": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       }
     },
     "streamProcessors": {
       "crosses": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "stationary": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "proximity": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       }
     },
     "windowProcessors": {
@@ -325,12 +325,12 @@
       "eval": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       },
       "evalSource": {
         "description": "Returns the absolute value of p1. This function wraps the java.lang.Math.abs() function",
         "parameters": [],
-        "return": []
+        "returnType": []
       }
     },
     "windowProcessors": {

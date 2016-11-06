@@ -11,16 +11,12 @@
         <relativePath>../..</relativePath>
     </parent>
 
-    <artifactId>org.wso2.siddhi.editor.api</artifactId>
+    <artifactId>org.wso2.siddhi.editor.api.core</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>org.wso2.siddhi</groupId>
             <artifactId>siddhi-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.siddhi.editor</groupId>
-            <artifactId>org.wso2.siddhi.editor.api.core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.wso2.siddhi.editor</groupId>
