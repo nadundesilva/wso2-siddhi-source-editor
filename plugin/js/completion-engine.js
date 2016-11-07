@@ -1519,6 +1519,7 @@ function loadMetaData() {
                     var snippets = {};
                     for (var namespace in response.extensions) {
                         if (response.extensions.hasOwnProperty(namespace)) {
+                            snippets[namespace] = {};
                             for (var processorType in response.extensions[namespace]) {
                                 if (response.extensions[namespace].hasOwnProperty(processorType)) {
                                     var snippet = {};

@@ -1,10 +1,10 @@
 package org.wso2.siddhi.editor.api.core;
 
+import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.annotations.Description;
 import org.wso2.siddhi.core.annotations.Parameter;
 import org.wso2.siddhi.core.annotations.Parameters;
 import org.wso2.siddhi.core.annotations.Return;
-import org.wso2.siddhi.core.config.SiddhiContext;
 import org.wso2.siddhi.core.executor.function.FunctionExecutor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
 import org.wso2.siddhi.core.query.processor.stream.function.StreamFunctionProcessor;
@@ -73,8 +73,8 @@ public class MetaDataUtils {
      * @return Extension processor meta data
      */
     public static Map<String, MetaData> getExtensionProcessorMetaData() {
-        SiddhiContext siddhiContext = new SiddhiContext();
-        Map<String, Class> namesToClassMap = siddhiContext.getSiddhiExtensions();
+        SiddhiManager siddhiManager = new SiddhiManager();
+        Map<String, Class> namesToClassMap = siddhiManager.getExtensions();
 
         Map<String, MetaData> namespaceToMetaDataMap = new HashMap<>();
         populateExtensionsMetaData(namespaceToMetaDataMap, namesToClassMap);
@@ -195,19 +195,19 @@ public class MetaDataUtils {
             Class<?> extensionClass = entry.getValue();
             String processorType = null;
             List<ProcessorMetaData> processorMetaDataList = null;
-            if (extensionClass.isAssignableFrom(processorTypeToSuperClassMap.get(FUNCTION_EXECUTOR))) {
+            if (processorTypeToSuperClassMap.get(FUNCTION_EXECUTOR).isAssignableFrom(extensionClass)) {
                 processorType = FUNCTION_EXECUTOR;
                 processorMetaDataList = metaData.getFunctions();
-            } else if (extensionClass.isAssignableFrom(processorTypeToSuperClassMap.get(ATTRIBUTE_AGGREGATOR))) {
+            } else if (processorTypeToSuperClassMap.get(ATTRIBUTE_AGGREGATOR).isAssignableFrom(extensionClass)) {
                 processorType = ATTRIBUTE_AGGREGATOR;
                 processorMetaDataList = metaData.getFunctions();
-            } else if (extensionClass.isAssignableFrom(processorTypeToSuperClassMap.get(STREAM_FUNCTION_PROCESSOR))) {
+            } else if (processorTypeToSuperClassMap.get(STREAM_FUNCTION_PROCESSOR).isAssignableFrom(extensionClass)) {
                 processorType = STREAM_FUNCTION_PROCESSOR;
                 processorMetaDataList = metaData.getStreamProcessors();
-            } else if (extensionClass.isAssignableFrom(processorTypeToSuperClassMap.get(STREAM_PROCESSOR))) {
+            } else if (processorTypeToSuperClassMap.get(STREAM_PROCESSOR).isAssignableFrom(extensionClass)) {
                 processorType = STREAM_PROCESSOR;
                 processorMetaDataList = metaData.getStreamProcessors();
-            } else if (extensionClass.isAssignableFrom(processorTypeToSuperClassMap.get(WINDOW_PROCESSOR))) {
+            } else if (processorTypeToSuperClassMap.get(WINDOW_PROCESSOR).isAssignableFrom(extensionClass)) {
                 processorType = WINDOW_PROCESSOR;
                 processorMetaDataList = metaData.getWindowProcessors();
             }
