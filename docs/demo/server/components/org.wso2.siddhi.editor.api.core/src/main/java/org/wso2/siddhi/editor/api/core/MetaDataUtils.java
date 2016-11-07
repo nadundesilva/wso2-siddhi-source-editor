@@ -241,7 +241,8 @@ public class MetaDataUtils {
             }
 
             Description descriptionAnnotation = processorClass.getAnnotation(Description.class);
-            Parameters parametersAnnotation = processorClass.getAnnotation(Parameters.class);
+            Parameters parametersAnnotation = processorClass.getAnnotation(Parameters.class);   // When multiple parameters are present
+            Parameter parameterAnnotation = processorClass.getAnnotation(Parameter.class);      // When only single parameter is present
             Return returnAnnotation = processorClass.getAnnotation(Return.class);
 
             if (descriptionAnnotation != null || parametersAnnotation != null || returnAnnotation != null) {
@@ -252,6 +253,7 @@ public class MetaDataUtils {
                     processorMetaData.setDescription(descriptionAnnotation.value());
                 }
                 if (parametersAnnotation != null) {
+                    // When multiple parameters are present
                     List<ParameterMetaData> parameterMetaDataList = new ArrayList<>();
                     for (Parameter parameter : parametersAnnotation.value()) {
                         ParameterMetaData parameterMetaData = new ParameterMetaData();
@@ -261,9 +263,23 @@ public class MetaDataUtils {
                         parameterMetaDataList.add(parameterMetaData);
                     }
                     processorMetaData.setParameters(parameterMetaDataList);
+                } else if (parameterAnnotation != null) {
+                    // When only a single parameter is present
+                    ParameterMetaData parameterMetaData = new ParameterMetaData();
+                    parameterMetaData.setName(parameterAnnotation.name());
+                    parameterMetaData.setType(Arrays.asList(parameterAnnotation.type()));
+                    parameterMetaData.setOptional(parameterAnnotation.optional());
+
+                    List<ParameterMetaData> parameterMetaDataList = new ArrayList<>();
+                    parameterMetaDataList.add(parameterMetaData);
+                    processorMetaData.setParameters(parameterMetaDataList);
+                } else {
+                    processorMetaData.setParameters(new ArrayList<>());
                 }
                 if (returnAnnotation != null) {
                     processorMetaData.setreturnType(Arrays.asList(returnAnnotation.value()));
+                } else {
+                    processorMetaData.setParameters(new ArrayList<>());
                 }
             }
         }

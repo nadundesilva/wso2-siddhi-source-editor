@@ -1548,36 +1548,40 @@ function loadMetaData() {
  */
 function generateSnippet(processorMetaData) {
     var snippetVariableCount = 0;
-    var snippetText = "snippet " + processorMetaData.name + "\n\t" +
-        processorMetaData.name + "(";
-    for (var i = 0; i < processorMetaData.parameters.length; i++) {
-        var parameter = processorMetaData.parameters[i];
-        if (i != 0) {
-            snippetText += ", ";
-        }
-        if (parameter.multiple) {
-            var repeatAmount = 2;
-            for (var j = 0; j < repeatAmount; j++) {   // Adding the multiple attributes twice
-                for (var k = 0; k < parameter.multiple.length; k++) {
-                    if (k != 0) {
+    var snippetText = "snippet " + processorMetaData.name + "\n\t" + processorMetaData.name;
+    if (processorMetaData.parameters) {
+        snippetText += "(";
+        for (var i = 0; i < processorMetaData.parameters.length; i++) {
+            var parameter = processorMetaData.parameters[i];
+            if (i != 0) {
+                snippetText += ", ";
+            }
+            if (parameter.multiple) {
+                var repeatAmount = 2;
+                for (var j = 0; j < repeatAmount; j++) {   // Adding the multiple attributes twice
+                    for (var k = 0; k < parameter.multiple.length; k++) {
+                        if (k != 0) {
+                            snippetText += ", ";
+                        }
+                        snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.multiple[k].name + j + "}";
+                        snippetVariableCount++;
+                    }
+                    if (j != repeatAmount - 1) {
                         snippetText += ", ";
                     }
-                    snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.multiple[k].name + j + "}";
-                    snippetVariableCount++;
                 }
-                if (j != repeatAmount - 1) {
-                    snippetText += ", ";
-                }
+            } else {
+                snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.name + "}";
+                snippetVariableCount++;
             }
-        } else {
-            snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.name + "}";
-            snippetVariableCount++;
         }
+        snippetText += ")\n";
     }
-    snippetText += ")\n";
     var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
 
-    snippet.description = generateDescription(processorMetaData);
+    if (processorMetaData.description || processorMetaData.returnType || processorMetaData.parameters) {
+        snippet.description = generateDescription(processorMetaData);
+    }
     return snippet;
 }
 
@@ -1589,9 +1593,10 @@ function generateSnippet(processorMetaData) {
  * @return {string} html string of the description generated from the meta data provided
  */
 function generateDescription(metaData) {
-    var description = "<div>" +
-        (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "") +
-        (metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>");
+    var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
+    if (metaData.description) {
+        description += metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>";
+    }
     if (metaData.parameters) {
         description += "Parameters - ";
         if (metaData.parameters.length > 0) {
