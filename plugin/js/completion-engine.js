@@ -311,13 +311,13 @@ function CompletionEngine() {
     var self = this;
 
     // List of streams that would keep the meta data of the streams defined/inferred within the query.
-    self.streamList = new StreamList();
+    self.streamList = {};
 
     // List of tables that would keep the meta data of the tables defined within the query.
-    self.tableList = new TableList();
+    self.tableList = {};
 
     // List of functions that would keep the meta data of the functions defined within the query.
-    self.functionList = new FunctionList();
+    self.functionList = {};
 
     /*
      * Stream aliases in query are stored as a list of  aliasName:streamID .
@@ -331,7 +331,7 @@ function CompletionEngine() {
      *  streamAliasList = [
      *      {
      *          myStream : streamB,
-     *          foo : streamA
+     *          fooStream : streamA
      *      }
      *  ]
      */
@@ -425,15 +425,15 @@ function CompletionEngine() {
      */
     self.adjustAutoCompletionHandlers = function (editor) {
         // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
-        var completerList = [this.SiddhiCompleter, this.SnippetCompleter];
+        var completerList = [self.SiddhiCompleter, self.SnippetCompleter];
         // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-        if (this.isKeyWordCompleterRequired(editor)) {
+        if (self.isKeyWordCompleterRequired(editor)) {
             // If the cursor is in the middle of a query and not preceded by a dot operator
             completerList.push(SiddhiEditor.langTools.keyWordCompleter);
         }
         editor.completers = completerList;
 
-        if (this.checkTheBeginning(editor)) {
+        if (self.checkTheBeginning(editor)) {
             SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
         } else {
             SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
@@ -514,8 +514,8 @@ function CompletionEngine() {
         var tempStatements = text.split(";");
         text = tempStatements[tempStatements.length - 1]; //get the last statement.
 
-        this.streamStore = {};           //clear the global tables for event references and stream alias
-        this.streamAliasList = {};
+        self.streamStore = {};           //clear the global tables for event references and stream alias
+        self.streamAliasList = {};
 
         text = text.replace(/\s/g, " "); //Replace all the white spaces with single space each.
         // This step is important for identifying the statements span across  multiple lines using regular expressions.
@@ -530,8 +530,8 @@ function CompletionEngine() {
         self.wordList = [];                                                         // Clear the previous suggestion list
         SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, "siddhi");   // Clear the previous snippet suggestions
         self.suggestedSnippets = [];
-        if (this.checkTheBeginning(editor)) {
-            this.$initialList();
+        if (self.checkTheBeginning(editor)) {
+            self.$initialList();
         }
 
         for (var a = 0; a < ruleBase.length; a++) {
@@ -612,8 +612,8 @@ function CompletionEngine() {
             "output", "outer", "inner", "left", "unidirectional", "all", "events", "insert",
             "delete", "update", "select", "as", "join", "on", "every", "group by", "having", "within"
         ];
-        this.$streamReference(args[0]);
-        this.$streamAlias(args[0]);
+        self.$streamReference(args[0]);
+        self.$streamAlias(args[0]);
 
         addCompletions(essentialKeyWords.map(function (keyword) {
             return {
@@ -621,7 +621,7 @@ function CompletionEngine() {
                 priority: 2
             };
         }));
-        addCompletions(this.streamList.getStreamIDList().map(function (stream) {
+        addCompletions(Object.keys(self.streamList).map(function (stream) {
             return {
                 value: stream,
                 type: "Stream",
@@ -656,13 +656,13 @@ function CompletionEngine() {
             return d + ":";
         });
 
-        var tableList = this.tableList.getTableIDList();
+        var tableList = Object.keys(self.tableList);
         tableList = tableList.map(function (d) {
             return d + ".";
         });
 
         var result = args[1].exec(args[0]);
-        var streamNames = this.streamList.getStreamIDList();
+        var streamNames = Object.keys(self.streamList);
         var fromPhrase = /from(.*)select/i.exec(result[0]);
 
         if (SiddhiEditor.debug) {
@@ -670,13 +670,13 @@ function CompletionEngine() {
             console.log("From Phrase", fromPhrase);
         }
 
-        this.$streamAlias(result[0]);
+        self.$streamAlias(result[0]);
         var aliasList = getStreamAliasList();
         aliasList = aliasList.map(function (d) {
             return d + ".";
         });
 
-        this.$streamReference(result[0]);
+        self.$streamReference(result[0]);
         var refList = getStreamReferences();
         refList = refList.map(function (d) {
             return d + ".";
@@ -689,7 +689,7 @@ function CompletionEngine() {
 
             if (fromPhrase[1].match(regex)) {
                 streamIds.push(streamNames[index]);
-                list = list.concat(this.streamList.getAttributeNameList(streamNames[index]));
+                list = list.concat(self.streamList[streamNames[index]]);
             }
         }
 
@@ -758,7 +758,7 @@ function CompletionEngine() {
         }));
     };
 
-    self.$processorPhrase = function (args) {
+    self.$processorPhrase = function () {
         // If built in streamProcessors exist , they should be included
         addCompletions(
             [{value: "window.", priority: 2}]
@@ -773,11 +773,10 @@ function CompletionEngine() {
         }));
     };
 
-    self.$allAttributeList = function (args) {
-        var tempList = [];
-        var streamList = this.streamList.getStreamIDList();
+    self.$allAttributeList = function () {
+        var streamList = Object.keys(self.streamList);
         for (var s = 0; s < streamList.length; s++) {
-            var attributeList = this.streamList.getAttributeNameList(streamList[s]);
+            var attributeList = Object.keys(self.streamList[streamList[s]]);
             addCompletions(attributeList.map(function (attribute) {
                 return {
                     value: attribute,
@@ -793,9 +792,9 @@ function CompletionEngine() {
         var regx = "(" + identifier + ")\\s+of\\s+\\w*$";
         var identifierResult = (new RegExp(regx)).exec(args[0]);
 
-        var streamList = this.streamList.getStreamIDList();
+        var streamList = Object.keys(self.streamList);
         for (var i = 0; i < streamList.length; i++) {
-            var attributeList = this.streamList.getAttributeNameList(streamList[i]);
+            var attributeList = Object.keys(self.streamList[streamList[i]]);
             for (var index = 0; index < attributeList.length; index++) {
                 if (attributeList[index] == identifierResult[1]) {
                     tempList.push(streamList[i]);
@@ -811,8 +810,8 @@ function CompletionEngine() {
         }));
     };
 
-    self.$TableSuggestions = function (args) {
-        addCompletions(this.tableList.getTableIDList().map(function (stream) {
+    self.$TableSuggestions = function () {
+        addCompletions(Object.keys(self.tableList).map(function (stream) {
             return {
                 value: stream,
                 type: "Stream"
@@ -820,13 +819,13 @@ function CompletionEngine() {
         }));
     };
 
-    self.$UDPhrase = function (args) {
+    self.$UDPhrase = function () {
         addCompletions([{value: "for"}, {value: "on"}].map(function (keyword) {
             keyword.priority = 1;
             return keyword;
         }));
 
-        addCompletions(this.tableList.getTableIDList().map(function (table) {
+        addCompletions(Object.keys(self.tableList).map(function (table) {
             return {
                 value: table,
                 type: "Event Table",
@@ -844,8 +843,8 @@ function CompletionEngine() {
         );
 
         var result = args[1].exec(args[0]);
-        var streamNames = this.streamList.getStreamIDList();
-        var tableNames = this.tableList.getTableIDList();
+        var streamNames = Object.keys(self.streamList);
+        var tableNames = Object.keys(self.tableList);
 
         var fromPhrase = /from(.*)(update|delete)/i.exec(result[0]);
         var streamList = [];
@@ -856,7 +855,7 @@ function CompletionEngine() {
 
             if (fromPhrase[1].match(regex)) {
                 streamList.push(streamNames[i]);
-                attributeList = attributeList.concat(this.streamList.getAttributeNameList(streamNames[i]))
+                attributeList = attributeList.concat(Object.keys(self.streamList[streamNames[i]]));
             }
         }
         addCompletions(streamList.map(function (d) {
@@ -905,7 +904,7 @@ function CompletionEngine() {
             console.log("fromPhrase:", fromPhrase);
         }
 
-        var streamNames = this.streamList.getStreamIDList();
+        var streamNames = Object.keys(self.streamList);
 
         addCompletions(keywords.map(function (keyword) {
             keyword.priority = 1;
@@ -921,7 +920,7 @@ function CompletionEngine() {
         for (var index = 0; index < streamNames.length; index++) {
             regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
             if (fromPhrase[1].match(regex)) {
-                addCompletions(this.streamList.getAttributeNameList(streamNames[index]).map(function (stream) {
+                addCompletions(Object.keys(self.streamList[streamNames[index]]).map(function (stream) {
                     return {
                         value: stream,
                         type: "Stream Attribute",
@@ -943,12 +942,12 @@ function CompletionEngine() {
             console.log("fromPhrase:", fromPhrase);
         }
 
-        var streamNames = this.streamList.getStreamIDList();
+        var streamNames = Object.keys(self.streamList);
         var attributeList = [];
         for (var index = 0; index < streamNames.length; index++) {
             var regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
             if (fromPhrase[1].match(regex)) {
-                attributeList = attributeList.concat(this.streamList.getAttributeNameList(streamNames[index]));
+                attributeList = attributeList.concat(Object.keys(self.streamList[streamNames[index]]));
             }
         }
 
@@ -996,8 +995,8 @@ function CompletionEngine() {
         var temp = "";
         var flag = true;
 
-        this.streamStore = {};
-        this.$streamReference(result[0]);
+        self.streamStore = {};
+        self.$streamReference(result[0]);
         for (var i = result[0].length - 1; i >= 0; i--) {
             if (start == 0) {
                 if (/\W/.test(result[0].charAt(i))) {
@@ -1040,7 +1039,7 @@ function CompletionEngine() {
                 };
             }));
 
-            addCompletions(this.streamList.getAttributeNameList(temp).map(function (attribute) {
+            addCompletions(Object.keys(self.streamList[temp]).map(function (attribute) {
                 return {
                     value: attribute,
                     type: "Stream Attribute",
@@ -1078,11 +1077,11 @@ function CompletionEngine() {
             console.log("result ", result);
         }
 
-        this.$streamReference(args[0]);
-        this.$streamAlias(args[0]);
+        self.$streamReference(args[0]);
+        self.$streamAlias(args[0]);
 
-        if (this.tableList.hasTable(result[1])) {
-            addCompletions(this.tableList.getAttributeNameList(result[1]).map(function (attribute) {
+        if (self.tableList[result[1]]) {
+            addCompletions(Object.keys(self.tableList[result[1]]).map(function (attribute) {
                 return {
                     value: attribute,
                     type: "Event Table Attribute",
@@ -1096,8 +1095,8 @@ function CompletionEngine() {
             if (this.streamAliasList.hasOwnProperty(result[1])) {
                 result[1] = this.streamAliasList[result[1]];
             }
-            if (this.streamList.hasStream(result[1])) {
-                addCompletions(this.streamList.getAttributeNameList(result[1]).map(function (stream) {
+            if (Object.keys(self.streamList[result[1]])) {
+                addCompletions(Object.keys(self.streamList[result[1]]).map(function (stream) {
                     return {
                         value: stream,
                         type: "Stream",
@@ -1113,7 +1112,7 @@ function CompletionEngine() {
         var fromPhrase = fromRegxp.exec(str);
         var asRegexp = /\s+as\s+(\w+)\s+/;
         var tokenArray = fromPhrase[1].split(asRegexp);
-        var streamIdList = this.streamList.getStreamIDList();
+        var streamIdList = Object.keys(self.streamList);
 
         var aliases = {};
         if (tokenArray.length >= 2) {
@@ -1138,11 +1137,11 @@ function CompletionEngine() {
     self.$streamReferenceHandler = function (args) {
         var results = args[1].exec(args[0]);
 
-        this.$streamReference(args[0]);
-        this.$streamAlias(args[0]);
+        self.$streamReference(args[0]);
+        self.$streamAlias(args[0]);
 
         var ref = this.streamStore[results[1]];
-        var attributeList = this.streamList.getAttributeNameList(ref);
+        var attributeList = self.streamList[ref];
         addCompletions(attributeList.map(function (stream) {
             return {
                 value: stream,
@@ -1384,10 +1383,6 @@ function CompletionEngine() {
         }
     }
 }
-
-// Constructors to expose to the global scope
-CompletionEngine.Stream = Stream;
-CompletionEngine.Table = Table;
 
 CompletionEngine.functionOperationSnippets = {
     /*
@@ -1646,168 +1641,5 @@ function isEmpty(map) {
     }
     return true;
 }
-
-
-/*************************************************************************************************************************
- *                                          Prototypes and constructors
- *************************************************************************************************************************/
-
-// Stream class represent the abstraction of Stream
-function Stream() {
-    this.id = "";
-    this.attributes = {};
-}
-
-Stream.prototype.setStreamFromDefineStatement = function (ctx) {
-    this.id = ctx.source().start.text;
-    var counter = 0;
-    var attrName;
-    while (attrName = ctx.attribute_name(counter)) {
-        this.attributes[ctx.attribute_name(counter).start.text] = ctx.attribute_type(counter).start.text;
-        counter++;
-    }
-};
-Stream.prototype.getAttributeList = function () {
-    return this.attributes;
-};
-Stream.prototype.getAttributeNameList = function () {
-    return Object.keys(this.attributes);
-};
-Stream.prototype.getAttribute = function (i) {
-    return Object.keys(this.attributes)[i];
-};
-
-// StreamList Class represents the symbolic list for streams within the execution plan
-function StreamList() {
-    this.streamList = {};
-}
-
-StreamList.prototype.addStream = function (streamObj) {
-    this.streamList[streamObj.id] = streamObj;
-};
-StreamList.prototype.getAttributeList = function (id) {
-    if (!this.streamList[id])
-        return {};
-    return this.streamList[id].getAttributeList();
-};
-StreamList.prototype.getAttributeNameList = function (id) {
-    if (!this.streamList[id])
-        return {};
-    return this.streamList[id].getAttributeNameList();
-};
-StreamList.prototype.clear = function () {
-    this.streamList = {};
-    //var array=this.getStreamIDList();
-    //for(var i=0;i<array.length;i++)
-    //{
-    //    delete this.editor.completionEngine.streamList[array[i]];
-    //}
-};
-StreamList.prototype.getStreamIDList = function () {
-    var temp = [];
-    for (var propertyName in this.streamList) {
-        // propertyName is what you want
-        // you can get the value like this: myObject[propertyName]
-        if (this.streamList.hasOwnProperty(propertyName))
-            temp.push(propertyName);
-    }
-    return temp;
-};
-StreamList.prototype.hasStream = function (id) {
-    var status = false;
-    this.getStreamIDList().map(function (d) {
-        if (id == d)
-            status = true;
-    });
-    return status;
-};
-
-
-// Table prototype represents Stream Table
-function Table() {
-    this.id = "";
-    this.attributes = {};
-}
-
-Table.prototype.setTableFromDefineStatement = function (ctx) {
-    this.id = ctx.source().start.text;
-    var counter = 0;
-    var attrName;
-    while (attrName = ctx.attribute_name(counter)) {
-        this.attributes[ctx.attribute_name(counter).start.text] = ctx.attribute_type(counter).start.text;
-        counter++;
-    }
-};
-Table.prototype.getAttributeNameList = function () {
-    return Object.keys(this.attributes);
-};
-Table.prototype.getAttributeList = function () {
-    return this.attributes;
-};
-Table.prototype.getAttribute = function (i) {
-    return Object.keys(this.attributes)[i];
-};
-
-// TableList class represent the symbolic list of Stream tables
-function TableList() {
-    this.tableList = {};
-}
-
-TableList.prototype.addTable = function (tableObj) {
-    this.tableList[tableObj.id] = tableObj;
-};
-TableList.prototype.getAttributeNameList = function (id) {
-    if (!this.tableList[id])
-        return {};
-    return this.tableList[id].getAttributeNameList();
-};
-TableList.prototype.getAttributeList = function (id) {
-    if (!this.tableList[id])
-        return {};
-    return this.tableList[id].getAttributeList();
-};
-TableList.prototype.getTableIDList = function () {
-    var temp = [];
-    for (var propertyName in this.tableList) {
-        if (this.tableList.hasOwnProperty(propertyName))
-            temp.push(propertyName);
-    }
-    return temp;
-};
-TableList.prototype.hasTable = function (id) {
-    var status = false;
-    this.getTableIDList().map(function (d) {
-        if (id == d)
-            status = true;
-    });
-    return status;
-};
-
-
-// Function class which represent the functions defined within the execution plan
-function Function() {
-    this.id = "";
-    this.lang = "";
-    this.returnType = "";
-    this.code = "";
-}
-
-// FunctionList
-function FunctionList() {
-    this.functionList = {};
-}
-
-FunctionList.prototype.addFunction = function (functionObj) {
-    this.functionList[functionObj.id] = functionObj;
-};
-FunctionList.prototype.getFunctionIDList = function () {
-    var temp = [];
-    for (var propertyName in this.functionList) {
-        if (this.functionList.hasOwnProperty(propertyName)) {
-            temp.push(propertyName);
-        }
-    }
-    return temp;
-};
 
 exports.CompletionEngine = CompletionEngine;

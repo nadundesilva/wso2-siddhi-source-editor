@@ -133,7 +133,7 @@
          * Editor change handler
          */
         function editorChangeHandler() {
-            editor.completionEngine.streamList.clear();        // Clear the exiting streams
+            editor.completionEngine.streamList = {};            // Clear the exiting streams
 
             // Clearing all errors before finding the errors again
             editor.state.semanticErrorList = [];
