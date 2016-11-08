@@ -310,14 +310,30 @@ loadMetaData();
 function CompletionEngine() {
     var self = this;
 
-    // List of streams that would keep the meta data of the streams defined/inferred within the query.
+    /*
+     * List of streams defined
+     */
     self.streamList = {};
 
-    // List of tables that would keep the meta data of the tables defined within the query.
+    /*
+     * List of tables defined
+     */
     self.tableList = {};
 
-    // List of functions that would keep the meta data of the functions defined within the query.
-    self.functionList = {};
+    /*
+     * List of triggers defined
+     */
+    self.triggerList = {};
+
+    /*
+     * List of functions defined
+     */
+    self.evalScriptList = {};
+
+    /*
+     * List of windows defined
+     */
+    self.windowList = {};
 
     /*
      * Stream aliases in query are stored as a list of  aliasName:streamID .
@@ -346,16 +362,16 @@ function CompletionEngine() {
      *
      *  representation
      *  --------------
-     *  streamStore ={
+     *  patternEventList = {
      *    e1 : streamB,
      *    e2 : streamA
      *  }
      */
-    self.streamStore = {};
+    self.patternEventList = {};
 
     /*
      * CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
-     * {
+     * wordList = {
      *       definition:"suggestion name",
      *       value : "suggestion value"
      *       score : 2,
@@ -371,7 +387,7 @@ function CompletionEngine() {
     self.SiddhiCompleter = {
         getCompletions: function (editor, session, pos, prefix, callback) {
             self.calculateCompletions(editor);      // Calculate the suggestions list for current context
-            self.checkTheBeginning(editor);
+            checkTheBeginning(editor);
 
             // This completer will be using the wordList array
             // context-handler functions will be updated the the worldList based on the context around the cursor position
@@ -427,77 +443,17 @@ function CompletionEngine() {
         // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
         var completerList = [self.SiddhiCompleter, self.SnippetCompleter];
         // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-        if (self.isKeyWordCompleterRequired(editor)) {
+        if (isKeyWordCompleterRequired(editor)) {
             // If the cursor is in the middle of a query and not preceded by a dot operator
             completerList.push(SiddhiEditor.langTools.keyWordCompleter);
         }
         editor.completers = completerList;
 
-        if (self.checkTheBeginning(editor)) {
+        if (checkTheBeginning(editor)) {
             SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
         } else {
             SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
         }
-    };
-
-    /**
-     * Check whether the cursor is positioned next to a dot operator or namespace operator
-     *
-     * @param {Object} editor ace editor instance
-     * @returns {boolean} true if the cursor is positioned just after the dot operator or namespace operator
-     */
-    self.isKeyWordCompleterRequired = function (editor) {
-        var objectNameRegex = /\w*\.$/i;
-        var namespaceRegex = /\w*:$/i;
-        var txt = editor.getValue();
-        return !(objectNameRegex.test(txt) || namespaceRegex.test(txt));
-    };
-
-    /**
-     * Check whether the cursor is positioned at the beginning of a query
-     *
-     * @param {Object} editor ace editor instance
-     * @returns {boolean} true if the cursor is positioned at the beginning.
-     */
-    self.checkTheBeginning = function (editor) {
-        var position = editor.getCursorPosition();
-        var lineNumber = position.row;
-        var currentLine = editor.session.getLine(lineNumber);
-        var txt = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
-            row: 0,
-            column: 0
-        }, position));  // all the text up to the cursor position.
-
-        var tailingSpaces = /^\s*/i;
-        var tail = currentLine.substring(position.column); //rest of the line
-
-        if (tailingSpaces.test(tail)) {
-            // if the rest of the line after the cursor has only the whitespaces.
-
-            // set of regular expressions to identify the beginning of the statement
-            var name = identifier + "(\\." + identifier + ")*";
-            var annotationElement = "(" + name + "\\s*[=]\\s*)?[\"'](.)+[\"']";
-            var newStatement = /;\s+\S*$/i;
-            var blockCommentEnd = /[*][/]\s*\S*$/i; // just after the block comment
-            var lineComment = /--(.)*\s+\S*$/i;     // just after the line comment
-            var begin = /begin\s*\S*$/i;            // within the partition statement. just after the begin keyword
-            var spaces = /^\s*$/;
-            var startingWord = /^\s*\S*$/i;         //spaces followed by non-space characters
-            var annotationBody = name + "\\s*[(]\\s*" + annotationElement + "(\\s*[,]\\s*" + annotationElement + ")*\\s*[)]\\s*\\S*$";
-            var annotation = new RegExp("@\\s*" + annotationBody, "i");                     //annotation element
-            var planAnnotations = new RegExp("@\\s*plan\\s*:\\s*" + annotationBody, "i");   //Regular expression for plan-annotations.
-
-            if (newStatement.test(txt) || annotation.test(txt) || planAnnotations.test(txt) ||
-                blockCommentEnd.test(txt) || lineComment.test(txt) || begin.test(txt) ||
-                spaces.test(txt) || txt == "" || startingWord.test(txt)) {
-                if (SiddhiEditor.debug) {
-                    console.warn(loggerContext + ":" + "checkTheBeginning" + "->");
-                    console.log("New statement is suitable for current position");
-                }
-                return true;
-            }
-        }
-        return false;
     };
 
     /**
@@ -514,7 +470,8 @@ function CompletionEngine() {
         var tempStatements = text.split(";");
         text = tempStatements[tempStatements.length - 1]; //get the last statement.
 
-        self.streamStore = {};           //clear the global tables for event references and stream alias
+        // Clear the maps for event references and stream alias
+        self.patternEventList = {};
         self.streamAliasList = {};
 
         text = text.replace(/\s/g, " "); //Replace all the white spaces with single space each.
@@ -530,7 +487,7 @@ function CompletionEngine() {
         self.wordList = [];                                                         // Clear the previous suggestion list
         SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, "siddhi");   // Clear the previous snippet suggestions
         self.suggestedSnippets = [];
-        if (self.checkTheBeginning(editor)) {
+        if (checkTheBeginning(editor)) {
             self.$initialList();
         }
 
@@ -995,7 +952,7 @@ function CompletionEngine() {
         var temp = "";
         var flag = true;
 
-        self.streamStore = {};
+        self.patternEventList = {};
         self.$streamReference(result[0]);
         for (var i = result[0].length - 1; i >= 0; i--) {
             if (start == 0) {
@@ -1028,7 +985,7 @@ function CompletionEngine() {
             console.log("Event LIST ", temp);
         }
 
-        if (this.streamStore.hasOwnProperty(temp)) {
+        if (this.patternEventList.hasOwnProperty(temp)) {
             addCompletions([{value: "last", priority: 2}])
         } else {
             addCompletions(getStreamReferences().map(function (stream) {
@@ -1089,8 +1046,8 @@ function CompletionEngine() {
                 };
             }));
         } else {
-            if (this.streamStore.hasOwnProperty(result[1])) {
-                result[1] = this.streamStore[result[1]];
+            if (this.patternEventList.hasOwnProperty(result[1])) {
+                result[1] = this.patternEventList[result[1]];
             }
             if (this.streamAliasList.hasOwnProperty(result[1])) {
                 result[1] = this.streamAliasList[result[1]];
@@ -1140,7 +1097,7 @@ function CompletionEngine() {
         self.$streamReference(args[0]);
         self.$streamAlias(args[0]);
 
-        var ref = this.streamStore[results[1]];
+        var ref = this.patternEventList[results[1]];
         var attributeList = self.streamList[ref];
         addCompletions(attributeList.map(function (stream) {
             return {
@@ -1182,7 +1139,7 @@ function CompletionEngine() {
                     //    }
                     //}
 
-                    this.streamStore[ref] = value;
+                    this.patternEventList[ref] = value;
                 }
             }
         }
@@ -1209,8 +1166,8 @@ function CompletionEngine() {
      */
     function getStreamReferences() {
         var aliasList = [];
-        for (var propertyName in this.streamStore) {
-            if (this.streamStore.hasOwnProperty(propertyName))
+        for (var propertyName in this.patternEventList) {
+            if (this.patternEventList.hasOwnProperty(propertyName))
                 aliasList.push(propertyName)
         }
         return aliasList;
@@ -1347,22 +1304,7 @@ function CompletionEngine() {
                 description: suggestion.description,
                 returnType: suggestion.returnType
             };
-            if (completion.parameters) {
-                var snippet = generateSnippet({
-                    name: completion.caption,
-                    description: completion.description,
-                    parameters: completion.parameters,
-                    returnType: completion.returnType
-                });
-                addSnippets(snippet);
-
-                // Adding to the additional snippets to be used in token tool tips
-                if (!CompletionEngine.functionOperationSnippets.additional[completion.caption]) {
-                    CompletionEngine.functionOperationSnippets.additional[completion.caption] = snippet;
-                }
-            } else {
-                self.wordList.push(completion);
-            }
+            self.wordList.push(completion);
         }
     }
 
@@ -1435,16 +1377,7 @@ CompletionEngine.functionOperationSnippets = {
      *          }
      *    }
      */
-    inBuilt: {},
-
-    /* Additional function operations used by the completion engine
-     *
-     *    additional = {
-     *          functionOperation1Name : {snippet},
-     *          functionOperation2Name : {snippet}
-     *    {
-     */
-    additional: {}
+    inBuilt: {}
 };
 
 /*
@@ -1640,6 +1573,66 @@ function isEmpty(map) {
         }
     }
     return true;
+}
+
+/**
+ * Check whether the cursor is positioned next to a dot operator or namespace operator
+ *
+ * @param {Object} editor ace editor instance
+ * @returns {boolean} true if the cursor is positioned just after the dot operator or namespace operator
+ */
+function isKeyWordCompleterRequired (editor) {
+    var objectNameRegex = /\w*\.$/i;
+    var namespaceRegex = /\w*:$/i;
+    var txt = editor.getValue();
+    return !(objectNameRegex.test(txt) || namespaceRegex.test(txt));
+}
+
+/**
+ * Check whether the cursor is positioned at the beginning of a query
+ *
+ * @param {Object} editor ace editor instance
+ * @returns {boolean} true if the cursor is positioned at the beginning.
+ */
+function checkTheBeginning (editor) {
+    var position = editor.getCursorPosition();
+    var lineNumber = position.row;
+    var currentLine = editor.session.getLine(lineNumber);
+    var txt = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
+        row: 0,
+        column: 0
+    }, position));  // all the text up to the cursor position.
+
+    var tailingSpaces = /^\s*/i;
+    var tail = currentLine.substring(position.column); //rest of the line
+
+    if (tailingSpaces.test(tail)) {
+        // if the rest of the line after the cursor has only the whitespaces.
+
+        // set of regular expressions to identify the beginning of the statement
+        var name = identifier + "(\\." + identifier + ")*";
+        var annotationElement = "(" + name + "\\s*[=]\\s*)?[\"'](.)+[\"']";
+        var newStatement = /;\s+\S*$/i;
+        var blockCommentEnd = /[*][/]\s*\S*$/i; // just after the block comment
+        var lineComment = /--(.)*\s+\S*$/i;     // just after the line comment
+        var begin = /begin\s*\S*$/i;            // within the partition statement. just after the begin keyword
+        var spaces = /^\s*$/;
+        var startingWord = /^\s*\S*$/i;         //spaces followed by non-space characters
+        var annotationBody = name + "\\s*[(]\\s*" + annotationElement + "(\\s*[,]\\s*" + annotationElement + ")*\\s*[)]\\s*\\S*$";
+        var annotation = new RegExp("@\\s*" + annotationBody, "i");                     //annotation element
+        var planAnnotations = new RegExp("@\\s*plan\\s*:\\s*" + annotationBody, "i");   //Regular expression for plan-annotations.
+
+        if (newStatement.test(txt) || annotation.test(txt) || planAnnotations.test(txt) ||
+            blockCommentEnd.test(txt) || lineComment.test(txt) || begin.test(txt) ||
+            spaces.test(txt) || txt == "" || startingWord.test(txt)) {
+            if (SiddhiEditor.debug) {
+                console.warn(loggerContext + ":" + "checkTheBeginning" + "->");
+                console.log("New statement is suitable for current position");
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 exports.CompletionEngine = CompletionEngine;
