@@ -68,7 +68,8 @@
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
     SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
     SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
-    SiddhiEditor.trace = false;
+    SiddhiEditor.Tracing = {NONE: "NONE", ERROR: "ERROR", DEBUG: "DEBUG", INFO: "INFO"};
+    SiddhiEditor.Tracing.traceLevel = SiddhiEditor.Tracing.NONE;
 
     /**
      * Initialize the editor
@@ -79,7 +80,7 @@
     SiddhiEditor.init = function (config) {
         var editor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
-        SiddhiEditor.trace = !!config.trace;
+        SiddhiEditor.Tracing.traceLevel = config.traceLevel;
         editor.realTimeValidation = config.realTimeValidation;
         editor.tokenTooltip = new TokenTooltip(editor);
         editor.setReadOnly(config.readOnly);

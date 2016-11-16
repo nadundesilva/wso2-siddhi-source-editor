@@ -15,7 +15,6 @@
  */
 
 var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
-var loggerContext = "CustomSiddhiListener";
 
 function CustomSiddhiListener(editor) {
     SiddhiQLListener.call(this);     // inherit default listener

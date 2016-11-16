@@ -15,7 +15,6 @@
  */
 
 var ErrorListener = require("../../lib/antlr4-js-runtime/error/ErrorListener").ErrorListener;
-var loggerContext = "AceErrorListener";
 
 function AceErrorListener(editor) {
     ErrorListener.call(this);

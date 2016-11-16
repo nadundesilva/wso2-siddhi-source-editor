@@ -17,8 +17,6 @@
 // Loading meta data from the server
 loadMetaData();
 
-var loggerContext = "CompletionEngine";
-
 // Constants used by the engine
 var constants = {
     FUNCTIONS: "functions",
@@ -464,7 +462,7 @@ function CompletionEngine() {
         self.suggestedSnippets = [];
         self.wordList = [];                                                         // Clear the previous suggestion list
 
-        if (editorText == "") {
+        if (editorText == "" || new RegExp("^" + regex.identifier + "$", "i").test(editorText)) {
             self.$startOfStatement();
             SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
         } else {
