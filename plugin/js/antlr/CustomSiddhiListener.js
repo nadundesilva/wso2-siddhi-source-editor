@@ -121,11 +121,6 @@ function addStatement(ctx, editor, separator) {
         state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + separator,
         line: ctx.start.line
     });
-
-    if (SiddhiEditor.debug) {
-        console.warn(loggerContext + ":" + "addStatement" + "->");
-        console.log("StatementList", editor.statementsList);
-    }
 }
 
 /*

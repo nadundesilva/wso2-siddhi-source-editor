@@ -459,11 +459,6 @@ function CompletionEngine() {
         }
         editorText = editorText.substring(currentStatementStartIndex).replace(/^\s+/, "");
 
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "calculateCompletions" + "->");
-            console.log("input text", editorText);
-        }
-
         // Clear the suggestion lists
         SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, "siddhi");   // Clear the previous snippet suggestions
         self.suggestedSnippets = [];
@@ -494,11 +489,6 @@ function CompletionEngine() {
             } else {
                 var ruleRegex = new RegExp(ruleBase[a].regex, "i");
                 if (ruleRegex.test(editorText)) {
-                    if (SiddhiEditor.debug) {
-                        console.warn(loggerContext + ":" + "calculateCompletion" + "->");
-                        console.log("Matched regular expression : ", editorText, ruleBase[a]);
-                    }
-
                     if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
                         addCompletions(ruleBase[a].next.map(function (completion) {
                             if (typeof completion == "string") {
@@ -509,12 +499,6 @@ function CompletionEngine() {
                     } else {
                         executeLoadSuggestionFunctionByName.call(this, ruleBase[a].next, ruleRegex.exec(editorText));
                     }
-
-                    if (SiddhiEditor.debug) {
-                        console.warn(loggerContext + ":" + "calculateCompletion" + "->");
-                        console.log("Generated suggestion List", self.wordList);
-                    }
-
                     return;
                 }
             }

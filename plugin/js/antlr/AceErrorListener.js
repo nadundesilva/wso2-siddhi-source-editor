@@ -33,11 +33,6 @@ AceErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, 
             text: msg,
             type: "error"
         });
-    if (SiddhiEditor.debug) {
-        console.warn(loggerContext + ":" + "syntaxError" + "->");
-        console.error("  Error line " + line + ":" + column + " " + msg, " recognizer:", recognizer, " offendingSymbol:", offendingSymbol, " e:", e);
-    }
-
 };
 
 exports.AceErrorListener = AceErrorListener;
