@@ -275,7 +275,7 @@
     /**
      * Utils used by the SiddhiEditor
      */
-    SiddhiEditor.utils = (function() {
+    SiddhiEditor.utils = (function () {
         /**
          * Word wrap the the string with a maxWidth for each line
          *
@@ -283,7 +283,7 @@
          * @param {int} maxWidth The maximum width for the lines
          * @return {string} The word wrapped string
          */
-        this.wordWrap = function(str, maxWidth) {
+        this.wordWrap = function (str, maxWidth) {
             for (var i = maxWidth; i < str.length;) {
                 if (/\s/.test(str.charAt(i))) {
                     str = str.substring(0, i) + "\n" + str.substring(i + 1);
