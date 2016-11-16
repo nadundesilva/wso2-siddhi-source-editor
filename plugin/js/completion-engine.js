@@ -16,36 +16,65 @@
 
 var loggerContext = "CompletionEngine";
 
-// Aliases for the attribute names used in 'CompletionEngine.functionOperationSnippets.extensions' and 'CompletionEngine.functionOperationSnippets.inBuilt' json objects
-var FUNCTIONS = "functions";
-var STREAM_PROCESSORS = "streamProcessors";
-var WINDOW_PROCESSORS = "windowProcessors";
+// Constants used by the engine
+var constants = {
+    FUNCTIONS: "functions",
+    STREAM_PROCESSORS: "streamProcessors",
+    WINDOW_PROCESSORS: "windowProcessors"
+};
 
-// Set of regular expressions
-var identifier = "[a-zA-Z_][a-zA-Z_0-9]*";
-var anyChar = "(.|\\n)";
-var oneDataType = "(int|long|double|bool|object|string|time)";
-var queryActions = "insert|delete|update";
-var querySelection = "select";
-var queryOutput = "output";
-var groupBY = "(group\\s+by)";
-var having = "having";
-var queryInput = "((?!(" + querySelection + "|" + queryOutput + "|" + queryActions + "|" + having + "|" + groupBY + ")).)*";
-var querySection = "((?!(" + queryOutput + "|" + queryActions + ")).)*";
-var outputRate = "((?!(every|" + queryActions + ")).)*";
-var outputRateEvery = "((?!(" + queryActions + ")).)*";
+// Suggestion lists used by the engine
+var suggestions = {
+    logicalOperatorList:    ["and", "or", "not", "in", "is null"].map(function (operator) {
+                                return {value: operator, type: "Logical Operator"};
+                            }),
+    dataTypes:              ["int", "long", "double", "float", "string", "bool", "object"].map(function (dataType) {
+                                return {value: dataType, type: "Data Type"};
+                            }),
+    outputEventTypes:       ["current", "all", "expired"].map(function (eventType) {
+                                return {value: eventType};
+                            }),
+    timeValueTypes:         ["years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds"].map(function (timeValueType) {
+                                return {value: timeValueType};
+                            })
+};
 
-// Following keyword lists are repeated in many functions
-var logicalOperatorList = ["IN", "AND", "OR", "NOT", "IS NULL", "CONTAINS"].map(function (operator) {
-    return {
-        value: operator
-    };
-});
-var dataTypes = ["int", "float", "double", "bool", "time", "object", "string", "long"].map(function (dataType) {
-    return {
-        value: dataType
-    };
-});
+/*
+ * Regex strings used by the engine starts here
+ */
+var regex = {};
+regex.comment = "(?:\\/\\*[^\\*]*\\*\\/)|(?:--.*\n)";
+regex.identifier = "[a-zA-Z_][a-zA-Z_0-9]*";
+regex.namespace = "([^\\(:]*):";
+regex.hash = "\\s*#";
+regex.comma = ",\\s*";
+regex.dataTypes = suggestions.dataTypes.map(function (dataType) {return dataType.value;}).join("|");
+regex.functionOperation = regex.identifier + "\\s*\\((?:(?:.(?!\\)))*.\\)|\\))\\s*";
+
+regex.query = {};
+
+regex.query.input = {};
+regex.query.input.windowKeywordAndDot= "window\\s*\\.";
+regex.query.input.sourceRegex = "(" + regex.identifier + ")\\s*";
+regex.query.input.filterRegex = "\\[(?:(?:.(?!\\]))*.\\]|\\])\\s*";
+regex.query.input.streamFunctionRegex = regex.hash + "\\s*(?:" + regex.identifier + "\\s*:\\s*)?" + regex.functionOperation;
+regex.query.input.windowRegex = "(?:" + regex.hash + "\\s*(?:" + regex.query.input.windowKeywordAndDot + "\\s*)?" + "(?:" + regex.identifier + "\\s*:\\s*)?" + regex.functionOperation + ")?";
+regex.query.input.sourceHandlersRegex = "(?:" + regex.query.input.filterRegex + "|" + regex.query.input.streamFunctionRegex + ")*";
+regex.query.input.standardStreamRegex = regex.query.input.sourceRegex + regex.query.input.sourceHandlersRegex + regex.query.input.windowRegex + regex.query.input.sourceHandlersRegex;
+regex.query.input.patternStreamRegex = "(" + regex.identifier + ")=(" + regex.identifier + ")";
+
+regex.query.selection = {};
+regex.query.selection.attribute = "(?:" + regex.identifier + "|" + regex.functionOperation + ")\\s*";
+regex.query.selection.attributesList = "(?:" + regex.query.selection.attribute + ")(?:" + regex.comma + regex.query.selection.attribute + ")*";
+
+regex.query.outputRate = {};
+regex.query.outputRate.types = "all|first|last";
+
+regex.query.output = {};
+regex.query.output.eventTypes = "(?:current|all|expired)\\s+";
+/*
+ * Regex strings used by the engine ends here
+ */
 
 /*
  * Snippets to be used in the ace editor at the start of a statement
@@ -152,156 +181,119 @@ var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Stat
  */
 var ruleBase = [
     {
-        regex: "@(p(l(a(n?)?)?)?)((?![)]).)*$",
+        regex: "@[^\\(]*$",
         next: [
-            {value: 'Plan:name(\'Name of the plan\')'},
-            {value: 'Plan:description(\'Description of the plan\')'},
-            {value: 'Plan:trace(\'true|false\')'},
-            {value: 'Plan:statistics(\'true|false\')'},
-            {value: 'Import(\'StreamName\')'},
-            {value: 'Export(\'StreamName\')'}
+            'Plan:name(\'Name of the plan\')',
+            'Plan:description(\'Description of the plan\')',
+            'Plan:trace(\'true|false\')',
+            'Plan:statistics(\'true|false\')',
+            'Import(\'StreamName\')',
+            'Export(\'StreamName\')',
+            'Config(async=true)',
+            'info(name=\'stream_id\')'
         ]
     },
+
+    /*
+     * Definition rules starts here
+     */
     {
-        regex: "@\\w*((?![)]).)*$",
-        next: [
-            {value: 'Config(async=true)'},
-            {value: 'info(name=\'stream_id\')'},
-            {value: 'Plan:name(\'Name of the plan\')'},
-            {value: 'Plan:description(\'Description of the plan\')'},
-            {value: 'Plan:trace(\'true|false\')'},
-            {value: 'Plan:statistics(\'true|false\')'},
-            {value: 'Import(\'StreamName\')'},
-            {value: 'Export(\'StreamName\')'}
-        ]
+        regex: "define\\s+[^\\s@]*$",
+        next: ["stream ", "table ", "trigger ", "function ", "window "]
     },
     {
-        regex: "\\0$",
-        next: "$initialList"
+        regex: "define\\s+(stream|table|window)\\s+" + regex.identifier + "\\s*\\((\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*,)*\\s*" +
+                    regex.identifier + "\\s+[^\\s" +
+                "\\),]*$",
+        next: suggestions.dataTypes
     },
     {
-        regex: "\\s+in\\s+$",
-        next: "$TableSuggestions"
+        regex: "define\\s+trigger\\s+" + regex.identifier + "\\s+[^\\s]*$",
+        next: ["at"]
     },
     {
-        regex: "from\\s+" + queryInput + "#window\\.$",
-        next: "$windowPhrase"
+        regex: "define\\s+trigger\\s+" + regex.identifier + "\\s+at\\s+[^\\s]*$",
+        next: ["every"]
     },
     {
-        regex: "from\\s+" + queryInput + "#(.)+:$",
-        next: "$nameSpacePhrase"
+        regex: "define\\s+function\\s+" + regex.identifier + "\\s*\\[[^\\s]*(?!\\])$",
+        next: ["JavaScript", "R", "Scala"]
     },
     {
-        regex: "(\\w+)\\:$",
-        next: "$nameSpacePhrase"
+        regex: "define\\s+function\\s+" + regex.identifier + "\\s*\\[\\s*[^\\s]*\\s*\\]\\s+[^\\s]*$",
+        next: ["return"]
     },
     {
-        regex: "(\\w+)\\[\\s*(\\d+|last|last-\\d+)\\s*\\]\\.$",
-        next: "$streamReferenceHandler"
+        regex: "define\\s+function\\s+" + regex.identifier + "\\s*\\[\\s*[^\\s]*\\s*\\]\\s+return\\s+[^\\s]*$",
+        next: suggestions.dataTypes
     },
     {
-        regex: "(\\w+)\\.$",
-        next: "$resolveVariable"
+        regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*,)*\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*" +
+                "\\)\\s+[^\\s:\\(]*$",
+        next: "$namespacesAndInBuiltWindowsAndStreamProcessors"
     },
     {
-        regex: "from\\s+" + queryInput + "#\\w*$",
-        next: "$processorPhrase"
+        regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((?:\\s*" +
+                    regex.identifier + "\\s+(?:" + regex.dataTypes +  ")\\s*,)*\\s*" +
+                    regex.identifier + "\\s+(?:" + regex.dataTypes +  ")\\s*" +
+                "\\)\\s+(" + regex.identifier + "):[^\\s\\(]*$",
+        next: "$extensionWindowsAndStreamProcessors"
     },
     {
-        regex: "insert\\s+((?!(into|;)).)*$",
-        next: [{value: "into"}, {value: "events"}, {value: "all"}, {value: "current"}, {value: "expired"}]
+        regex: "define\\s+window\\s+(" + regex.identifier + ")\\s*\\((\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*,)*\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*" +
+                "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*\\((\\s*" + regex.identifier + "\\s*,)*\\s*[^\\s\\)]*$",
+        next: "$windowDefinitionFunctionOperationParameters"
     },
     {
-        regex: "insert(.)*into((?!(;)).)*$",
-        next: "$TableSuggestions"
+        regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*,)*\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*" +
+                "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*\\(.*\\)\\s+[^\\s]*$",
+        next: ["output"]
     },
     {
-        regex: "from.*(delete|update)((?!(on|for)).)*$",
-        next: "$UDPhrase" //for,on,tablenames
+        regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*,)*\\s*" +
+                    regex.identifier + "\\s+(" + regex.dataTypes +  ")\\s*" +
+                "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*\\(.*\\)\\s+output\\s+[^\\s]*$",
+        next: suggestions.outputEventTypes.map(function (completion) {
+            return Object.assign({}, completion, {
+                value: completion.value + " events;"
+            });
+        })
+    },
+    /*
+     * Definition rules ends here
+     */
+    {
+        regex: "(from)\\s+((?:.(?!select|group\\s+by|having|output|insert|delete|update))*)" +
+                "(?:\\s+(select)\\s+((?:.(?!group\\s+by|having|output|insert|delete|update))*)" +
+                    "(?:\\s+(group\\s+by)\\s+((?:.(?!having|output|insert|delete|update))*))?" +
+                    "(?:\\s+(having)\\s+((?:.(?!output|insert|delete|update))*))?" +
+                ")?" +
+                "(?:\\s+(output)\\s+((?:.(?!insert|delete|update))*))?" +
+                "(?:\\s+((?:insert\\s+overwrite|delete|update|insert))\\s+((?:.(?!;))*.?))?$",
+        next: "$query"
+    },
+    /*
+     * Partition rules starts here
+     */
+    {
+        regex: "partition\\s+[a-zA-Z_0-9]*$",
+        next: ["with"]
     },
     {
-        regex: "from.*(delete|update)\\s+" + identifier + "\\s+for((?!on).)*$",
-        next: [{value: "all"}, {value: "current"}, {value: "expired"}, {value: "events"}, {value: "on"}]   //all , current, expired , events .
-    },
-    {
-        regex: "from.*(delete|update)\\s+(" + identifier + ").*on.*((?!;).)*$",
-        next: "$UDConditionPhrase"
-    },
-    {
-        regex: "partition\\s+$",
-        next: [{value: "with"}]
-    },
-    {
-        regex: "partition\\s+with\\s+[(](\\s*" + identifier + "\\s+of\\s+" + identifier + "\\s*[,])*\\s*$",
-        next: "$allAttributeList"
-    },
-    {
-        regex: "partition\\s+with\\s+[(](\\s*" + identifier + "\\s+of\\s+" + identifier + "\\s*[,])*\\s*" + identifier + "\\s+$",
-        next: [{value: "of"}]
-    },
-    {
-        regex: "partition\\s+with\\s+[(](\\s*" + identifier + "\\s+of\\s+" + identifier + "\\s*[,])*\\s*" + identifier + "\\s+of\\s+$",
-        next: "$partitionStreamList"
-    },
-    {
-        regex: "define\\s*((?!(stream|table|function)).)*$",
-        next: [{value: "stream"}, {value: "table"}, {value: "function"}]
-    },
-    {
-        regex: "define\\s+function\\s+" + identifier + "\\s+$",
-        next: [{value: " [language_name] "}]
-    },
-    {
-        regex: "define\\s+function\\s+" + identifier + "\\s+\\[\\s*\\w+\\s*\\]\\s+$",
-        next: [{value: "return"}]
-    },
-    {
-        regex: "define\\s+function\\s+" + identifier + "\\s+\\[\\s*\\w+\\s*\\]\\s+return\\s+$",
-        next: dataTypes
-    },
-    {
-        regex: "define\\s+function\\s+" + identifier + "\\s+\\[\\s*\\w+\\s*\\]\\s+return\\s+" + oneDataType + "\\s+$",
-        next: [{value: "{ \"Function Body\"  }"}]
-    },
-    {
-        regex: "define\\s+(stream|table)\\s+" + identifier + "\\s*[(](\\s*" + identifier + "\\s+\\w+\\s*[,])*\\s*" + identifier + "\\s+((?!(int|string|float|object|time|bool|[,]|;))" + anyChar + ")*$",
-        next: dataTypes
-    },
-    {
-        regex: "from.*(select)?.*" + groupBY + "?.*having" + querySection + "$", //output | insert | delete | update is possible
-        next: "$selectPhraseHaving"
-    },
-    {
-        regex: "from.*(select)?.*" + groupBY + "\\s+" + querySection + "$", // having | output | insert| delete | update is possible
-        next: "$selectPhraseGroupBy"
-    },
-    {
-        regex: "from(.)*\\[((?!\\]).)*$",
-        next: "$filterPhrase"
-    },
-    {
-        cfg: "_checkNestedSquareBracketInFROMPhrase",
-        next: "$filterPhrase"
-    },
-    {
-        regex: "from\\s+" + queryInput + "$",    //group by , having , output    join ,on "expired events   "from\\s+((?!select).)*$"
-        next: "$fromPhraseStreamIdList"
-    },
-    {
-        regex: "from(.)*select\\s+" + querySection + "$",             //output ,group by , having , insert, delete , update
-        next: "$selectPhraseAttributesList"
-    },
-    {
-        regex: "from(.)*output\\s+" + outputRate + "$",             //insert, delete , update
-        next: [{value: "snapshot"}, {value: "all"}, {value: "last"}, {value: "first"}, {value: "every"}]
-    },
-    {
-        regex: "from(.)*output.*every" + outputRateEvery + "$",             //insert, delete , update
-        next: [
-            {value: "events"}, {value: "min"}, {value: "hours"}, {value: "weeks"}, {value: "days"},
-            {value: "months"}, {value: "years"}, {value: "insert"}, {value: "delete"}, {value: "update"}
-        ]
+        regex: "partition\\s+with\\s*((?:.(?!\\s+begin))*.)\\s*(?:(begin))?(?:\\s+((?:.(?!\\s+end))*))?$",
+        next: "$partition"
     }
+    /*
+     * Partition rules ends here
+     */
 ];
 
 // Loading meta data from the server
@@ -336,61 +328,28 @@ function CompletionEngine() {
     self.windowList = {};
 
     /*
-     * Stream aliases in query are stored as a list of  aliasName:streamID .
-     * ex :
-     *  query
-     *  -----
-     *  from streamB as myStream join streamA as foo ...
-     *
-     *  representation
-     *  --------------
-     *  streamAliasList = [
-     *      {
-     *          myStream : streamB,
-     *          fooStream : streamA
-     *      }
-     *  ]
-     */
-    self.streamAliasList = {};
-
-    /*
-     * Event references in a query are stored as a list of  aliasName:streamID .
-     * ex :
-     *  query
-     *  -----
-     *  from e1=streamB -> e2=streamA ...
-     *
-     *  representation
-     *  --------------
-     *  patternEventList = {
-     *    e1 : streamB,
-     *    e2 : streamA
-     *  }
-     */
-    self.patternEventList = {};
-
-    /*
      * CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
      * wordList = {
-     *       definition:"suggestion name",
-     *       value : "suggestion value"
-     *       score : 2,
-     *       meta : "keyword"
+     *       caption: "suggestion name",
+     *       value: "suggestion value",
+     *       score: 2,
+     *       meta: "suggestion type"
      * }
      */
     self.wordList = [];
 
-    // Snippets that had been added to the SnippetManager. This is stored so that they can be removed when the next suggestion need to be calculated
+    // Snippets that had been added to the SnippetManager
+    // This is stored so that they can be unregistered when the next suggestion need to be calculated
     self.suggestedSnippets = [];
 
     // SiddhiCompleter provides language specific suggestions
     self.SiddhiCompleter = {
         getCompletions: function (editor, session, pos, prefix, callback) {
-            self.calculateCompletions(editor);      // Calculate the suggestions list for current context
-            checkTheBeginning(editor);
+            // Calculate the suggestions list for current context
+            // context-handler functions will be updated the the worldList based on the context around the cursor position
+            self.calculateCompletions(editor);
 
             // This completer will be using the wordList array
-            // context-handler functions will be updated the the worldList based on the context around the cursor position
             callback(null, self.wordList);
         }
     };
@@ -405,8 +364,9 @@ function CompletionEngine() {
                 for (var i = snippets.length; i--;) {
                     var s = snippets[i];
                     var caption = s.name || s.tabTrigger;
-                    if (!caption)
+                    if (!caption) {
                         continue;
+                    }
                     completions.push({
                         caption: caption,
                         snippet: s.content,
@@ -441,19 +401,18 @@ function CompletionEngine() {
      */
     self.adjustAutoCompletionHandlers = function (editor) {
         // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
-        var completerList = [self.SiddhiCompleter, self.SnippetCompleter];
         // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-        if (isKeyWordCompleterRequired(editor)) {
-            // If the cursor is in the middle of a query and not preceded by a dot operator
+        var completerList = [self.SiddhiCompleter, self.SnippetCompleter];
+
+        // Adding keyword completor if the cursor is not in front of dot or colon
+        var objectNameRegex = new RegExp(regex.identifier + "\\s*\\.\\s*$", "i");
+        var namespaceRegex = new RegExp(regex.identifier + "\\s*:\\s*$", "i");
+        var editorText = editor.getValue();
+        if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText))) {
             completerList.push(SiddhiEditor.langTools.keyWordCompleter);
         }
-        editor.completers = completerList;
 
-        if (checkTheBeginning(editor)) {
-            SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
-        } else {
-            SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
-        }
+        editor.completers = completerList;
     };
 
     /**
@@ -462,58 +421,90 @@ function CompletionEngine() {
      * @param {Object} editor ace editor instance
      */
     self.calculateCompletions = function (editor) {
-        var pos = editor.getCursorPosition();   //cursor position
-        var text = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
+        var pos = editor.getCursorPosition();   // Cursor position
+        var editorText = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
             row: 0,
             column: 0
-        }, pos));                               //all the text before the cursor position
-        var tempStatements = text.split(";");
-        text = tempStatements[tempStatements.length - 1]; //get the last statement.
+        }, pos));                               // All the text before the cursor
 
-        // Clear the maps for event references and stream alias
-        self.patternEventList = {};
-        self.streamAliasList = {};
+        editorText = editorText.replace(new RegExp(regex.comment, "ig"), "");       // Removing comments
+        editorText = editorText.replace(/\s+/g, " ");           // Replacing all spaces with single white spaces
 
-        text = text.replace(/\s/g, " "); //Replace all the white spaces with single space each.
-        // This step is important for identifying the statements span across  multiple lines using regular expressions.
-        // Regular expressions listed in 'ruleBase' structure only identify the prefixes span in single line.
-        // By replacing newline characters of the input text with spaces, those rules can be used for identifying multiline prefixes.
+        // Get the last statement
+        var statementStartToEndKeywordMap = {
+            "@": "\\)",
+            "define": ";",
+            "from": ";",
+            "partition": "end\\s*;"
+        };
+        var currentStatementStartIndex = 0;
+        editorTextLoop: for (var i = 0; i < editorText.length; i++) {
+            keywordMapLoop: for (var keyword in statementStartToEndKeywordMap) {
+                if (statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
+                        new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
+                    var endKeyword = statementStartToEndKeywordMap[keyword];
+                    for (var j = i + new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1].length; j < editorText.length; j++) {
+                        if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
+                            currentStatementStartIndex = j + new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1].length;
+                            i = currentStatementStartIndex;
+                            break keywordMapLoop;
+                        }
+                    }
+                    break editorTextLoop;
+                }
+            }
+        }
+        editorText = editorText.substring(currentStatementStartIndex).replace(/^\s+/, "");
 
         if (SiddhiEditor.debug) {
             console.warn(loggerContext + ":" + "calculateCompletions" + "->");
-            console.log("input text", text);
+            console.log("input text", editorText);
         }
 
-        self.wordList = [];                                                         // Clear the previous suggestion list
+        // Clear the suggestion lists
         SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, "siddhi");   // Clear the previous snippet suggestions
         self.suggestedSnippets = [];
-        if (checkTheBeginning(editor)) {
-            self.$initialList();
+        self.wordList = [];                                                         // Clear the previous suggestion list
+
+        if (editorText == "") {
+            self.$startOfStatement();
+            SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
+        } else {
+            SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
         }
 
         for (var a = 0; a < ruleBase.length; a++) {
             if (ruleBase[a].hasOwnProperty("cfg")) {
-                if (executeFunctionByName.call(this, ruleBase[a].cfg, [text])) {
+                if (executeLoadSuggestionFunctionByName.call(this, ruleBase[a].cfg, [editorText])) {
                     if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
-                        addCompletions(ruleBase[a].next);
+                        addCompletions(ruleBase[a].next.map(function (completion) {
+                            if (typeof completion == "string") {
+                                completion = {value: completion};
+                            }
+                            return completion;
+                        }));
                     } else {
-                        executeFunctionByName.call(this, ruleBase[a].next, [text]);
+                        executeLoadSuggestionFunctionByName.call(this, ruleBase[a].next, [editorText]);
                     }
                     return;
                 }
             } else {
-                var regex = new RegExp(ruleBase[a].regex, "i");
-                if (regex.test(text)) {
+                var ruleRegex = new RegExp(ruleBase[a].regex, "i");
+                if (ruleRegex.test(editorText)) {
                     if (SiddhiEditor.debug) {
                         console.warn(loggerContext + ":" + "calculateCompletion" + "->");
-                        console.log("Matched regular expression : ", text, ruleBase[a]);
+                        console.log("Matched regular expression : ", editorText, ruleBase[a]);
                     }
 
                     if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
-                        addCompletions(ruleBase[a].next)
-
+                        addCompletions(ruleBase[a].next.map(function (completion) {
+                            if (typeof completion == "string") {
+                                completion = {value: completion};
+                            }
+                            return completion;
+                        }));
                     } else {
-                        executeFunctionByName.call(this, ruleBase[a].next, [text, regex]);
+                        executeLoadSuggestionFunctionByName.call(this, ruleBase[a].next, ruleRegex.exec(editorText));
                     }
 
                     if (SiddhiEditor.debug) {
@@ -527,678 +518,659 @@ function CompletionEngine() {
         }
     };
 
-
-    /*************************************************************************************************************************
-     *                                          Context identification functions
-     *************************************************************************************************************************/
-
-    self._checkNestedSquareBracketInFROMPhrase = function (arg) {
-        var fromRegxp = /from((?:.(?!from))+)$/i;
-        var fromPhrase = fromRegxp.exec(arg[0]);
-        if (fromPhrase == null) {
-            return false;
-        }
-
-        var bracketCouter = 0;
-        for (var index = fromPhrase[1].length - 1; index >= 0; index--) {
-
-            if (fromPhrase[1].charAt(index) == '[')
-                bracketCouter++;
-            else if (fromPhrase[1].charAt(index) == ']')
-                bracketCouter--;
-
-            if (bracketCouter > 0)
-                return true;
-        }
-        return false;
-    };
-
-
     /*************************************************************************************************************************
      *                                          Auto completions context-handler functions
      *************************************************************************************************************************/
 
-    self.$initialList = function () {
-        addCompletions(
-            [{value: "define"}, {value: "from"}, {value: "partition"}, {value: "@"}]
-        );
-    };
-
-    self.$fromPhraseStreamIdList = function (args) {
-        var essentialKeyWords = [
-            "output", "outer", "inner", "left", "unidirectional", "all", "events", "insert",
-            "delete", "update", "select", "as", "join", "on", "every", "group by", "having", "within"
-        ];
-        self.$streamReference(args[0]);
-        self.$streamAlias(args[0]);
-
-        addCompletions(essentialKeyWords.map(function (keyword) {
-            return {
-                value: keyword,
-                priority: 2
-            };
-        }));
-        addCompletions(Object.keys(self.streamList).map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream",
-                priority: 3
-            };
-        }));
-        addCompletions(getStreamReferences().map(function (stream) {
-            return {
-                value: stream + ".",
-                type: "Stream",
-                priority: 4
-            };
-        }));
-        addCompletions(getStreamAliasList().map(function (stream) {
-            return {
-                value: stream + ".",
-                type: "Stream",
-                priority: 5
-            };
+    /**
+     * Load the initial suggestions list
+     */
+    self.$startOfStatement = function () {
+        addCompletions(["define ", "from ", "partition ", "@"].map(function (completion) {
+            return {value: completion};
         }));
     };
 
-    self.$selectPhraseAttributesList = function (args) {
-        // Stream Alias yet to be handled , both in 'stream as e' form and "e1=stream"
-        var keywords = [
-            {value: "as"}, {value: "insert"}, {value: "group by"}, {value: "having"},
-            {value: "output"}, {value: "update"}, {value: "delete"}
-        ];
-
-        var ns = getExtensionNamesSpaces(FUNCTIONS);
-        ns = ns.map(function (d) {
-            return d + ":";
-        });
-
-        var tableList = Object.keys(self.tableList);
-        tableList = tableList.map(function (d) {
-            return d + ".";
-        });
-
-        var result = args[1].exec(args[0]);
-        var streamNames = Object.keys(self.streamList);
-        var fromPhrase = /from(.*)select/i.exec(result[0]);
-
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$selectPhraseAttributesList" + "->");
-            console.log("From Phrase", fromPhrase);
-        }
-
-        self.$streamAlias(result[0]);
-        var aliasList = getStreamAliasList();
-        aliasList = aliasList.map(function (d) {
-            return d + ".";
-        });
-
-        self.$streamReference(result[0]);
-        var refList = getStreamReferences();
-        refList = refList.map(function (d) {
-            return d + ".";
-        });
-
-        var streamIds = [];
-        var list = [];
-        for (var index = 0; index < streamNames.length; index++) {
-            var regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
-
-            if (fromPhrase[1].match(regex)) {
-                streamIds.push(streamNames[index]);
-                list = list.concat(self.streamList[streamNames[index]]);
-            }
-        }
-
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$selectPhraseAttributesList" + "->");
-            console.log("generated list", list);
-        }
-
-        addCompletions(streamIds.map(function (stream) {
-            return {
-                value: stream + ".",
-                type: "Stream",
-                priority: 5
-            };
-        }));
-        addCompletions(list.map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream Attribute",
-                priority: 8
-            };
-        }));
-        addCompletions(refList.map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream",
-                priority: 7
-            };
-        }));
-        addCompletions(aliasList.map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream",
-                priority: 6
-            };
-        }));
-        addCompletions(tableList.map(function (table) {
-            return {
-                value: table,
-                type: "Event Table",
-                priority: 4
-            };
-        }));
-        addCompletions(ns.map(function (namespace) {
-            return {
-                value: namespace,
-                type: "Extension Namespace",
-                priority: 3
-            };
-        }));
-        addCompletions(keywords.map(function (keyword) {
-            keyword.priority = 1;
-            return keyword;
-        }));
-        addSnippets(getInBuiltFunctionNames());
-    };
-
-    self.$windowPhrase = function () {
+    /**
+     * Load the namespaces of extension windows and stream processors, in-built window names and in-built stream processor names
+     */
+    self.$namespacesAndInBuiltWindowsAndStreamProcessors = function () {
         addSnippets(getInBuiltWindowProcessors());
-
-        addCompletions(getExtensionNamesSpaces(WINDOW_PROCESSORS).map(function (d) {
-            return {
-                value: d + ":",
-                type: "Extension Namespace"
-            };
-        }));
+        addSnippets(getInBuiltStreamProcessors());
+        addSnippets(getExtensionNamesSpaces([constants.WINDOW_PROCESSORS, constants.STREAM_PROCESSORS]));
+        addCompletions({value: "window.", priority: 2});
     };
 
-    self.$processorPhrase = function () {
-        // If built in streamProcessors exist , they should be included
-        addCompletions(
-            [{value: "window.", priority: 2}]
-        );
-
-        addCompletions(getExtensionNamesSpaces(WINDOW_PROCESSORS, STREAM_PROCESSORS).map(function (ns) {
-            return {
-                value: ns + ":",
-                type: "Extension Namespace",
-                priority: 1
-            };
-        }));
+    /**
+     * Load the extension windows and stream processors for a namespace
+     *
+     * @param {Array} args
+     */
+    self.$extensionWindowsAndStreamProcessors = function (args) {
+        var namespace = args[1];
+        addSnippets(getExtensionWindowProcessors(namespace));
+        addSnippets(getExtensionStreamProcessors(namespace));
     };
 
-    self.$allAttributeList = function () {
-        var streamList = Object.keys(self.streamList);
-        for (var s = 0; s < streamList.length; s++) {
-            var attributeList = Object.keys(self.streamList[streamList[s]]);
-            addCompletions(attributeList.map(function (attribute) {
+    self.$windowDefinitionFunctionOperationParameters = function (args) {
+        var stream = args[1];
+        if (self.windowList[stream]) {
+            addCompletions(Object.keys(self.windowList[stream].attributes).map(function (attribute) {
                 return {
                     value: attribute,
-                    type: "Stream Attribute",
-                    priority: s
-                };
+                    type: "Attribute"
+                }
             }));
         }
     };
 
-    self.$partitionStreamList = function (args) {
-        var tempList = [];
-        var regx = "(" + identifier + ")\\s+of\\s+\\w*$";
-        var identifierResult = (new RegExp(regx)).exec(args[0]);
-
-        var streamList = Object.keys(self.streamList);
-        for (var i = 0; i < streamList.length; i++) {
-            var attributeList = Object.keys(self.streamList[streamList[i]]);
-            for (var index = 0; index < attributeList.length; index++) {
-                if (attributeList[index] == identifierResult[1]) {
-                    tempList.push(streamList[i]);
-                    break;
-                }
+    self.$query = function (args) {
+        // Find the part of the query in which the cursor is at
+        for (var i = args.length - 1; i > 0; i--) {
+            if (args[i] != undefined) {
+                break;
             }
         }
-        addCompletions(tempList.map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream"
-            };
-        }));
-    };
-
-    self.$TableSuggestions = function () {
-        addCompletions(Object.keys(self.tableList).map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream"
-            };
-        }));
-    };
-
-    self.$UDPhrase = function () {
-        addCompletions([{value: "for"}, {value: "on"}].map(function (keyword) {
-            keyword.priority = 1;
-            return keyword;
-        }));
-
-        addCompletions(Object.keys(self.tableList).map(function (table) {
-            return {
-                value: table,
-                type: "Event Table",
-                priority: 2
-            };
-        }));
-    };
-
-    self.$UDConditionPhrase = function (args) {
-        addCompletions(
-            [{value: "IS NULL"}, {value: "NOT"}, {value: "AND"}, {value: "OR"}].map(function (keyword) {
-                keyword.priority = 1;
-                return keyword;
-            })
-        );
-
-        var result = args[1].exec(args[0]);
-        var streamNames = Object.keys(self.streamList);
-        var tableNames = Object.keys(self.tableList);
-
-        var fromPhrase = /from(.*)(update|delete)/i.exec(result[0]);
-        var streamList = [];
-        var attributeList = [];
-        var regex;
-        for (var i = 0; i < streamNames.length; i++) {
-            regex = new RegExp("[^a-zA-Z]" + streamNames[i] + "[^a-zA-Z0-9]");
-
-            if (fromPhrase[1].match(regex)) {
-                streamList.push(streamNames[i]);
-                attributeList = attributeList.concat(Object.keys(self.streamList[streamNames[i]]));
-            }
-        }
-        addCompletions(streamList.map(function (d) {
-            return {
-                value: d + ".",
-                type: "Stream",
-                priority: 2
-            }
-        }));
-
-        var updatePhrase = /(update|delete)(.*)on/i.exec(result[0]);
-        var tableList = [];
-        for (i = 0; i < tableNames.length; i++) {
-            regex = new RegExp("[^a-zA-Z]" + tableNames[i] + "[^a-zA-Z0-9]");
-            if (updatePhrase[2].match(regex)) {
-                //
-                // if( updatePhrase[2].indexOf(tableNames[i]))
-                tableList.push(tableNames[i]);
-            }
-        }
-        addCompletions(tableList.map(function (d) {
-            return {
-                value: d + ".",
-                type: "Event Table",
-                priority: 4
-            }
-        }));
-
-        addCompletions(attributeList.map(function (attribute) {
-            return {
-                value: attribute,
-                type: "Stream Attribute",
-                priority: 3
-            };
-        }));
-    };
-
-    self.$selectPhraseGroupBy = function (args) {
-        var keywords = [{value: "output"}, {value: "having"}, {value: "insert"}, {value: "delete"}, {value: "update"}];
-        var result = args[1].exec(args[0]);
-        var regex = /from(.*)group/i;
-        var fromPhrase = regex.exec(result[0]);
-
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$selectPhraseGroupBy" + "->");
-            console.log("fromPhrase:", fromPhrase);
-        }
-
-        var streamNames = Object.keys(self.streamList);
-
-        addCompletions(keywords.map(function (keyword) {
-            keyword.priority = 1;
-            return keyword;
-        }));
-        addCompletions(streamNames.map(function (stream) {
-            return {
-                value: stream + ".",
-                type: "Stream",
-                priority: 2
-            };
-        }));
-        for (var index = 0; index < streamNames.length; index++) {
-            regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
-            if (fromPhrase[1].match(regex)) {
-                addCompletions(Object.keys(self.streamList[streamNames[index]]).map(function (stream) {
-                    return {
-                        value: stream,
-                        type: "Stream Attribute",
-                        priority: 3
-                    };
-                }));
-            }
+        switch (args[i - 1]) {
+            case "from":
+                handleQueryInputSuggestions(args);
+                break;
+            case "select":
+                handleQuerySelectionSuggestions(args);
+                break;
+            case "group by":
+                handleGroupBySuggestions(args);
+                break;
+            case "having":
+                handleHavingSuggestions(args);
+                break;
+            case "output":
+                handleQueryOutputRateSuggestions(args);
+                break;
+            case "insert":
+                handleQueryInsertIntoSuggestions(args);
+                break;
+            case "insert overwrite":
+            case "delete":
+            case "update":
+                handleQueryInsertOverwriteDeleteUpdateSuggestions(args);
+                break;
+            default:
         }
     };
 
-    self.$selectPhraseHaving = function (args) {
-        var result = args[1].exec(args[0]);
-        var regx = /from(.*)having/i;
-        var fromPhrase = regx.exec(result[0]);
-        var keywords = [{value: "output"}, {value: "insert"}, {value: "delete"}, {value: "update"}];
+    /**
+     * Handle the query input suggestions for the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleQueryInputSuggestions(regexResults) {
+        var queryInput = regexResults[2];
 
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$selectPhraseHaving" + "->");
-            console.log("fromPhrase:", fromPhrase);
-        }
+        // Regexps used for identifying the suggestions
+        var sourceSuggestionsRegex = new RegExp("(?:" +
+                "^[a-zA-Z_0-9]*|" +                                     // Source name at the start of query input
+                "\\s+join\\s+(?:[a-zA-Z_0-9]*)?|" +                     // Source name after "join" keyword
+                regex.identifier + "\\s*=\\s*(?:[a-zA-Z_0-9]*)?" +      // Source name after "=" in patterns
+            ")$", "i");
+        var afterHashSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash + "[^\\(\\.:]*$", "i");
+        var streamProcessorExtensionSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash + regex.namespace + "[^\\(]*$", "i");
+        var windowSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash + "\\s*" + regex.query.input.windowKeywordAndDot + "[^\\(:]*$", "i");
+        var windowExtensionSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash + "\\s*" + regex.query.input.windowKeywordAndDot + regex.namespace + "[^\\(]*$", "i");
+        var windowAndStreamProcessorParameterSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "\\s*#" +
+            "(?:\\s*" + regex.query.input.windowKeywordAndDot + ")?" +
+            "(?:\\s*" + regex.identifier + "\\s*:)?" +
+            "\\s*" + regex.identifier + "\\s*\\([^\\)]*$", "i");
+        var patternQueryFilterSuggestionsRegex = new RegExp(regex.query.input.patternStreamRegex + "\\[(?:.(?!\\]))*$", "i");
+        var nonPatternQueryFilterSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "\\[(?:.(?!\\]))*$", "i");
+        var afterStreamSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "\\s+[^\\[#]*$", "i");
+        var afterUnidirectionalKeywordSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "\\s+unidirectional\\s+[a-zA-Z_0-9]*$", "i");
+        var afterOnKeywordSuggestionsRegex = new RegExp("\\s+on\\s+(?:.(?!\\s+within))*$", "i");
+        var afterWithinKeywordSuggestionsRegex = new RegExp("\\s+within\\s+(?:.(?!select|group\\s+by|having|output|insert|delete|update))*$", "i");
 
-        var streamNames = Object.keys(self.streamList);
-        var attributeList = [];
-        for (var index = 0; index < streamNames.length; index++) {
-            var regex = new RegExp("[^a-zA-Z]" + streamNames[index] + "[^a-zA-Z0-9]");
-            if (fromPhrase[1].match(regex)) {
-                attributeList = attributeList.concat(Object.keys(self.streamList[streamNames[index]]));
-            }
-        }
-
-        addCompletions(keywords.concat(logicalOperatorList).map(function (keyword) {
-            keyword.priority = 2;
-            return keyword;
-        }));
-
-        addCompletions(streamNames.map(function (d) {
-            return {
-                value: d + ".",
-                type: "Stream",
-                priority: 4
-            };
-        }));
-
-        addCompletions(getExtensionNamesSpaces(FUNCTIONS).map(function (namespace) {
-            return {
-                value: namespace + ":",
-                type: "Extension Namespace",
-                priority: 3
-            }
-        }));
-
-        addSnippets(getInBuiltFunctionNames());
-
-        addCompletions(attributeList.map(function (d) {
-            return {
-                value: d,
-                type: "Stream Attribute",
-                priority: 5
-            }
-        }));
-    };
-
-    self.$filterPhrase = function (args) {
-        var fromRegexp = /from((?:.(?!from))+)$/i;
-        var result = fromRegexp.exec(args[0]);
-
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$filterPhrase" + "->");
-            console.log("result:", result);
-        }
-        var start = -1;
-        var temp = "";
-        var flag = true;
-
-        self.patternEventList = {};
-        self.$streamReference(result[0]);
-        for (var i = result[0].length - 1; i >= 0; i--) {
-            if (start == 0) {
-                if (/\W/.test(result[0].charAt(i))) {
-                    if (flag) {
-                        continue;
-                    } else {
-                        break;
-                    }
-                } else {
-                    flag = false;
-                    temp = result[0].charAt(i) + temp;
-                }
-            }
-
-            if (result[0].charAt(i) == ']') {
-                start--;
-            }
-            if (result[0].charAt(i) == '[') {
-                start++;
-            }
-        }
-
-        addCompletions(logicalOperatorList.map(function (operator) {
-            operator.priority = 1;
-            return operator;
-        }));
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$filterPhrase" + "->");
-            console.log("Event LIST ", temp);
-        }
-
-        if (this.patternEventList.hasOwnProperty(temp)) {
-            addCompletions([{value: "last", priority: 2}])
-        } else {
-            addCompletions(getStreamReferences().map(function (stream) {
+        // Testing to find the relevant suggestion
+        if (queryInput == "" || sourceSuggestionsRegex.test(queryInput)) {
+            addCompletions(Object.keys(self.streamList).map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream",
-                    priority: 2
-                };
-            }));
-
-            addCompletions(Object.keys(self.streamList[temp]).map(function (attribute) {
-                return {
-                    value: attribute,
-                    type: "Stream Attribute",
                     priority: 3
-                };
+                }
             }));
-        }
-    };
-
-    self.$nameSpacePhrase = function (args) {
-        var result = args[1].exec(args[0]);
-        var windowRegex = /#window.(\w+):$/i;
-        var streamRegex = /#(\w+):$/i;
-        var functionRegex = /(\w+):$/i;
-        var ns = "";
-        if (windowRegex.test(result[0])) {
-            var windowResult = windowRegex.exec(result[0]);
-            ns = windowResult[1];
-            addSnippets(getExtensionWindowProcessors(ns));
-        } else if (streamRegex.test(result[0])) {
-            var streamFunctionPhrase = streamRegex.exec(result[0]);
-            ns = streamFunctionPhrase[1];
-            addSnippets(getExtensionStreamProcessors(ns));
-        } else if (functionRegex.test(result[0])) {
-            var functionPhrase = functionRegex.exec(result[0]);
-            ns = functionPhrase[1];
-            addSnippets(getExtensionFunctionNames(ns));
-        }
-    };
-
-    self.$resolveVariable = function (args) {
-        var result = args[1].exec(args[0]);
-        if (SiddhiEditor.debug) {
-            console.warn(loggerContext + ":" + "$resolveVariable" + "->");
-            console.log("result ", result);
-        }
-
-        self.$streamReference(args[0]);
-        self.$streamAlias(args[0]);
-
-        if (self.tableList[result[1]]) {
-            addCompletions(Object.keys(self.tableList[result[1]]).map(function (attribute) {
+            addCompletions(Object.keys(self.tableList).map(function (table) {
                 return {
-                    value: attribute,
-                    type: "Event Table Attribute",
-                    priority: 1
-                };
+                    value: table,
+                    type: "Event Table",
+                    priority: 2
+                }
             }));
-        } else {
-            if (this.patternEventList.hasOwnProperty(result[1])) {
-                result[1] = this.patternEventList[result[1]];
+        } else if (streamProcessorExtensionSuggestionsRegex.test(queryInput)) {
+            var namespace = streamProcessorExtensionSuggestionsRegex.exec(queryInput)[1].trim();
+            addSnippets(getExtensionStreamProcessors(namespace));
+        } else if (windowSuggestionsRegex.test(queryInput)) {
+            addSnippets(getInBuiltWindowProcessors());
+            addSnippets(getExtensionNamesSpaces([constants.WINDOW_PROCESSORS]).map(function (windowProcessor) {
+                return Object.assign({}, windowProcessor, {
+                    value: windowProcessor.value + ":"
+                });
+            }));
+        } else if (windowExtensionSuggestionsRegex.test(queryInput)) {
+            addSnippets(getExtensionWindowProcessors(windowExtensionSuggestionsRegex.exec(queryInput)[1].trim()));
+        } else if (windowAndStreamProcessorParameterSuggestionsRegex.test(queryInput)) {
+            addCompletions(getAttributesFromStreamsOrTables(windowAndStreamProcessorParameterSuggestionsRegex.exec(queryInput)[1].trim()));
+        } else if (afterUnidirectionalKeywordSuggestionsRegex.test(queryInput)) {
+            addCompletions(["join ", "on ", "within "].map(function (suggestion) {
+                return {value: suggestion};
+            }));
+        } else if (afterOnKeywordSuggestionsRegex.test(queryInput)) {
+            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 4, 3);
+            addCompletions(suggestions.logicalOperatorList.map(function (operator) {
+                return Object.assign({}, operator, {
+                    priority: 2
+                });
+            }));
+            addCompletions({value: "within ", priority: 3});
+        } else if (patternQueryFilterSuggestionsRegex.test(queryInput)) {
+            var patternMatch = patternQueryFilterSuggestionsRegex.exec(queryInput);
+            addCompletions(getAttributesFromStreamsOrTables(patternMatch[2]));
+            addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
+        } else if (nonPatternQueryFilterSuggestionsRegex.test(queryInput)) {
+            addCompletions(getAttributesFromStreamsOrTables(nonPatternQueryFilterSuggestionsRegex.exec(queryInput)[1].trim()).map(function (suggestion) {
+                return {value: suggestion.value + " ", priority: 3};
+            }));
+            addCompletions(suggestions.logicalOperatorList.map(function (operator) {
+                return {value: operator.value + " ", priority: 2};
+            }));
+        } else if (afterWithinKeywordSuggestionsRegex.test(queryInput)) {
+            addCompletions(suggestions.timeValueTypes.map(function (type) {
+                return {value: type.value + " ", priority: 2};
+            }));
+            addCompletions(["select ", "output ", "insert ", "delete ", "update "].map(function (completion) {
+                return {value: completion, priority: 2};
+            }));
+        } else if (afterStreamSuggestionsRegex.test(queryInput)) {
+            var completions = [{value: "#"}];
+            if (/\s+[^\[#]*$/i.test(queryInput)) {
+                completions = completions.concat(
+                    [
+                        "join ", "left outer join ", "right outer join ", "full outer join ", "on ",
+                        "unidirectional ", "within ", "select ", "output ", "insert ", "delete ", "update "
+                    ].map(function (completion) {
+                        return {value: completion};
+                    })
+                );
             }
-            if (this.streamAliasList.hasOwnProperty(result[1])) {
-                result[1] = this.streamAliasList[result[1]];
-            }
-            if (Object.keys(self.streamList[result[1]])) {
-                addCompletions(Object.keys(self.streamList[result[1]]).map(function (stream) {
-                    return {
-                        value: stream,
-                        type: "Stream",
-                        priority: 1
-                    };
-                }))
-            }
-        }
-    };
-
-    self.$streamAlias = function (str) {
-        var fromRegxp = /from((?:.(?!from))+)$/i;
-        var fromPhrase = fromRegxp.exec(str);
-        var asRegexp = /\s+as\s+(\w+)\s+/;
-        var tokenArray = fromPhrase[1].split(asRegexp);
-        var streamIdList = Object.keys(self.streamList);
-
-        var aliases = {};
-        if (tokenArray.length >= 2) {
-            for (var i = 0; i + 1 < tokenArray.length; i += 2) {
-                var maxIndex = 0;
-                var strId = "";
-                for (var j = 0; j < streamIdList.length; j++) {
-                    var tempIndex = 0;
-                    if (tempIndex = tokenArray[i].lastIndexOf(streamIdList[j]) >= 0) {
-                        if (tempIndex > maxIndex)
-                            strId = streamIdList[j];
-                    }
-                }
-
-                aliases[tokenArray[i + 1]] = strId;
-                this.streamAliasList[tokenArray[i + 1]] = strId;
-            }
-        }
-        return aliases;
-    };
-
-    self.$streamReferenceHandler = function (args) {
-        var results = args[1].exec(args[0]);
-
-        self.$streamReference(args[0]);
-        self.$streamAlias(args[0]);
-
-        var ref = this.patternEventList[results[1]];
-        var attributeList = self.streamList[ref];
-        addCompletions(attributeList.map(function (stream) {
-            return {
-                value: stream,
-                type: "Stream Attribute"
-            };
-        }));
-    };
-
-    self.$streamReference = function (str) {
-        var fromRegxp = /from((?:.(?!from))+)$/i;
-        var fromPhrase = fromRegxp.exec(str);
-        var eventRef = /(\w+\s*=\s*\w+)/;
-        var tokenArray = fromPhrase[1].split(eventRef);
-
-        for (var i = 0; i < tokenArray.length; i++) {
-            if (tokenArray[i].indexOf('=') > 0 && tokenArray[i].indexOf('==') < 0 && tokenArray[i].indexOf('<=') < 0 && tokenArray[i].indexOf('>=') < 0) {
-                var keyValue = tokenArray[i].split("=");
-                if (SiddhiEditor.debug) {
-                    console.warn(loggerContext + ":" + "$streamReference" + "->");
-                    console.log("keyValue", keyValue);
-                }
-
-                var keyRegex = /(\w+)\s*$/i;
-                var valueRegex = /^\s*(\w+)/i;
-                var ref = keyRegex.exec(keyValue[0]);
-                var value = valueRegex.exec(keyValue[1]);
-
-                if (ref && value && ref[0] && value[0]) {
-                    value = value[0].trim();
-                    ref = ref[0].trim();
-
-                    //Check the match with stream ID
-                    // for (var j = 0; j < streamIdList.length; j++) {
-                    //    var tempIndex = 0;
-                    //    if (tempIndex = tokenArray[i].lastIndexOf(streamIdList[j]) >= 0) {
-                    //        if (tempIndex > maxIndex)
-                    //            strId = streamIdList[j];
-                    //    }
-                    //}
-
-                    this.patternEventList[ref] = value;
-                }
+            addCompletions(completions);
+        } else if (afterHashSuggestionsRegex.test(queryInput)) {
+            addSnippets(getInBuiltStreamProcessors().map(function (suggestion) {
+                return Object.assign({}, suggestion, {
+                    priority: 3
+                });
+            }));
+            addSnippets(getExtensionNamesSpaces([constants.STREAM_PROCESSORS]).map(function (suggestion) {
+                return Object.assign({}, suggestion, {
+                    value: suggestion.value + ":",
+                    priority: 3
+                });
+            }));
+            if (new RegExp(regex.query.input.sourceRegex + regex.query.input.sourceHandlersRegex + regex.hash + "[^\\(\\.:]*$", "i").test(queryInput)) {
+                // Only one window can be applied for a stream
+                addCompletions({value: "window.", priority: 2});
             }
         }
-    };
-
-    /**
-     * Get the current stream alias list
-     *
-     * @returns {Array}
-     */
-    function getStreamAliasList() {
-        var aliasList = [];
-        for (var propertyName in this.streamAliasList) {
-            if (this.streamAliasList.hasOwnProperty(propertyName))
-                aliasList.push(propertyName)
-        }
-        return aliasList;
     }
 
     /**
-     * Get the current event references list
+     * Handle the query section suggestions for the query
      *
-     * @returns {Array}
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
-    function getStreamReferences() {
-        var aliasList = [];
-        for (var propertyName in this.patternEventList) {
-            if (this.patternEventList.hasOwnProperty(propertyName))
-                aliasList.push(propertyName)
+    function handleQuerySelectionSuggestions(regexResults) {
+        var querySelectionClause = regexResults[4];
+
+        // Regexps used for identifying the suggestions
+        var extensionFunctionSuggestionsRegex = new RegExp(regex.query.selection.attributesList + regex.comma + regex.namespace + "[a-zA-Z_0-9]*$", "i");
+        var afterQuerySectionClauseSuggestionsRegex = new RegExp(regex.query.selection.attributesList + "\\s+[a-zA-Z_0-9]*$", "i");
+        var generalSuggestionsRegex = new RegExp("(?:" +
+            regex.query.selection.attributesList + regex.comma + "[a-zA-Z_0-9]*(?:\\s*\\((?:(?:.(?!\\)))*.)?\\s*)?|" +
+            "^" + regex.identifier + ")$", "i");
+
+        // Testing to find the relevant suggestion
+        if (extensionFunctionSuggestionsRegex.test(querySelectionClause)) {
+            var namespace = extensionFunctionSuggestionsRegex.exec(querySelectionClause)[0];
+            addSnippets(getExtensionFunctionNames(namespace));
+        } else if (afterQuerySectionClauseSuggestionsRegex.test(querySelectionClause)) {
+            addCompletions(["as", "group by ", "having ", "output ", "insert ", "delete ", "update "].map(function (completion) {
+                return {value: completion};
+            }));
+        } else if (querySelectionClause == "" || generalSuggestionsRegex.test(querySelectionClause)) {
+            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addSnippets(getExtensionNamesSpaces([constants.FUNCTIONS]).map(function (suggestion) {
+                suggestion.value = suggestion.value + ":";
+                return suggestion;
+            }));
+            addSnippets(getInBuiltFunctionNames());
         }
-        return aliasList;
+    }
+
+    /**
+     * Handle the query section group by suggestions for the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleGroupBySuggestions(regexResults) {
+        var groupByClause = regexResults[6];
+
+        // Regexps used for identifying the suggestions
+        var afterGroupByClauseRegex = new RegExp("(?:" + regex.identifier + "\\s*)(?:" + regex.comma + regex.identifier + "\\s*)*" + "\\s+[a-zA-Z_0-9]*$", "i");
+        var generalSuggestionsRegex = new RegExp("(?:" + regex.identifier + "\\s*" + regex.comma + ")*", "i");
+
+        // Testing to find the relevant suggestion
+        if (afterGroupByClauseRegex.test(groupByClause)) {
+            addCompletions(["having ", "output ", "insert ", "delete ", "update "].map(function (completion) {
+                return {value: completion, priority: 2};
+            }));
+        } else if (generalSuggestionsRegex.test(groupByClause)) {
+            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
+        }
+    }
+
+    /**
+     * Handle the having suggestions for the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleHavingSuggestions(regexResults) {
+        var havingClause = regexResults[8];
+
+        // Regexps used for identifying the suggestions
+        var afterHavingClauseRegex = new RegExp("\\s+[a-zA-Z_0-9]*$");
+
+        // Testing to find the relevant suggestion
+        if (afterHavingClauseRegex.test(havingClause)) {
+            addCompletions(["output ", "insert ", "delete ", "update "].map(function (completion) {
+                return {value: completion, priority: 2};
+            }));
+        }
+        addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+        addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
+        addCompletions(suggestions.logicalOperatorList.map(function (suggestion) {
+            return Object.assign({}, suggestion, {
+                priority: 2
+            });
+        }));
+    }
+
+    /**
+     * Handle the query output rate suggestions for the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleQueryOutputRateSuggestions(regexResults) {
+        var outputRateClause = regexResults[10];
+
+        // Regexps used for identifying the suggestions
+        var afterHalfTypedKeywordSuggestionsRegex = new RegExp("^[a-zA-Z]*$", "i");
+        var everyKeywordSuggestionsRegex = new RegExp("^(?:" + regex.query.outputRate.types + "|snapshot)\\s+[a-zA-Z]*$", "i");
+        var afterOutputRateClauseSuggestionsRegex = new RegExp("^(?:" +
+                "(?:" + regex.query.outputRate.types + ")?|" +
+                "(?:(?:" + regex.query.outputRate.types + ")?|snapshot)" +
+            ")\\s+every\\s+[0-9]*\\s+" + regex.identifier + "\\s+[a-zA-Z]*$", "i");
+        var timeValueSuggestionsRegex = new RegExp("^(?:(?:" + regex.query.outputRate.types + ")?|snapshot)\\s+every\\s+[0-9]*\\s+[a-zA-Z]*$", "i");
+        var eventKeywordSuggestionRegex = new RegExp("^(?:" + regex.query.outputRate.types + ")?\\s+every\\s+[0-9]*\\s+[a-zA-Z]*$", "i");
+
+        // Testing to find the relevant suggestion
+        if (outputRateClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(outputRateClause)) {
+            addCompletions(["snapshot every ", "all every ", "last every ", "first every ", "every "].map(function (completion) {
+                return {value: completion};
+            }));
+        } else if (everyKeywordSuggestionsRegex.test(outputRateClause)) {
+            addCompletions({value: "every "});
+        } else if (afterOutputRateClauseSuggestionsRegex.test(outputRateClause)) {
+            addCompletions(["insert ", "delete ", "update "].map(function (completion) {
+                return {value: completion};
+            }));
+        } else {
+            if (timeValueSuggestionsRegex.test(outputRateClause)) {
+                addCompletions(suggestions.timeValueTypes);
+            }
+            if (eventKeywordSuggestionRegex.test(outputRateClause)) {
+                addCompletions({value: "events"});
+            }
+        }
+    }
+
+    /**
+     * Handle the query insert into suggestions for the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleQueryInsertIntoSuggestions(regexResults) {
+        var streamOutputClause = regexResults[12];
+
+        // Regexps used for identifying the suggestions
+        var afterHalfTypedKeywordSuggestionsRegex = new RegExp("^[a-zA-Z]*$", "i");
+        var afterOutputEventTypesSuggestionRegex = new RegExp("^(?:" +regex.query.output.eventTypes + ")?events\\s+[a-zA-Z]*$", "i");
+        var afterIntoKeywordSuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?events\\s+)?into\\s+[a-zA-Z]*$", "i");
+        var afterQuerySuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?events\\s+)?into\\s+" + regex.identifier + "\\s*(?:;)?\\s+[a-zA-Z]*$", "i");
+
+        // Testing to find the relevant suggestion
+        if (streamOutputClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(streamOutputClause)) {
+            addCompletions(suggestions.outputEventTypes.map(function (completion) {
+                return Object.assign({}, completion, {
+                    value: completion.value + " events into "
+                });
+            }));
+            addCompletions(["into ", "overwrite "].map(function (completion) {
+                return {value: completion};
+            }));
+        } else if (afterOutputEventTypesSuggestionRegex.test(streamOutputClause)) {
+            addCompletions({value: "into "});
+        } else if (afterIntoKeywordSuggestionsRegex.test(streamOutputClause)) {
+            addCompletions(Object.keys(self.streamList).map(function (stream) {
+                return {
+                    caption: stream,
+                    value: stream + ";",
+                    type: "Stream"
+                }
+            }));
+            addCompletions(Object.keys(self.tableList).map(function (table) {
+                return {
+                    caption: table,
+                    value: table + ";",
+                    type: "Event Table"
+                }
+            }));
+        } else if (afterQuerySuggestionsRegex.test(streamOutputClause)) {
+            handleEndOfPartitionCheck(regexResults);
+        }
+    }
+
+    /**
+     * Handle the query output to table suggestions for the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleQueryInsertOverwriteDeleteUpdateSuggestions(regexResults) {
+        var tableOutputClause = regexResults[12];
+
+        // Regexps used for identifying the suggestions
+        var afterHalfTypedKeywordSuggestionsRegex = new RegExp("^[a-zA-Z]*$", "i");
+        var eventTypeSuggestionsRegex = new RegExp("^" + regex.identifier + "\\s+[a-zA-Z]*$", "i");
+        var afterForKeywordSuggestionsRegex = new RegExp("^" + regex.identifier + "\\s+" +
+                "for\\s+[a-zA-Z]*$", "i");
+        var eventsKeywordSuggestionsRegex = new RegExp("^" + regex.identifier + "\\s+" +
+                "for\\s+" + regex.query.output.eventTypes + "[a-zA-Z]*$", "i");
+        var onKeywordSuggestionsRegex = new RegExp("^" + regex.identifier + "\\s+" +
+                "(?:for\\s+(?:" + regex.query.output.eventTypes + ")?events\\s+)?[a-zA-Z]*$", "i");
+        var afterOnKeywordSuggestionsRegex = new RegExp("^" + regex.identifier + "\\s+" +
+                "(?:for\\s+(?:" + regex.query.output.eventTypes + ")?events\\s+)?" +
+                "on\\s+(?!;)(?:.(?!;))*$", "i");
+
+        // Testing to find the relevant suggestion
+        if (tableOutputClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(tableOutputClause)) {
+            addCompletions(Object.keys(self.tableList).map(function (table) {
+                return {
+                    value: table + " ",
+                    type: "Event Table"
+                }
+            }));
+        } else if (eventTypeSuggestionsRegex.test(tableOutputClause)) {
+            addCompletions(suggestions.outputEventTypes.map(function (completion) {
+                return Object.assign({}, completion, {
+                    value: "for " + completion.value + " events on "
+                });
+            }));
+        } else if (afterForKeywordSuggestionsRegex.test(tableOutputClause)) {
+            addCompletions(suggestions.outputEventTypes.map(function (completion) {
+                return Object.assign({}, completion, {
+                    value: completion.value + " events on "
+                });
+            }));
+        } else if (eventsKeywordSuggestionsRegex.test(tableOutputClause)) {
+            addCompletions({value: "events "});
+        } else if (afterOnKeywordSuggestionsRegex.test(tableOutputClause)) {
+            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addCompletions(suggestions.logicalOperatorList.map(function (suggestion) {
+                return Object.assign({}, suggestion, {
+                    priority: 2
+                });
+            }));
+            handleEndOfPartitionCheck(regexResults);
+        }
+        if (onKeywordSuggestionsRegex.test(tableOutputClause)) {
+            addCompletions({value: "on "});
+        }
+    }
+
+    /**
+     * Add "end" keyword after checking for end of partition
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     */
+    function handleEndOfPartitionCheck(regexResults) {
+        // Regexps used for identifying the suggestions
+        var endOfPartitionRegex = new RegExp("partition\\s+with\\s+(?:.(?!\\s+begin))*.\\s+begin\\s+(?:.(?!\\s+end))*.$", "i");
+
+        // Testing to find the relevant suggestion
+        if (endOfPartitionRegex.test(regexResults.input)) {
+            addCompletions({value: "end;"});
+        }
+    }
+
+    /**
+     * add attributes of standard stateful sources in patterns in query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     * @param {int} attributePriority priority to be set as attribute priority
+     * @param {int} streamPriority priority to be set as stream priority
+     */
+    function addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, attributePriority, streamPriority) {
+        var queryInput = regexResults[2];
+        var standardStatefulSourceSearchRegex = new RegExp(regex.query.input.patternStreamRegex, "ig");
+        var eventToStreamMap = [];
+        var standardStatefulSourceMatch;
+        while(standardStatefulSourceMatch = standardStatefulSourceSearchRegex.exec(queryInput)) {
+            eventToStreamMap[standardStatefulSourceMatch[1]] = standardStatefulSourceMatch[2];
+        }
+        addAttributesOfStreamReferencesAsCompletions(regexResults, eventToStreamMap, attributePriority, streamPriority);
+    }
+
+    /**
+     * add attributes in the streams or tables in the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     * @param {int} attributePriority priority to be set as attribute priority
+     * @param {int} streamPriority priority to be set as stream priority
+     */
+    function addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, attributePriority, streamPriority) {
+        var queryInput = regexResults[2];
+        var queryInStreams = [];
+        var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
+        var streamMatch;
+        while (streamMatch = streamFinderRegex.exec(queryInput)) {
+            if (["join", "every"].indexOf(streamMatch[1]) == -1) {
+                queryInStreams.push(streamMatch[1]);
+            }
+        }
+        addAttributesOfStreamsAsCompletions(regexResults, queryInStreams, attributePriority, streamPriority);
+    }
+
+    self.$partition = function (regexResults) {
+        var partitionConditionStatement = regexResults[1];
+        var partitionBody = regexResults[3];
+
+        var unclosedBracketsCount = 0;
+        for (var i = 0; i < partitionConditionStatement.length; i++) {
+            if (partitionConditionStatement.charAt(i) == "(") {
+                unclosedBracketsCount++;
+            } else if (partitionConditionStatement.charAt(i) == ")") {
+                unclosedBracketsCount--;
+            }
+        }
+
+        if (partitionBody && /;\s*$/.test(partitionBody)) {
+            addCompletions({value: "\nend;", caption: "end"});
+        } else if (unclosedBracketsCount == 0 && /\)\s*[a-zA-Z_0-9]*/.test(partitionConditionStatement)) {
+            var completionPrefix = "";
+            if (partitionConditionStatement.charAt(partitionConditionStatement.length - 1) == ")") {
+                completionPrefix = "\n";
+            }
+            addCompletions({value: completionPrefix + "begin\n\t", caption: "begin"});
+        } else if (unclosedBracketsCount == 1) {
+            // Regexps used for identifying the suggestions
+            var beforeOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:.(?!\\s+of))*.\\s+[a-zA-Z_0-9]*$", "i");
+            var afterOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:.(?!\\s+of))*.\\s+of\\s+[a-zA-Z_0-9]*$", "i");
+
+            // Testing to find the relevant suggestion
+            if (beforeOfKeywordSuggestionRegex.test(partitionConditionStatement)) {
+                addAllAttributesInExecutionPlanAsCompletions(4, 3);
+                if (new RegExp("\s+$", "i")) {
+                    addCompletions([{value: "of "}, {value: "as "}, {value: "or ", type: "Logical Operator"}]);
+                }
+            } else if (afterOfKeywordSuggestionRegex) {
+                var streamAttributeSearchRegex = new RegExp("([a-zA-Z_0-9]+)\\s*(?:<|>|=|!){1,2}\\s*[a-zA-Z_0-9]+\\s+(?:as|of)", "ig");
+
+                var attributeList = [];
+                var attribute;
+                while (attribute = streamAttributeSearchRegex.exec(partitionConditionStatement)) {
+                    if (attributeList.indexOf(attribute) == -1) {
+                        attributeList.push(attribute[1]);
+                    }
+                }
+
+                var streamList = [];
+                streamListLoop: for (var streamName in self.streamList) {
+                    if (self.streamList.hasOwnProperty(streamName)) {
+                        for (i = 0; i < attributeList.length; i++) {
+                            if (!self.streamList[streamName][attributeList[i]]) {
+                                continue streamListLoop;
+                            }
+                        }
+                        streamList.push(streamName);
+                    }
+                }
+                addCompletions(streamList.map(function (stream) {
+                    return {value: stream + ")\nbegin\n\t", caption: stream, type: "Stream"};
+                }));
+            }
+        } else if (unclosedBracketsCount > 1) {
+            addAllAttributesInExecutionPlanAsCompletions(3, 2);
+            if (new RegExp("\s+$", "i")) {
+                addCompletions({value: "as "});
+            }
+        }
+
+        /**
+         * Add all attributes in all the streams in the execution plan as completions
+         *
+         * @param {int} attributePriority priority to be set as attribute priority
+         * @param {int} streamPriority priority to be set as stream priority
+         */
+        function addAllAttributesInExecutionPlanAsCompletions(attributePriority, streamPriority) {
+            addAttributesOfStreamsAsCompletions(regexResults, Object.keys(self.streamList), attributePriority, streamPriority);
+        }
+    };
+
+    /**
+     * add attributes in the streams or tables in the query
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     * @param {string[]} streams Array of streams of which attributes will be added
+     * @param {int} attributePriority priority to be set as attribute priority
+     * @param {int} streamPriority priority to be set as stream priority
+     */
+    function addAttributesOfStreamsAsCompletions(regexResults, streams, attributePriority, streamPriority) {
+        var afterStreamAndDotSuggestionsRegex = new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+        var streamBeforeDotMatch;
+        if (streamBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
+            if (streams.indexOf(streamBeforeDotMatch[1]) != -1) {
+                addCompletions(getAttributesFromStreamsOrTables(streamBeforeDotMatch[1]).map(function (attribute) {
+                    return Object.assign({}, attribute, {
+                        priority: attributePriority
+                    });
+                }));
+            }
+        } else {
+            addCompletions(getAttributesFromStreamsOrTables(streams).map(function (attribute) {
+                return Object.assign({}, attribute, {
+                    priority: attributePriority
+                });
+            }));
+            addCompletions(streams.map(function (stream) {
+                return {
+                    value: stream + ".",
+                    priority: streamPriority
+                };
+            }));
+        }
+    }
+
+    /**
+     * add attributes in the streams in the reference to stream map
+     * References will be used rather than stream names to refer to attributes (reference.attribute)
+     *
+     * @param {string[]} regexResults Array of groups from the regex execution of the query
+     * @param {string[]} referenceToStreamMap Array of streams of which attributes will be added
+     * @param {int} attributePriority priority to be set as attribute priority
+     * @param {int} streamPriority priority to be set as stream priority
+     */
+    function addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap, attributePriority, streamPriority) {
+        var afterStreamAndDotSuggestionsRegex = new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+        var referenceBeforeDotMatch;
+        if (referenceBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
+            if (referenceToStreamMap[referenceBeforeDotMatch]) {
+                addCompletions(getAttributesFromStreamsOrTables(referenceToStreamMap[referenceBeforeDotMatch]).map(function (attribute) {
+                    return Object.assign({}, attribute, {
+                        priority: attributePriority
+                    });
+                }));
+            }
+        } else {
+            for (var reference in referenceToStreamMap) {
+                if (referenceToStreamMap.hasOwnProperty(reference)) {
+                    addCompletions(getAttributesFromStreamsOrTables(referenceToStreamMap[reference]).map(function (attribute) {
+                        return Object.assign({}, attribute, {
+                            value: reference + "." + attribute.value,
+                            priority: attributePriority
+                        });
+                    }));
+                }
+            }
+            addCompletions(Object.keys(referenceToStreamMap).map(function (stream) {
+                return {
+                    value: stream + ".",
+                    priority: streamPriority
+                };
+            }));
+        }
     }
 
     /**
      * Get the list of namespaces which has artifacts in  objType1 or objType2 categories
      *
-     * @param {string} objType1 windowProcessors|functions|streamProcessors
-     * @param {string} [objType2] windowProcessors|functions|streamProcessors
+     * @param {string[]} types types of processors of which namespaces are returned. Should be one of ["windowProcessors", "functions", "streamProcessors"]
      * @returns {Array} list of namespaces.
      */
-    function getExtensionNamesSpaces(objType1, objType2) {
-        var tempList = [];
-        for (var propertyName in CompletionEngine.functionOperationSnippets.extensions) {
-            if (CompletionEngine.functionOperationSnippets.extensions.hasOwnProperty(propertyName)) {
-                if (SiddhiEditor.debug) {
-                    console.warn(loggerContext + ":" + "getExtensionNamesSpaces" + "->");
-                    console.log(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType1], objType1, propertyName);
-                    console.log("RESULTS", objType1 && !isEmpty(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType1]));
+    function getExtensionNamesSpaces(types) {
+        var namespaces = [];
+        for (var namespace in CompletionEngine.functionOperationSnippets.extensions) {
+            if (CompletionEngine.functionOperationSnippets.extensions.hasOwnProperty(namespace)) {
+                var processorsPresentInNamespace = false;
+                for (var i = 0; i < types.length; i++) {
+                    if (CompletionEngine.functionOperationSnippets.extensions[namespace][types[i]]) {
+                        processorsPresentInNamespace = true;
+                        break;
+                    }
                 }
-
-                if ((objType1 && !isEmpty(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType1])) ||
-                    (objType2 && !isEmpty(CompletionEngine.functionOperationSnippets.extensions[propertyName][objType2]))) {
-                    tempList.push(propertyName);
-                } else if (!objType1 && !objType2) {
-                    tempList.push(propertyName);
+                if (processorsPresentInNamespace) {
+                    namespaces.push(namespace);
                 }
             }
         }
-        return tempList;
+        return namespaces;
     }
 
     /**
@@ -1208,10 +1180,14 @@ function CompletionEngine() {
      * @returns {Array} : list of function snippets
      */
     function getExtensionFunctionNames(namespace) {
-        return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].functions).map(function (processor) {
-            processor.type = "Function";
-            return processor;
-        });
+        if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].functions).map(function (processor) {
+                processor.type = "Function";
+                return processor;
+            });
+        } else {
+            return [];
+        }
     }
 
     /**
@@ -1221,10 +1197,14 @@ function CompletionEngine() {
      * @returns {Array} list of window processor snippets
      */
     function getExtensionWindowProcessors(namespace) {
-        return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].windowProcessors).map(function (processor) {
-            processor.type = "Window Processor";
-            return processor;
-        });
+        if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].windowProcessors).map(function (processor) {
+                processor.type = "Window Processor";
+                return processor;
+            });
+        } else {
+            return [];
+        }
     }
 
     /**
@@ -1234,10 +1214,14 @@ function CompletionEngine() {
      * @returns {Array} list of stream processor snippets
      */
     function getExtensionStreamProcessors(namespace) {
-        return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].streamProcessors).map(function (processor) {
-            processor.type = "Stream Processor";
-            return processor;
-        });
+        if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].streamProcessors).map(function (processor) {
+                processor.type = "Stream Processor";
+                return processor;
+            });
+        } else {
+            return [];
+        }
     }
 
     /**
@@ -1280,31 +1264,110 @@ function CompletionEngine() {
      * This function will call a given function by it's name within given context
      *
      * @param {string} functionName name of the function
-     * @param {Array} args arguments array that would be passed to the function
+     * @param {String[]} matchedStringGroups arguments array that would be passed to the function
      * @returns {*} return from the executed function
      */
-    function executeFunctionByName(functionName, args) {
-        return this[functionName].call(this, args);
+    function executeLoadSuggestionFunctionByName(functionName, matchedStringGroups) {
+        return self[functionName].call(this, matchedStringGroups);
+    }
+
+    /**
+     * get the attributes of the streams or tables specified
+     *
+     * @param {string|string[]} streamOrTableName name of the streams or tables of which attributes are returned
+     * @return {Object[]} arrays of attribute names of the stream or table
+     */
+    function getAttributesFromStreamsOrTables(streamOrTableName) {
+        var attributes = [];
+        if (streamOrTableName.constructor === Array) {
+            var newAttributes = [];
+            for (var i = 0; i < streamOrTableName.length; i++) {
+                newAttributes = newAttributes.concat(getAttributesOfSource(streamOrTableName[i]));
+            }
+
+            // Prefixing duplicates attribute names with stream
+            var prefixedAttributes = [];
+            for (var j = 0; j < newAttributes.length; j++) {
+                if (prefixedAttributes.indexOf(newAttributes[j].value) == -1) {
+                    // Check for duplicates after the current index
+                    for (var k = j + 1; k < newAttributes.length; k++) {
+                        if (newAttributes[j].value == newAttributes[k].value) {
+                            attributes.push({
+                                value: newAttributes[k].source + "." + newAttributes[k].value,
+                                type: "Attribute"
+                            });
+
+                            // If this is the first time this duplicate is detected prefix the first attribute as well
+                            if (prefixedAttributes.indexOf(newAttributes[j].value) == -1) {
+                                attributes.push({
+                                    value: newAttributes[j].source + "." + newAttributes[j].value,
+                                    type: "Attribute"
+                                });
+                                prefixedAttributes.push(newAttributes[j].value);
+                            }
+                        }
+                    }
+
+                    // If no duplicates are found add without prefix
+                    if (prefixedAttributes.indexOf(newAttributes[j].value) == -1) {
+                        attributes.push({
+                            value: newAttributes[j].value,
+                            type: "Attribute"
+                        });
+                    }
+                }
+            }
+        } else {
+            attributes = getAttributesOfSource(streamOrTableName);
+        }
+
+        /**
+         * get the attributes of a single stream or table
+         *
+         * @param {string} sourceName name of the stream or table of which attributes are returned
+         * @return {Object[]} arrays of attribute names of the stream or table
+         */
+        function getAttributesOfSource (sourceName) {
+            var attributes = [];
+            if (self.streamList[sourceName]) {
+                attributes = Object.keys(self.streamList[sourceName]);
+            } else if (self.tableList[sourceName]) {
+                attributes = Object.keys(self.tableList[sourceName]);
+            }
+            return attributes.map(function (attribute) {
+                return {value: attribute, source: sourceName};
+            });
+        }
+
+        return attributes;
     }
 
     /**
      * Add a new completions to the words list
      *
-     * @param {Object[]} suggestions list of  suggestions
+     * @param {Object[]|Object} suggestions list of  suggestions
      */
     function addCompletions(suggestions) {
-        for (var i = 0; i < suggestions.length; i++) {
-            var suggestion = suggestions[i];
-            var completion = {
-                caption: (suggestion.caption == undefined ? suggestion.value : suggestion.caption),
-                value: suggestion.value,
-                score: (suggestions.priority == undefined ? 1 : suggestions.priority),
-                meta: suggestion.type,
-                parameters: suggestion.parameters,
-                description: suggestion.description,
-                returnType: suggestion.returnType
-            };
-            self.wordList.push(completion);
+        if (suggestions.constructor === Array) {
+            for (var i = 0; i < suggestions.length; i++) {
+                addCompletion(suggestions[i]);
+            }
+        } else {
+            addCompletion(suggestions);
+        }
+
+        /**
+         * Add a single completion to the completions list
+         *
+         * @param {Object} completion Completion to add to the completions list
+         */
+        function addCompletion(completion) {
+            self.wordList.push({
+                caption: (completion.caption == undefined ? completion.value : completion.caption),
+                value: completion.value,
+                score: (completion.priority == undefined ? 1 : completion.priority),
+                meta: completion.type
+            });
         }
     }
 
@@ -1509,7 +1572,7 @@ function generateSnippet(processorMetaData) {
     var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
 
     if (processorMetaData.description || processorMetaData.returnType || processorMetaData.parameters) {
-        snippet.description = generateDescription(processorMetaData);
+        snippet.description = generateDescriptionFromProcessorMetaData(processorMetaData);
     }
     return snippet;
 }
@@ -1521,7 +1584,7 @@ function generateSnippet(processorMetaData) {
  * @param {Object} metaData Meta data object containing parameters, return and description
  * @return {string} html string of the description generated from the meta data provided
  */
-function generateDescription(metaData) {
+function generateDescriptionFromProcessorMetaData(metaData) {
     var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
     if (metaData.description) {
         description += metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>";
@@ -1560,79 +1623,5 @@ function generateDescription(metaData) {
     return description;
 }
 
-/**
- * Check whether a given object has properties or not
- *
- * @param {object} map : object
- * @returns {boolean} : true if the object has properties. false if the object is empty
- */
-function isEmpty(map) {
-    for (var key in map) {
-        if (map.hasOwnProperty(key)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
- * Check whether the cursor is positioned next to a dot operator or namespace operator
- *
- * @param {Object} editor ace editor instance
- * @returns {boolean} true if the cursor is positioned just after the dot operator or namespace operator
- */
-function isKeyWordCompleterRequired (editor) {
-    var objectNameRegex = /\w*\.$/i;
-    var namespaceRegex = /\w*:$/i;
-    var txt = editor.getValue();
-    return !(objectNameRegex.test(txt) || namespaceRegex.test(txt));
-}
-
-/**
- * Check whether the cursor is positioned at the beginning of a query
- *
- * @param {Object} editor ace editor instance
- * @returns {boolean} true if the cursor is positioned at the beginning.
- */
-function checkTheBeginning (editor) {
-    var position = editor.getCursorPosition();
-    var lineNumber = position.row;
-    var currentLine = editor.session.getLine(lineNumber);
-    var txt = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
-        row: 0,
-        column: 0
-    }, position));  // all the text up to the cursor position.
-
-    var tailingSpaces = /^\s*/i;
-    var tail = currentLine.substring(position.column); //rest of the line
-
-    if (tailingSpaces.test(tail)) {
-        // if the rest of the line after the cursor has only the whitespaces.
-
-        // set of regular expressions to identify the beginning of the statement
-        var name = identifier + "(\\." + identifier + ")*";
-        var annotationElement = "(" + name + "\\s*[=]\\s*)?[\"'](.)+[\"']";
-        var newStatement = /;\s+\S*$/i;
-        var blockCommentEnd = /[*][/]\s*\S*$/i; // just after the block comment
-        var lineComment = /--(.)*\s+\S*$/i;     // just after the line comment
-        var begin = /begin\s*\S*$/i;            // within the partition statement. just after the begin keyword
-        var spaces = /^\s*$/;
-        var startingWord = /^\s*\S*$/i;         //spaces followed by non-space characters
-        var annotationBody = name + "\\s*[(]\\s*" + annotationElement + "(\\s*[,]\\s*" + annotationElement + ")*\\s*[)]\\s*\\S*$";
-        var annotation = new RegExp("@\\s*" + annotationBody, "i");                     //annotation element
-        var planAnnotations = new RegExp("@\\s*plan\\s*:\\s*" + annotationBody, "i");   //Regular expression for plan-annotations.
-
-        if (newStatement.test(txt) || annotation.test(txt) || planAnnotations.test(txt) ||
-            blockCommentEnd.test(txt) || lineComment.test(txt) || begin.test(txt) ||
-            spaces.test(txt) || txt == "" || startingWord.test(txt)) {
-            if (SiddhiEditor.debug) {
-                console.warn(loggerContext + ":" + "checkTheBeginning" + "->");
-                console.log("New statement is suitable for current position");
-            }
-            return true;
-        }
-    }
-    return false;
-}
 
 exports.CompletionEngine = CompletionEngine;
