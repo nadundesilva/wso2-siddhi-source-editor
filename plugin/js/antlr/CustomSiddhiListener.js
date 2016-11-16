@@ -93,21 +93,20 @@ CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
         attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
         i++;
     }
-    this.editor.completionEngine.tableList[windowName] = {
+    var window = {
         attributes: attributes,
-        functionOperation: ctx.function_operation().start.text,
-        output: ctx.output_event_type().start.text
+        functionOperation: ctx.function_operation().start.text
     };
+    if (ctx.output_event_type()) {
+        window.output = ctx.output_event_type().start.text;
+    }
+    this.editor.completionEngine.windowList[windowName] = window;
 
     addStatement(ctx, this.editor, " ; ");
 };
 /*
  * Define statement listeners ends here
  */
-
-CustomSiddhiListener.prototype.exitStandard_stateful_source = function (ctx) {
-    this.editor.completionEngine.patternEventList[ctx.event().start.text] = ctx.basic_source().source().start.text;
-};
 
 CustomSiddhiListener.prototype.exitExecution_element = function (ctx) {
     addStatement(ctx, this.editor, " ; ");
@@ -143,33 +142,37 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
     var namespaceCtx = ctx.function_namespace(0);
     var functionCtx = ctx.function_id(0);
 
-    var processorName = functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
-    if (namespaceCtx) {
-        var namespace = namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
-        snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
+    if (functionCtx) {
+        var processorName = functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
+        if (namespaceCtx) {
+            var namespace = namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
+            snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
 
-        // Adding namespace tool tip
-        updateTokenDescription(this.editor, namespaceCtx.stop.line - 1, namespaceCtx.stop.column + 1, "Extension namespace - " + namespace);
-    } else {
-        snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
-    }
+            // Adding namespace tool tip
+            updateTokenDescription(this.editor, namespaceCtx.stop.line - 1, namespaceCtx.stop.column + 1, "Extension namespace - " + namespace);
+        } else {
+            snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
+        }
 
-    // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
-    var description;
-    if (snippets.windowProcessors[processorName]) {         // Checking if the processor exists in window processors
-        description = snippets.windowProcessors[processorName].description;
-    } else if (snippets.streamProcessors[processorName]) {  // Checking if the processor exists in stream processors
-        description = snippets.streamProcessors[processorName].description;
-    } else if (snippets.functions[processorName]) {         // Checking if the processor exists in functions
-        description = snippets.functions[processorName].description;
-    } else if (this.editor.completionEngine.evalScriptList[processorName]) {
-        description = "<strong>Eval Script</strong> - " + processorName + "<br><ul>" +
-                "<li>Language - " + this.editor.completionEngine.evalScriptList[processorName].language + "</li>" +
-                "<li>Return Type - " + this.editor.completionEngine.evalScriptList[processorName].returnType + "</li>" +
-                "<li>Function Body - <br><br>" + this.editor.completionEngine.evalScriptList[processorName].functionBody + "</li></ul>"
-    }
-    if (description) {
-        updateTokenDescription(this.editor, functionCtx.stop.line - 1, functionCtx.stop.column + 1, description);
+        // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
+        var description;
+        if (snippets) {
+            if (snippets.windowProcessors && snippets.windowProcessors[processorName]) {            // Checking if the processor exists in window processors
+                description = snippets.windowProcessors[processorName].description;
+            } else if (snippets.streamProcessors && snippets.streamProcessors[processorName]) {     // Checking if the processor exists in stream processors
+                description = snippets.streamProcessors[processorName].description;
+            } else if (snippets.functions && snippets.functions[processorName]) {                   // Checking if the processor exists in functions
+                description = snippets.functions[processorName].description;
+            } else if (this.editor.completionEngine.evalScriptList[processorName]) {
+                description = "<strong>Eval Script</strong> - " + processorName + "<br><ul>" +
+                    "<li>Language - " + this.editor.completionEngine.evalScriptList[processorName].language + "</li>" +
+                    "<li>Return Type - " + this.editor.completionEngine.evalScriptList[processorName].returnType + "</li>" +
+                    "<li>Function Body - <br><br>" + this.editor.completionEngine.evalScriptList[processorName].functionBody + "</li></ul>"
+            }
+        }
+        if (description) {
+            updateTokenDescription(this.editor, functionCtx.stop.line - 1, functionCtx.stop.column + 1, description);
+        }
     }
 };
 
