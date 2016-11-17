@@ -26,18 +26,22 @@ var constants = {
 
 // Suggestion lists used by the engine
 var suggestions = {
-    logicalOperatorList: ["and", "or", "not", "in", "is null"].map(function (operator) {
-        return {value: operator, type: "Logical Operator"};
-    }),
-    dataTypes: ["int", "long", "double", "float", "string", "bool", "object"].map(function (dataType) {
-        return {value: dataType, type: "Data Type"};
-    }),
-    outputEventTypes: ["current", "all", "expired"].map(function (eventType) {
-        return {value: eventType};
-    }),
-    timeValueTypes: ["years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds"].map(function (timeValueType) {
-        return {value: timeValueType};
-    })
+    logicalOperatorList: ["and", "or", "not", "in", "is null"]
+        .map(function (operator) {
+            return {value: operator, type: "Logical Operator"};
+        }),
+    dataTypes: ["int", "long", "double", "float", "string", "bool", "object"]
+        .map(function (dataType) {
+            return {value: dataType, type: "Data Type"};
+        }),
+    outputEventTypes: ["current", "all", "expired"]
+        .map(function (eventType) {
+            return {value: eventType};
+        }),
+    timeValueTypes: ["years", "months", "weeks", "days", "hours", "minutes", "seconds", "milliseconds"]
+        .map(function (timeValueType) {
+            return {value: timeValueType};
+        })
 };
 
 /*
@@ -60,16 +64,21 @@ regex.query.input = {};
 regex.query.input.windowKeywordAndDot = "window\\s*\\.";
 regex.query.input.sourceRegex = "(" + regex.identifier + ")\\s*";
 regex.query.input.filterRegex = "\\[(?:(?:.(?!\\]))*.\\]|\\])\\s*";
-regex.query.input.streamFunctionRegex = regex.hash + "\\s*(?:" + regex.identifier + "\\s*:\\s*)?" + regex.functionOperation;
-regex.query.input.windowRegex = "(?:" + regex.hash + "\\s*(?:" + regex.query.input.windowKeywordAndDot + "\\s*)?" + "(?:" + regex.identifier + "\\s*:\\s*)?" + regex.functionOperation + ")?";
-regex.query.input.sourceHandlersRegex = "(?:" + regex.query.input.filterRegex + "|" + regex.query.input.streamFunctionRegex + ")*";
-regex.query.input.standardStreamRegex = regex.query.input.sourceRegex + regex.query.input.sourceHandlersRegex + regex.query.input.windowRegex + regex.query.input.sourceHandlersRegex;
+regex.query.input.streamFunctionRegex = regex.hash + "\\s*(?:" + regex.identifier + "\\s*:\\s*)?" +
+    regex.functionOperation;
+regex.query.input.windowRegex = "(?:" + regex.hash + "\\s*(?:" + regex.query.input.windowKeywordAndDot + "\\s*)?" +
+    "(?:" + regex.identifier + "\\s*:\\s*)?" + regex.functionOperation + ")?";
+regex.query.input.sourceHandlersRegex = "(?:" + regex.query.input.filterRegex + "|" +
+    regex.query.input.streamFunctionRegex + ")*";
+regex.query.input.standardStreamRegex = regex.query.input.sourceRegex + regex.query.input.sourceHandlersRegex +
+    regex.query.input.windowRegex + regex.query.input.sourceHandlersRegex;
 regex.query.input.streamReference = regex.query.input.standardStreamRegex + "\\s+as\\s+(" + regex.identifier + ")";
 regex.query.input.patternStreamRegex = "(" + regex.identifier + ")\\s*=\\s*(" + regex.identifier + ")\\s*";
 
 regex.query.selection = {};
 regex.query.selection.attribute = "(?:" + regex.identifier + "|" + regex.functionOperation + ")\\s*";
-regex.query.selection.attributesList = "(?:" + regex.query.selection.attribute + ")(?:" + regex.comma + regex.query.selection.attribute + ")*";
+regex.query.selection.attributesList = "(?:" + regex.query.selection.attribute + ")" +
+    "(?:" + regex.comma + regex.query.selection.attribute + ")*";
 
 regex.query.outputRate = {};
 regex.query.outputRate.types = "all|first|last";
@@ -155,7 +164,7 @@ var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Stat
 );
 
 /*
- *   ruleBase has a list of regular expressions to identify the different contexts and appropriate handlers to generate context aware suggestions.
+ *   mainRuleBase has a list of regular expressions to identify the different contexts and appropriate handlers to generate context aware suggestions.
  *
  *   RULES HAVE DIFFERENT FORMAT
  *   ---------------------------
@@ -164,29 +173,27 @@ var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Stat
  *          ------------------------------------------------
  *                 {
  *                    regex : "regularExpression",
- *                    next : [{value: "list", description:"description"} , {value: "of", description:"of"}, {value: "keywords", description:"keywords"}]
+ *                    handler : [
+ *                      {value: "list", caption: "caption", description:"description", type: "type"},
+ *                      {value: "of", caption: "caption", description:"of", type: "type"},
+ *                      {value: "keywords", caption: "caption", description:"keywords", type: "type"}
+ *                    ]
  *                 }
- *          "description" attribute is optional.
+ *          "description", "caption", "type" attributes are optional.
  *
  *          if the suggestions list dynamically calculated (Ex : suggestions list after the 'from' keyword)
  *          ----------------------------------------------
  *                 {
  *                    regex : "regularExpression",
- *                    next : "CompletionEngine.$FunctionHandler"   // CONVENTION : function name is started with $ mark
+ *                    handler : "CompletionEngine.$FunctionHandler"     // CONVENTION : function name is started with $ mark
  *                 }
  *
- *
- *          if the context cannot be identified using regular expressions ( Ex : nested structures which cannot be identified using regex)
- *          -------------------------------------------------------------
- *                 {
- *                    cfg : "CompletionEngine._checkNestedBrackets", // CONVENTION : function name is started with _
- *                    next : "CompletionEngine.$FunctionHandler"
- *                 }
  */
-var ruleBase = [
+var mainRuleBase = [
+    // Annotation rule
     {
         regex: "@[^\\(]*$",
-        next: [
+        handler: [
             'Plan:name(\'Name of the plan\')',
             'Plan:description(\'Description of the plan\')',
             'Plan:trace(\'true|false\')',
@@ -199,81 +206,77 @@ var ruleBase = [
     },
 
     /*
-     * Definition rules starts here
+     * Define statement rules starts here
      */
     {
         regex: "define\\s+[^\\s@]*$",
-        next: ["stream ", "table ", "trigger ", "function ", "window "]
+        handler: ["stream", "table", "trigger", "function", "window"]
     },
     {
         regex: "define\\s+(stream|table|window)\\s+" + regex.identifier + "\\s*\\((\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*,)*\\s*" +
         regex.identifier + "\\s+[^\\s" +
         "\\),]*$",
-        next: suggestions.dataTypes
+        handler: suggestions.dataTypes
     },
     {
         regex: "define\\s+trigger\\s+" + regex.identifier + "\\s+[^\\s]*$",
-        next: ["at"]
+        handler: ["at"]
     },
     {
         regex: "define\\s+trigger\\s+" + regex.identifier + "\\s+at\\s+[^\\s]*$",
-        next: ["every"]
+        handler: ["every"]
     },
     {
         regex: "define\\s+function\\s+" + regex.identifier + "\\s*\\[[^\\s]*(?!\\])$",
-        next: ["JavaScript", "R", "Scala"]
+        handler: ["JavaScript", "R", "Scala"]
     },
     {
         regex: "define\\s+function\\s+" + regex.identifier + "\\s*\\[\\s*[^\\s]*\\s*\\]\\s+[^\\s]*$",
-        next: ["return"]
+        handler: ["return"]
     },
     {
         regex: "define\\s+function\\s+" + regex.identifier + "\\s*\\[\\s*[^\\s]*\\s*\\]\\s+return\\s+[^\\s]*$",
-        next: suggestions.dataTypes
+        handler: suggestions.dataTypes
     },
     {
         regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*,)*\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*" +
-        "\\)\\s+[^\\s:\\(]*$",
-        next: "$namespacesAndInBuiltWindowsAndStreamProcessors"
-    },
-    {
-        regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((?:\\s*" +
-        regex.identifier + "\\s+(?:" + regex.dataTypes + ")\\s*,)*\\s*" +
-        regex.identifier + "\\s+(?:" + regex.dataTypes + ")\\s*" +
-        "\\)\\s+(" + regex.identifier + "):[^\\s\\(]*$",
-        next: "$extensionWindowsAndStreamProcessors"
+        "\\)\\s+[a-zA-Z_0-9]*$",
+        handler: "$defineWindowStatementWindowType"
     },
     {
         regex: "define\\s+window\\s+(" + regex.identifier + ")\\s*\\((\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*,)*\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*" +
-        "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*\\((\\s*" + regex.identifier + "\\s*,)*\\s*[^\\s\\)]*$",
-        next: "$windowDefinitionFunctionOperationParameters"
+        "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*" +
+        "\\((\\s*" + regex.identifier + "\\s*,)*\\s*[^\\s\\)]*$",
+        handler: "$defineWindowStatementWindowParameters"
     },
     {
         regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*,)*\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*" +
         "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*\\(.*\\)\\s+[^\\s]*$",
-        next: ["output"]
+        handler: ["output"]
     },
     {
         regex: "define\\s+window\\s+" + regex.identifier + "\\s*\\((\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*,)*\\s*" +
         regex.identifier + "\\s+(" + regex.dataTypes + ")\\s*" +
         "\\)\\s+(" + regex.identifier + ":)?" + regex.identifier + "\\s*\\(.*\\)\\s+output\\s+[^\\s]*$",
-        next: suggestions.outputEventTypes.map(function (completion) {
+        handler: suggestions.outputEventTypes.map(function (completion) {
             return Object.assign({}, completion, {
                 value: completion.value + " events;"
             });
         })
     },
     /*
-     * Definition rules ends here
+     * Define statement rules ends here
      */
+
+    // Query rule
     {
         regex: "(from)\\s+((?:.(?!select|group\\s+by|having|output|insert|delete|update))*)" +
         "(?:\\s+(select)\\s+((?:.(?!group\\s+by|having|output|insert|delete|update))*)" +
@@ -282,18 +285,19 @@ var ruleBase = [
         ")?" +
         "(?:\\s+(output)\\s+((?:.(?!insert|delete|update))*))?" +
         "(?:\\s+((?:insert\\s+overwrite|delete|update|insert))\\s+((?:.(?!;))*.?))?$",
-        next: "$query"
+        handler: "$query"
     },
+
     /*
      * Partition rules starts here
      */
     {
         regex: "partition\\s+[a-zA-Z_0-9]*$",
-        next: ["with"]
+        handler: ["with"]
     },
     {
         regex: "partition\\s+with\\s*((?:.(?!\\s+begin))*.)\\s*(?:(begin))?(?:\\s+((?:.(?!\\s+end))*))?$",
-        next: "$partition"
+        handler: "$partition"
     }
     /*
      * Partition rules ends here
@@ -389,11 +393,6 @@ function CompletionEngine() {
         }
     };
 
-
-    /*************************************************************************************************************************
-     *                                          Integration functions for CompletionEngine
-     *************************************************************************************************************************/
-
     /**
      * Dynamically select the completers suitable for current context
      *
@@ -444,9 +443,12 @@ function CompletionEngine() {
                 if (statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
                     new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
                     var endKeyword = statementStartToEndKeywordMap[keyword];
-                    for (var j = i + new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1].length; j < editorText.length; j++) {
+                    var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
+                    for (var j = i + keywordMatch.length; j < editorText.length; j++) {
                         if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
-                            currentStatementStartIndex = j + new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1].length;
+                            var endKeywordMatch =
+                                new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
+                            currentStatementStartIndex = j + endKeywordMatch.length;
                             i = currentStatementStartIndex;
                             break keywordMapLoop;
                         }
@@ -469,76 +471,51 @@ function CompletionEngine() {
             SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
         }
 
-        for (var a = 0; a < ruleBase.length; a++) {
-            if (ruleBase[a].hasOwnProperty("cfg")) {
-                if (executeLoadSuggestionFunctionByName.call(this, ruleBase[a].cfg, [editorText])) {
-                    if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
-                        addCompletions(ruleBase[a].next.map(function (completion) {
-                            if (typeof completion == "string") {
-                                completion = {value: completion};
-                            }
-                            return completion;
-                        }));
-                    } else {
-                        executeLoadSuggestionFunctionByName.call(this, ruleBase[a].next, [editorText]);
-                    }
-                    return;
+        for (i = 0; i < mainRuleBase.length; i++) {
+            var ruleRegex = new RegExp(mainRuleBase[i].regex, "i");
+            if (ruleRegex.test(editorText)) {
+                if (Object.prototype.toString.call(mainRuleBase[i].handler) === '[object Array]') {
+                    addCompletions(mainRuleBase[i].handler.map(function (completion) {
+                        if (typeof completion == "string") {
+                            completion = {value: completion + " "};
+                        }
+                        return completion;
+                    }));
+                } else {
+                    self[mainRuleBase[i].handler].call(this, ruleRegex.exec(editorText));
                 }
-            } else {
-                var ruleRegex = new RegExp(ruleBase[a].regex, "i");
-                if (ruleRegex.test(editorText)) {
-                    if (Object.prototype.toString.call(ruleBase[a].next) === '[object Array]') {
-                        addCompletions(ruleBase[a].next.map(function (completion) {
-                            if (typeof completion == "string") {
-                                completion = {value: completion};
-                            }
-                            return completion;
-                        }));
-                    } else {
-                        executeLoadSuggestionFunctionByName.call(this, ruleBase[a].next, ruleRegex.exec(editorText));
-                    }
-                    return;
-                }
+                return;
             }
         }
     };
 
-    /*************************************************************************************************************************
-     *                                          Auto completions context-handler functions
-     *************************************************************************************************************************/
+    /*
+     * Suggestion Handler functions starts here
+     */
 
     /**
      * Load the initial suggestions list
      */
     self.$startOfStatement = function () {
-        addCompletions(["define ", "from ", "partition ", "@"].map(function (completion) {
-            return {value: completion};
+        addCompletions(["define", "from", "partition", "@"].map(function (completion) {
+            return {value: completion + " "};
         }));
     };
 
     /**
-     * Load the namespaces of extension windows and stream processors, in-built window names and in-built stream processor names
+     * Load in-built window names for the define window statement
      */
-    self.$namespacesAndInBuiltWindowsAndStreamProcessors = function () {
+    self.$defineWindowStatementWindowType = function () {
         addSnippets(getInBuiltWindowProcessors());
-        addSnippets(getInBuiltStreamProcessors());
-        addSnippets(getExtensionNamesSpaces([constants.WINDOW_PROCESSORS, constants.STREAM_PROCESSORS]));
-        addCompletions({value: "window.", priority: 2});
     };
 
     /**
-     * Load the extension windows and stream processors for a namespace
+     * Load attribute names as completions for the define window statement window's parameters
      *
-     * @param {Array} args
+     * @param {string[]} regexResults Regex results from the regex test in the main rule base matching
      */
-    self.$extensionWindowsAndStreamProcessors = function (args) {
-        var namespace = args[1];
-        addSnippets(getExtensionWindowProcessors(namespace));
-        addSnippets(getExtensionStreamProcessors(namespace));
-    };
-
-    self.$windowDefinitionFunctionOperationParameters = function (args) {
-        var stream = args[1];
+    self.$defineWindowStatementWindowParameters = function (regexResults) {
+        var stream = regexResults[1];
         if (self.windowList[stream]) {
             addCompletions(Object.keys(self.windowList[stream].attributes).map(function (attribute) {
                 return {
@@ -549,36 +526,43 @@ function CompletionEngine() {
         }
     };
 
-    self.$query = function (args) {
+    /**
+     * Load completions for queries
+     * Regex results contains regex result groups for different parts of the query; input, select, group by, having, output rate, output
+     * The relevant part of the query the user is in will be tested again using regexps
+     *
+     * @param {string[]} regexResults Regex results from the regex test in the main rule base matching
+     */
+    self.$query = function (regexResults) {
         // Find the part of the query in which the cursor is at
-        for (var i = args.length - 1; i > 0; i--) {
-            if (args[i] != undefined) {
+        for (var i = regexResults.length - 1; i > 0; i--) {
+            if (regexResults[i] != undefined) {
                 break;
             }
         }
-        switch (args[i - 1]) {
+        switch (regexResults[i - 1]) {
             case "from":
-                handleQueryInputSuggestions(args);
+                handleQueryInputSuggestions(regexResults);
                 break;
             case "select":
-                handleQuerySelectionSuggestions(args);
+                handleQuerySelectionSuggestions(regexResults);
                 break;
             case "group by":
-                handleGroupBySuggestions(args);
+                handleGroupBySuggestions(regexResults);
                 break;
             case "having":
-                handleHavingSuggestions(args);
+                handleHavingSuggestions(regexResults);
                 break;
             case "output":
-                handleQueryOutputRateSuggestions(args);
+                handleQueryOutputRateSuggestions(regexResults);
                 break;
             case "insert":
-                handleQueryInsertIntoSuggestions(args);
+                handleQueryInsertIntoSuggestions(regexResults);
                 break;
             case "insert overwrite":
             case "delete":
             case "update":
-                handleQueryInsertOverwriteDeleteUpdateSuggestions(args);
+                handleQueryInsertOverwriteDeleteUpdateSuggestions(regexResults);
                 break;
             default:
         }
@@ -616,38 +600,41 @@ function CompletionEngine() {
         var afterUnidirectionalKeywordSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex +
             "\\s+unidirectional\\s+[a-zA-Z_0-9]*$", "i");
         var afterOnKeywordSuggestionsRegex = new RegExp("\\s+on\\s+(?:.(?!\\s+within))*$", "i");
-        var afterWithinKeywordSuggestionsRegex = new RegExp("\\s+within\\s+(?:.(?!select|group\\s+by|having|output|insert|delete|update))*$", "i");
+        var afterWithinKeywordSuggestionsRegex = new RegExp("\\s+within\\s+" +
+            "(?:.(?!select|group\\s+by|having|output|insert|delete|update))*$", "i");
+        var everyKeywordSuggestionsRegex = new RegExp("->\\s*[a-zA-Z_0-9]*$", "i");
 
         // Testing to find the relevant suggestion
-        if (queryInput == "" || sourceSuggestionsRegex.test(queryInput)) {
+        if (sourceSuggestionsRegex.test(queryInput)) {
             addCompletions(Object.keys(self.streamList).map(function (stream) {
                 return {
                     value: stream,
                     type: "Stream",
-                    priority: 5
+                    priority: 6
                 }
             }));
             addCompletions(Object.keys(self.tableList).map(function (table) {
                 return {
                     value: table,
                     type: "Event Table",
-                    priority: 4
+                    priority: 5
                 }
             }));
             addCompletions(Object.keys(self.windowList).map(function (window) {
                 return {
                     value: window,
                     type: "Event Window",
-                    priority: 3
+                    priority: 4
                 }
             }));
             addCompletions(Object.keys(self.triggerList).map(function (trigger) {
                 return {
                     value: trigger,
                     type: "Event Trigger",
-                    priority: 2
+                    priority: 3
                 }
             }));
+            addCompletions({value: "every ", priority: 2});
         } else if (streamProcessorExtensionSuggestionsRegex.test(queryInput)) {
             var namespace = streamProcessorExtensionSuggestionsRegex.exec(queryInput)[1].trim();
             addSnippets(getExtensionStreamProcessors(namespace));
@@ -662,7 +649,9 @@ function CompletionEngine() {
         } else if (windowExtensionSuggestionsRegex.test(queryInput)) {
             addSnippets(getExtensionWindowProcessors(windowExtensionSuggestionsRegex.exec(queryInput)[1].trim()));
         } else if (windowAndStreamProcessorParameterSuggestionsRegex.test(queryInput)) {
-            addCompletions(getAttributesFromStreamsOrTables(windowAndStreamProcessorParameterSuggestionsRegex.exec(queryInput)[1].trim()));
+            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(
+                windowAndStreamProcessorParameterSuggestionsRegex.exec(queryInput)[1].trim())
+            );
         } else if (afterUnidirectionalKeywordSuggestionsRegex.test(queryInput)) {
             addCompletions(["join", "on", "within"].map(function (suggestion) {
                 return {
@@ -673,34 +662,38 @@ function CompletionEngine() {
             addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 4, 3);
             addCompletions(suggestions.logicalOperatorList.map(function (operator) {
                 return Object.assign({}, operator, {
-                    value: operator + " ", priority: 2
+                    value: operator.value + " ", priority: 2
                 });
             }));
             addCompletions({value: "within ", priority: 3});
         } else if (patternQueryFilterSuggestionsRegex.test(queryInput)) {
             var patternMatch = patternQueryFilterSuggestionsRegex.exec(queryInput);
-            addCompletions(getAttributesFromStreamsOrTables(patternMatch[2]));
+            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(patternMatch[2]));
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
         } else if (nonPatternQueryFilterSuggestionsRegex.test(queryInput)) {
-            addCompletions(getAttributesFromStreamsOrTables(nonPatternQueryFilterSuggestionsRegex.exec(queryInput)[1].trim()).map(function (suggestion) {
-                return Object.assign({}, suggestion, {
-                    value: suggestion.value + " ", priority: 3
-                });
-            }));
+            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(
+                nonPatternQueryFilterSuggestionsRegex.exec(queryInput)[1].trim()).map(function (suggestion) {
+                    return Object.assign({}, suggestion, {
+                        value: suggestion.value + " ", priority: 3
+                    });
+                }
+            ));
             addCompletions(suggestions.logicalOperatorList.map(function (operator) {
                 return Object.assign({}, operator, {
-                    value: operator + " ", priority: 2
+                    value: operator.value + " ", priority: 2
                 });
             }));
         } else if (afterWithinKeywordSuggestionsRegex.test(queryInput)) {
             addCompletions(suggestions.timeValueTypes.map(function (type) {
                 return Object.assign({}, type, {
-                    value: type + " ", priority: 2
+                    value: type.value + " ", priority: 2
                 });
             }));
             addCompletions(["select", "output", "insert", "delete", "update"].map(function (completion) {
                 return {value: completion + " ", priority: 2};
             }));
+        } else if (everyKeywordSuggestionsRegex.test(queryInput)) {
+            addCompletions({value: "every ", priority: 2});
         } else if (afterStreamSuggestionsRegex.test(queryInput)) {
             var completions = [{value: "#"}];
             if (/\s+[^\[#]*$/i.test(queryInput)) {
@@ -726,7 +719,9 @@ function CompletionEngine() {
                     priority: 3
                 });
             }));
-            if (new RegExp(regex.query.input.sourceRegex + regex.query.input.sourceHandlersRegex + regex.hash + "[^\\(\\.:]*$", "i").test(queryInput)) {
+            if (new RegExp(regex.query.input.sourceRegex +
+                    regex.query.input.sourceHandlersRegex +
+                    regex.hash + "[^\\(\\.:]*$", "i").test(queryInput)) {
                 // Only one window can be applied for a stream
                 addCompletions({caption: "window", value: "window.", priority: 2});
             }
@@ -742,29 +737,46 @@ function CompletionEngine() {
         var querySelectionClause = regexResults[4];
 
         // Regexps used for identifying the suggestions
-        var extensionFunctionSuggestionsRegex = new RegExp(regex.query.selection.attributesList + regex.comma + regex.namespace + "[a-zA-Z_0-9]*$", "i");
-        var afterQuerySectionClauseSuggestionsRegex = new RegExp(regex.query.selection.attributesList + "\\s+[a-zA-Z_0-9]*$", "i");
-        var generalSuggestionsRegex = new RegExp("(?:" +
-            regex.query.selection.attributesList + regex.comma + "[a-zA-Z_0-9]*(?:\\s*\\((?:(?:.(?!\\)))*.)?\\s*)?|" +
-            "^" + regex.identifier + ")$", "i");
+        var extensionFunctionSuggestionsRegex = new RegExp(regex.query.selection.attributesList + regex.comma +
+            regex.namespace + "[a-zA-Z_0-9]*$", "i");
+        var afterQuerySelectionClauseSuggestionsRegex = new RegExp(regex.query.selection.attributesList + "\\s+[a-zA-Z_0-9]*$", "i");
+        var attributeAndInBuiltFunctionSuggestionsRegex = new RegExp("(?:" + regex.query.selection.attribute + regex.comma + ")*" +
+            "[a-zA-Z_0-9]*(?:\\s*\\((?:(?:.(?!\\)))*.)?\\s*)?$", "i");
 
         // Testing to find the relevant suggestion
         if (extensionFunctionSuggestionsRegex.test(querySelectionClause)) {
             var namespace = extensionFunctionSuggestionsRegex.exec(querySelectionClause)[0];
             addSnippets(getExtensionFunctionNames(namespace));
-        } else if (afterQuerySectionClauseSuggestionsRegex.test(querySelectionClause)) {
+        } else if (afterQuerySelectionClauseSuggestionsRegex.test(querySelectionClause)) {
             addCompletions(["as", "group by", "having", "output", "insert", "delete", "update"].map(function (completion) {
                 return {value: completion + " "};
             }));
-        } else if (querySelectionClause == "" || generalSuggestionsRegex.test(querySelectionClause)) {
+        } else if (attributeAndInBuiltFunctionSuggestionsRegex.test(querySelectionClause)) {
             addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
-            addSnippets(getExtensionNamesSpaces([constants.FUNCTIONS]).map(function (suggestion) {
-                suggestion.value = suggestion.value + ":";
-                return suggestion;
+            addCompletions(Object.keys(self.evalScriptList).map(function (evalScript) {
+                return {
+                    value: evalScript,
+                    description: "<strong>Eval Script</strong> - " + evalScript + "<br><ul>" +
+                    "<li>Language - " + self.evalScriptList[evalScript].language + "</li>" +
+                    "<li>Return Type - " + self.evalScriptList[evalScript].returnType + "</li>" +
+                    "<li>Function Body -" + "<br><br>" + self.evalScriptList[evalScript].functionBody + "</li></ul>",
+                    type: "Eval Script",
+                    priority: 2
+                }
             }));
-            addSnippets(getInBuiltFunctionNames());
+            addSnippets(getExtensionNamesSpaces([constants.FUNCTIONS]).map(function (suggestion) {
+                return Object.assign({}, suggestion, {
+                    value: suggestion.value + ":",
+                    priority: 2
+                });
+            }));
+            addSnippets(getInBuiltFunctionNames().map(function (completion) {
+                return Object.assign({}, completion, {
+                    priority: 2
+                });
+            }));
         }
     }
 
@@ -777,7 +789,8 @@ function CompletionEngine() {
         var groupByClause = regexResults[6];
 
         // Regexps used for identifying the suggestions
-        var afterGroupByClauseRegex = new RegExp("(?:" + regex.identifier + "\\s*)(?:" + regex.comma + regex.identifier + "\\s*)*" + "\\s+[a-zA-Z_0-9]*$", "i");
+        var afterGroupByClauseRegex = new RegExp(regex.identifier + "\\s*" +
+            "(?:" + regex.comma + regex.identifier + "\\s*)*" + "\\s+[a-zA-Z_0-9]*$", "i");
         var generalSuggestionsRegex = new RegExp("(?:" + regex.identifier + "\\s*" + regex.comma + ")*", "i");
 
         // Testing to find the relevant suggestion
@@ -829,19 +842,24 @@ function CompletionEngine() {
 
         // Regexps used for identifying the suggestions
         var afterHalfTypedKeywordSuggestionsRegex = new RegExp("^[a-zA-Z]*$", "i");
-        var everyKeywordSuggestionsRegex = new RegExp("^(?:" + regex.query.outputRate.types + "|snapshot)\\s+[a-zA-Z]*$", "i");
+        var everyKeywordSuggestionsRegex = new RegExp("^(?:" + regex.query.outputRate.types + "|snapshot)\\s+" +
+            "[a-zA-Z]*$", "i");
         var afterOutputRateClauseSuggestionsRegex = new RegExp("^(?:" +
             "(?:" + regex.query.outputRate.types + ")?|" +
             "(?:(?:" + regex.query.outputRate.types + ")?|snapshot)" +
             ")\\s+every\\s+[0-9]*\\s+" + regex.identifier + "\\s+[a-zA-Z]*$", "i");
-        var timeValueSuggestionsRegex = new RegExp("^(?:(?:" + regex.query.outputRate.types + ")?|snapshot)\\s+every\\s+[0-9]*\\s+[a-zA-Z]*$", "i");
-        var eventKeywordSuggestionRegex = new RegExp("^(?:" + regex.query.outputRate.types + ")?\\s+every\\s+[0-9]*\\s+[a-zA-Z]*$", "i");
+        var timeValueSuggestionsRegex = new RegExp("^(?:(?:" + regex.query.outputRate.types + ")?|snapshot)\\s+" +
+            "every\\s+[0-9]*\\s+[a-zA-Z]*$", "i");
+        var eventKeywordSuggestionRegex = new RegExp("^(?:" + regex.query.outputRate.types + ")?\\s+" +
+            "every\\s+[0-9]*\\s+[a-zA-Z]*$", "i");
 
         // Testing to find the relevant suggestion
         if (outputRateClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(outputRateClause)) {
-            addCompletions(["snapshot every", "all every", "last every", "first every", "every"].map(function (completion) {
-                return {value: completion + " "};
-            }));
+            addCompletions(["snapshot every", "all every", "last every", "first every", "every"]
+                .map(function (completion) {
+                    return {value: completion + " "};
+                })
+            );
         } else if (everyKeywordSuggestionsRegex.test(outputRateClause)) {
             addCompletions({value: "every "});
         } else if (afterOutputRateClauseSuggestionsRegex.test(outputRateClause)) {
@@ -868,9 +886,12 @@ function CompletionEngine() {
 
         // Regexps used for identifying the suggestions
         var afterHalfTypedKeywordSuggestionsRegex = new RegExp("^[a-zA-Z]*$", "i");
-        var afterOutputEventTypesSuggestionRegex = new RegExp("^(?:" + regex.query.output.eventTypes + ")?events\\s+[a-zA-Z]*$", "i");
-        var afterIntoKeywordSuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?events\\s+)?into\\s+[a-zA-Z]*$", "i");
-        var afterQuerySuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?events\\s+)?into\\s+" + regex.identifier + "\\s*(?:;)?\\s+[a-zA-Z]*$", "i");
+        var afterOutputEventTypesSuggestionRegex = new RegExp("^(?:" + regex.query.output.eventTypes + ")?" +
+            "events\\s+[a-zA-Z]*$", "i");
+        var afterIntoKeywordSuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?" +
+            "events\\s+)?into\\s+[a-zA-Z]*$", "i");
+        var afterQuerySuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?events\\s+)?" +
+            "into\\s+" + regex.identifier + "\\s*(?:;)?\\s+[a-zA-Z]*$", "i");
 
         // Testing to find the relevant suggestion
         if (streamOutputClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(streamOutputClause)) {
@@ -975,7 +996,8 @@ function CompletionEngine() {
      */
     function handleEndOfPartitionCheck(regexResults) {
         // Regexps used for identifying the suggestions
-        var endOfPartitionRegex = new RegExp("partition\\s+with\\s+(?:.(?!\\s+begin))*.\\s+begin\\s+(?:.(?!\\s+end))*.$", "i");
+        var endOfPartitionRegex = new RegExp("partition\\s+with\\s+(?:.(?!\\s+begin))*.\\s+begin\\s+" +
+            "(?:.(?!\\s+end))*.$", "i");
 
         // Testing to find the relevant suggestion
         if (endOfPartitionRegex.test(regexResults.input)) {
@@ -996,8 +1018,12 @@ function CompletionEngine() {
             }
         }
 
-        if (partitionBody && /;\s*$/.test(partitionBody)) {
-            addCompletions({caption: "end", value: "\nend;"});
+        if (partitionBody != undefined) {
+            if (/;\s*$/.test(partitionBody)) {
+                addCompletions({caption: "end", value: "\nend;"});
+            } else if (/^$/i.test(partitionBody)) {
+                addCompletions({value: "from "});
+            }
         } else if (unclosedBracketsCount == 0 && /\)\s*[a-zA-Z_0-9]*/.test(partitionConditionStatement)) {
             var completionPrefix = "";
             if (partitionConditionStatement.charAt(partitionConditionStatement.length - 1) == ")") {
@@ -1006,30 +1032,69 @@ function CompletionEngine() {
             addCompletions({value: completionPrefix + "begin\n\t", caption: "begin"});
         } else if (unclosedBracketsCount == 1) {
             // Regexps used for identifying the suggestions
-            var beforeOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:.(?!\\s+of))*.\\s+[a-zA-Z_0-9]*$", "i");
+            var beforeOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:(?:.(?!\\s+of))+.)?(?:\\s+[a-zA-Z_0-9]*)?$", "i");
             var afterOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:.(?!\\s+of))*.\\s+of\\s+[a-zA-Z_0-9]*$", "i");
 
             // Testing to find the relevant suggestion
             if (beforeOfKeywordSuggestionRegex.test(partitionConditionStatement)) {
-                addAllAttributesInExecutionPlanAsCompletions(4, 3);
-                if (new RegExp("\s+$", "i")) {
-                    addCompletions([{value: "of "}, {value: "as "}, {
-                        value: "or ",
-                        type: "Logical Operator"
-                    }]);
+                var streams = getStreamsForAttributesInPartitionCondition();
+                if (streams.length == 0) {
+                    // Adding all streams if no streams has attributes in the partition condition
+                    streams = Object.keys(self.streamList);
                 }
-            } else if (afterOfKeywordSuggestionRegex) {
-                var streamAttributeSearchRegex = new RegExp("([a-zA-Z_0-9]+)\\s*(?:<|>|=|!){1,2}\\s*[a-zA-Z_0-9]+\\s+(?:as|of)", "ig");
 
-                var attributeList = [];
-                var attribute;
-                while (attribute = streamAttributeSearchRegex.exec(partitionConditionStatement)) {
-                    if (attributeList.indexOf(attribute) == -1) {
-                        attributeList.push(attribute[1]);
+                // Getting the attributes of the streams which has attributes in the partition condition already
+                var attributes = [];
+                for (i = 0; i < streams.length; i++) {
+                    var newAttributes = Object.keys(self.streamList[streams[i]]);
+                    for (var j = 0; j < newAttributes.length; j++) {
+                        if (attributes.indexOf(newAttributes[j]) == -1) {
+                            attributes.push(newAttributes[j]);
+                        }
                     }
                 }
 
-                var streamList = [];
+                addCompletions(attributes.map(function (attribute) {
+                    return {value: attribute, priority: 2, type: "Attribute"};
+                }));
+
+                if (new RegExp("\s+$", "i")) {
+                    addCompletions([{value: "of "}, {value: "as "}, {value: "or ", type: "Logical Operator"}]);
+                }
+            } else if (afterOfKeywordSuggestionRegex) {
+                addCompletions(getStreamsForAttributesInPartitionCondition().map(function (stream) {
+                    return {value: stream, type: "Stream"};
+                }));
+            }
+        }
+
+        /**
+         * Get the streams of the attributes mentioned in the partition condition statement
+         *
+         * @return {string[]} streams of the attributes in the partition condition
+         */
+        function getStreamsForAttributesInPartitionCondition () {
+            var streamAttributeSearchRegex = new RegExp("(?:(?:[0-9]+|(" + regex.identifier + "))\\s*" +
+                "(?:<|>|=|!){1,2}\\s*" +
+                "(?:[0-9]+|(" + regex.identifier + "))\\s+as|" +
+                "^\\s*\\(\\s*(" + regex.identifier + ")\\s+(?:of\\s+)?$)", "ig");
+
+            // Getting the attributes mentioned in the partition condition
+            var attributeList = [];
+            var attribute;
+            while (attribute = streamAttributeSearchRegex.exec(partitionConditionStatement)) {
+                if (attribute && attributeList.indexOf(attribute) == -1) {
+                    for (i = 1; i < attribute.length; i++) {
+                        if (attribute[i]) {
+                            attributeList.push(attribute[i]);
+                        }
+                    }
+                }
+            }
+
+            // Getting the streams with all the attributes in them
+            var streamList = [];
+            if (attributeList.length > 0) {
                 streamListLoop: for (var streamName in self.streamList) {
                     if (self.streamList.hasOwnProperty(streamName)) {
                         for (i = 0; i < attributeList.length; i++) {
@@ -1040,25 +1105,8 @@ function CompletionEngine() {
                         streamList.push(streamName);
                     }
                 }
-                addCompletions(streamList.map(function (stream) {
-                    return {value: stream + ")\nbegin\n\t", caption: stream, type: "Stream"};
-                }));
             }
-        } else if (unclosedBracketsCount > 1) {
-            addAllAttributesInExecutionPlanAsCompletions(3, 2);
-            if (new RegExp("\s+$", "i")) {
-                addCompletions({value: "as "});
-            }
-        }
-
-        /**
-         * Add all attributes in all the streams in the execution plan as completions
-         *
-         * @param {int} attributePriority priority to be set as attribute priority
-         * @param {int} streamPriority priority to be set as stream priority
-         */
-        function addAllAttributesInExecutionPlanAsCompletions(attributePriority, streamPriority) {
-            addAttributesOfStreamsAsCompletions(regexResults, Object.keys(self.streamList), attributePriority, streamPriority);
+            return streamList;
         }
     };
 
@@ -1070,7 +1118,8 @@ function CompletionEngine() {
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, attributePriority, streamPriority) {
+    function addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, attributePriority,
+                                                                     streamPriority) {
         var queryInput = regexResults[2];
         var streamReferenceSearchRegex = new RegExp(regex.query.input.streamReference, "ig");
         var referenceToStreamMap = [];
@@ -1078,7 +1127,9 @@ function CompletionEngine() {
         while (streamReferenceMatch = streamReferenceSearchRegex.exec(queryInput)) {
             referenceToStreamMap[streamReferenceMatch[2]] = streamReferenceMatch[1];
         }
-        addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap, attributePriority, streamPriority);
+        addAttributesOfStreamReferencesAsCompletions(
+            regexResults, referenceToStreamMap, attributePriority, streamPriority
+        );
     }
 
     /**
@@ -1089,7 +1140,8 @@ function CompletionEngine() {
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, attributePriority, streamPriority) {
+    function addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, attributePriority,
+                                                                            streamPriority) {
         var queryInput = regexResults[2];
         var standardStatefulSourceSearchRegex = new RegExp(regex.query.input.patternStreamRegex, "ig");
         var eventToStreamMap = [];
@@ -1097,7 +1149,9 @@ function CompletionEngine() {
         while (standardStatefulSourceMatch = standardStatefulSourceSearchRegex.exec(queryInput)) {
             eventToStreamMap[standardStatefulSourceMatch[1]] = standardStatefulSourceMatch[2];
         }
-        addAttributesOfStreamReferencesAsCompletions(regexResults, eventToStreamMap, attributePriority, streamPriority);
+        addAttributesOfStreamReferencesAsCompletions(
+            regexResults, eventToStreamMap, attributePriority, streamPriority
+        );
     }
 
     /**
@@ -1107,7 +1161,8 @@ function CompletionEngine() {
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, attributePriority, streamPriority) {
+    function addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, attributePriority,
+                                                            streamPriority) {
         var queryInput = regexResults[2];
         var queryInStreams = [];
         var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
@@ -1117,7 +1172,9 @@ function CompletionEngine() {
                 queryInStreams.push(streamMatch[1]);
             }
         }
-        addAttributesOfStreamsAsCompletions(regexResults, queryInStreams, attributePriority, streamPriority);
+        addAttributesOfStreamsAsCompletions(
+            regexResults, queryInStreams, attributePriority, streamPriority
+        );
     }
 
     /**
@@ -1133,14 +1190,14 @@ function CompletionEngine() {
         var streamBeforeDotMatch;
         if (streamBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
             if (streams.indexOf(streamBeforeDotMatch[1]) != -1) {
-                addCompletions(getAttributesFromStreamsOrTables(streamBeforeDotMatch[1]).map(function (attribute) {
+                addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(streamBeforeDotMatch[1]).map(function (attribute) {
                     return Object.assign({}, attribute, {
                         priority: attributePriority
                     });
                 }));
             }
         } else {
-            addCompletions(getAttributesFromStreamsOrTables(streams).map(function (attribute) {
+            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(streams).map(function (attribute) {
                 return Object.assign({}, attribute, {
                     priority: attributePriority
                 });
@@ -1164,26 +1221,31 @@ function CompletionEngine() {
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap, attributePriority, streamPriority) {
+    function addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap,
+                                                          attributePriority, streamPriority) {
         var afterStreamAndDotSuggestionsRegex = new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
         var referenceBeforeDotMatch;
         if (referenceBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
             if (referenceToStreamMap[referenceBeforeDotMatch]) {
-                addCompletions(getAttributesFromStreamsOrTables(referenceToStreamMap[referenceBeforeDotMatch]).map(function (attribute) {
-                    return Object.assign({}, attribute, {
-                        priority: attributePriority
-                    });
-                }));
+                addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(
+                    referenceToStreamMap[referenceBeforeDotMatch]).map(function (attribute) {
+                        return Object.assign({}, attribute, {
+                            priority: attributePriority
+                        });
+                    }
+                ));
             }
         } else {
             for (var reference in referenceToStreamMap) {
                 if (referenceToStreamMap.hasOwnProperty(reference)) {
-                    addCompletions(getAttributesFromStreamsOrTables(referenceToStreamMap[reference]).map(function (attribute) {
-                        return Object.assign({}, attribute, {
-                            value: reference + "." + attribute.value,
-                            priority: attributePriority
-                        });
-                    }));
+                    addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(
+                        referenceToStreamMap[reference]).map(function (attribute) {
+                            return Object.assign({}, attribute, {
+                                value: reference + "." + attribute.value,
+                                priority: attributePriority
+                            });
+                        }
+                    ));
                 }
             }
             addCompletions(Object.keys(referenceToStreamMap).map(function (stream) {
@@ -1228,10 +1290,11 @@ function CompletionEngine() {
      */
     function getExtensionFunctionNames(namespace) {
         if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
-            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].functions).map(function (processor) {
-                processor.type = "Function";
-                return processor;
-            });
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].functions)
+                .map(function (processor) {
+                    processor.type = "Function";
+                    return processor;
+                });
         } else {
             return [];
         }
@@ -1245,10 +1308,11 @@ function CompletionEngine() {
      */
     function getExtensionWindowProcessors(namespace) {
         if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
-            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].windowProcessors).map(function (processor) {
-                processor.type = "Window Processor";
-                return processor;
-            });
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].windowProcessors)
+                .map(function (processor) {
+                    processor.type = "Window Processor";
+                    return processor;
+                });
         } else {
             return [];
         }
@@ -1262,10 +1326,11 @@ function CompletionEngine() {
      */
     function getExtensionStreamProcessors(namespace) {
         if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
-            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].streamProcessors).map(function (processor) {
-                processor.type = "Stream Processor";
-                return processor;
-            });
+            return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].streamProcessors)
+                .map(function (processor) {
+                    processor.type = "Stream Processor";
+                    return processor;
+                });
         } else {
             return [];
         }
@@ -1277,10 +1342,11 @@ function CompletionEngine() {
      * @returns {Array} list of function snippets
      */
     function getInBuiltFunctionNames() {
-        return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.functions).map(function (processor) {
-            processor.type = "Function";
-            return processor;
-        });
+        return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.functions)
+            .map(function (processor) {
+                processor.type = "Function";
+                return processor;
+            });
     }
 
     /**
@@ -1289,10 +1355,11 @@ function CompletionEngine() {
      * @returns {Array} list of window processor snippets
      */
     function getInBuiltWindowProcessors() {
-        return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors).map(function (processor) {
-            processor.type = "Window Processor";
-            return processor;
-        });
+        return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors)
+            .map(function (processor) {
+                processor.type = "Window Processor";
+                return processor;
+            });
     }
 
     /**
@@ -1301,35 +1368,26 @@ function CompletionEngine() {
      * @returns {Array} list of stream processor snippets
      */
     function getInBuiltStreamProcessors() {
-        return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors).map(function (processor) {
-            processor.type = "Stream Processor";
-            return processor;
-        });
-    }
-
-    /**
-     * This function will call a given function by it's name within given context
-     *
-     * @param {string} functionName name of the function
-     * @param {String[]} matchedStringGroups arguments array that would be passed to the function
-     * @returns {*} return from the executed function
-     */
-    function executeLoadSuggestionFunctionByName(functionName, matchedStringGroups) {
-        return self[functionName].call(this, matchedStringGroups);
+        return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors)
+            .map(function (processor) {
+                processor.type = "Stream Processor";
+                return processor;
+            });
     }
 
     /**
      * get the attributes of the streams or tables specified
+     * Duplicate attribute names will be prefixed with the stream or table names
      *
      * @param {string|string[]} streamOrTableName name of the streams or tables of which attributes are returned
      * @return {Object[]} arrays of attribute names of the stream or table
      */
-    function getAttributesFromStreamsOrTables(streamOrTableName) {
+    function getAttributesFromStreamsOrTablesWithPrefixedDuplicates(streamOrTableName) {
         var attributes = [];
         if (streamOrTableName.constructor === Array) {
             var newAttributes = [];
             for (var i = 0; i < streamOrTableName.length; i++) {
-                newAttributes = newAttributes.concat(getAttributesOfSource(streamOrTableName[i]));
+                newAttributes = newAttributes.concat(getAttributesOfStreamOrTable(streamOrTableName[i]));
             }
 
             // Prefixing duplicates attribute names with stream
@@ -1365,7 +1423,7 @@ function CompletionEngine() {
                 }
             }
         } else {
-            attributes = getAttributesOfSource(streamOrTableName);
+            attributes = getAttributesOfStreamOrTable(streamOrTableName);
         }
 
         /**
@@ -1374,7 +1432,7 @@ function CompletionEngine() {
          * @param {string} sourceName name of the stream or table of which attributes are returned
          * @return {Object[]} arrays of attribute names of the stream or table
          */
-        function getAttributesOfSource(sourceName) {
+        function getAttributesOfStreamOrTable(sourceName) {
             var attributes = [];
             if (self.streamList[sourceName]) {
                 attributes = Object.keys(self.streamList[sourceName]);
@@ -1413,6 +1471,7 @@ function CompletionEngine() {
                 caption: (completion.caption == undefined ? completion.value : completion.caption),
                 value: completion.value,
                 score: (completion.priority == undefined ? 1 : completion.priority),
+                docHTML: completion.description,
                 meta: completion.type
             });
         }
@@ -1436,6 +1495,9 @@ function CompletionEngine() {
     }
 }
 
+/*
+ * Data stored common for all editors
+ */
 CompletionEngine.functionOperationSnippets = {
     /*
      * extensions object contains the custom function, streamProcessor and windowProcessor extensions available for
@@ -1643,14 +1705,22 @@ function generateDescriptionFromProcessorMetaData(metaData) {
             for (var j = 0; j < metaData.parameters.length; j++) {
                 if (metaData.parameters[j].multiple) {
                     for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
-                        description += "<li>" + metaData.parameters[j].multiple[k].name +
+                        description += "<li>" +
+                            metaData.parameters[j].multiple[k].name +
                             (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
-                            (metaData.parameters[j].multiple[k].type.length > 0 ? metaData.parameters[j].multiple[k].type.join(" | ") : "") + "</li>";
+                            (metaData.parameters[j].multiple[k].type.length > 0 ?
+                                metaData.parameters[j].multiple[k].type.join(" | ") :
+                                "")
+                            + "</li>";
                     }
                 } else {
-                    description += "<li>" + metaData.parameters[j].name +
+                    description += "<li>" +
+                        metaData.parameters[j].name +
                         (metaData.parameters[j].optional ? " (optional)" : "") +
-                        (metaData.parameters[j].type.length > 0 ? " - " + metaData.parameters[j].type.join(" | ") : "") + "</li>";
+                        (metaData.parameters[j].type.length > 0 ?
+                        " - " + metaData.parameters[j].type.join(" | ") :
+                            "") +
+                        "</li>";
                 }
             }
             description += "</ul>";

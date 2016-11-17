@@ -25,8 +25,12 @@
 
     // Finding the base url of the plugin
     var scripts = document.getElementsByTagName("script");
-    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");     // Get "src" attribute of the <script> tag for the current file (last tag in the array)
-    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/editor.js".length);
+    // Get "src" attribute of the <script> tag for the current file
+    // (last tag in the array since tags after that are not yet added to it)
+    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
+    SiddhiEditor.baseURL =
+        relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/editor.js".length);
+
     SiddhiEditor.serverURL = "http://localhost:8080/";
     SiddhiEditor.serverSideValidationDelay = 2000;
 
@@ -67,7 +71,8 @@
     SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
     SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
-    SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
+    SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT +
+        SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
     SiddhiEditor.Tracing = {NONE: "NONE", ERROR: "ERROR", DEBUG: "DEBUG", INFO: "INFO"};
     SiddhiEditor.Tracing.traceLevel = SiddhiEditor.Tracing.NONE;
 
@@ -179,7 +184,8 @@
 
             // parser() is the root level grammar rule. This line generates a parser tree.
             // when generating the new parserTree, the ErrorListener
-            // (client-side-siddhi-parser/antlr4/error/ErrorListener.js -> ConsoleErrorListener.syntaxError()) will be invoked automatically.
+            // (client-side-siddhi-parser/antlr4/error/ErrorListener.js -> ConsoleErrorListener.syntaxError())
+            // will be invoked automatically.
             // within that method , the syntax errors are stored in  editor.state.syntaxErrorList
             var tree = parser.parse();
 
@@ -187,7 +193,7 @@
             editor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
 
             // To maintains the line numbers against the distinct query statements(streamDefinitions,query,functionDefinitions..).
-            // statementList is important when checking semantic errors.
+            // statementsList is important when checking semantic errors.
             // The input execution plan is submitted to the server statement by statement for semantic error checking
             editor.statementsList = [];
 
@@ -199,7 +205,8 @@
 
             if (parser._syntaxErrors == 0 && config.realTimeValidation &&
                 (editor.state.previousParserTree != tree.toStringTree(tree, parser))) {
-                // If there are no syntax errors and there is a change in parserTree => check for semantic errors if there is no change in the query within 3sec period
+                // If there are no syntax errors and there is a change in parserTree
+                // check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
                 setTimeout(checkForSemanticErrors, SiddhiEditor.serverSideValidationDelay);
             }
@@ -219,12 +226,15 @@
                 var isValid = submitToServerForSemanticErrorCheck(editor.getValue(), true);
 
                 if (!isValid) {
-                    // If the query contains semantic  errors. send the query in a constructive manner to sever to get the line number with error
+                    // If the query contains semantic errors
+                    // send the query in a constructive manner to sever to get the line number with error
                     // This check is needed because the ServerSide compiler doesn't return line numbers of the semantic errors.
                     var query = "";
                     for (var i = 0; i < editor.statementsList.length; i++) {
                         query += editor.statementsList[i].state + "  \n";
-                        submitToServerForSemanticErrorCheck(query, false, editor.statementsList[i].line, editor.statementsList[i].state);
+                        submitToServerForSemanticErrorCheck(
+                            query, false, editor.statementsList[i].line, editor.statementsList[i].state
+                        );
                         if (editor.state.foundSemanticErrors) {
                             break;
                         }
@@ -287,7 +297,9 @@
                         editor.state.foundSemanticErrors = true;
 
                         // Show the errors
-                        editor.session.setAnnotations(editor.state.semanticErrorList.concat(editor.state.syntaxErrorList));
+                        editor.session.setAnnotations(
+                            editor.state.semanticErrorList.concat(editor.state.syntaxErrorList)
+                        );
                     }
                 };
                 jQuery.ajax(ajaxConfig);

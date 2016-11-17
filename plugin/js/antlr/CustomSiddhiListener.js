@@ -137,13 +137,19 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
     var functionCtx = ctx.function_id(0);
 
     if (functionCtx) {
-        var processorName = functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
+        var processorName =
+            functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
         if (namespaceCtx) {
-            var namespace = namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
+            var namespace =
+                namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
             snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
 
             // Adding namespace tool tip
-            updateTokenDescription(this.editor, namespaceCtx.stop.line - 1, namespaceCtx.stop.column + 1, "Extension namespace - " + namespace);
+            updateTokenDescription(
+                this.editor, namespaceCtx.stop.line - 1,
+                namespaceCtx.stop.column + 1,
+                "Extension namespace - " + namespace
+            );
         } else {
             snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
         }
@@ -151,17 +157,28 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
         // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
         var description;
         if (snippets) {
-            if (snippets.windowProcessors && snippets.windowProcessors[processorName]) {            // Checking if the processor exists in window processors
+            // Checking if the processor exists in window processors
+            if (snippets.windowProcessors && snippets.windowProcessors[processorName]) {
                 description = snippets.windowProcessors[processorName].description;
-            } else if (snippets.streamProcessors && snippets.streamProcessors[processorName]) {     // Checking if the processor exists in stream processors
+                // Checking if the processor exists in stream processors
+            } else if (snippets.streamProcessors && snippets.streamProcessors[processorName]) {
                 description = snippets.streamProcessors[processorName].description;
-            } else if (snippets.functions && snippets.functions[processorName]) {                   // Checking if the processor exists in functions
+                // Checking if the processor exists in functions
+            } else if (snippets.functions && snippets.functions[processorName]) {
                 description = snippets.functions[processorName].description;
+                // Checking if the processor exists in eval scripts
             } else if (this.editor.completionEngine.evalScriptList[processorName]) {
                 description = "<strong>Eval Script</strong> - " + processorName + "<br><ul>" +
-                    "<li>Language - " + this.editor.completionEngine.evalScriptList[processorName].language + "</li>" +
-                    "<li>Return Type - " + this.editor.completionEngine.evalScriptList[processorName].returnType + "</li>" +
-                    "<li>Function Body - <br><br>" + this.editor.completionEngine.evalScriptList[processorName].functionBody + "</li></ul>"
+                    "<li>Language - " +
+                    this.editor.completionEngine.evalScriptList[processorName].language +
+                    "</li>" +
+                    "<li>Return Type - " +
+                    this.editor.completionEngine.evalScriptList[processorName].returnType +
+                    "</li>" +
+                    "<li>Function Body -" +
+                    "<br><br>" + this.editor.completionEngine.evalScriptList[processorName].functionBody +
+                    "</li>" +
+                    "</ul>";
             }
         }
         if (description) {
