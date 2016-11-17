@@ -59,15 +59,15 @@ ace.define("ace/mode/siddhi_highlight_rules", ["require", "exports", "module", "
                     end: "\\*/"
                 },
                 {
-                    token: "string.quoted.double",           // " string
+                    token: "string.quoted.double",
                     regex: '".*?"'
                 },
                 {
-                    token: "string.quoted.single",           // ' string
+                    token: "string.quoted.single",
                     regex: "'.*?'"
                 },
                 {
-                    token: "constant.numeric", // float
+                    token: "constant.numeric",
                     regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
                 },
                 {

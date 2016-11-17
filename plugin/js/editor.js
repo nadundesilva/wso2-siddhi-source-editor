@@ -56,12 +56,12 @@
     var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "lib/antlr4-js-runtime/index";
 
     // ANTLR4 JS runtime integration code segment goes here..
-    var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                   // ANTLR4 JS runtime
+    var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                                          // ANTLR4 JS runtime
     var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
     var CustomSiddhiListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LISTENER).CustomSiddhiListener;      // Custom listener for Siddhi
     var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
-    var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;                        // Required for token tooltips
+    var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
 
     SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
     SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
@@ -84,6 +84,7 @@
         editor.realTimeValidation = config.realTimeValidation;
         editor.tokenTooltip = new TokenTooltip(editor);
         editor.setReadOnly(config.readOnly);
+
         // Setting the editor options
         editor.session.setMode(ACE_CONSTANT.SIDDHI_MODE);   // Language mode located at ace_editor/mode-siddhi.js
         editor.setTheme(ACE_CONSTANT.THEME);                // Theme located at ace_editor/theme/crimson_editor.js
@@ -129,6 +130,28 @@
         editor.completionEngine.adjustAutoCompletionHandlers(editor);
         editor.commands.on('afterExec', function () {
             editor.completionEngine.adjustAutoCompletionHandlers(editor);
+        });
+
+        // Adding events for adjusting the completions list styles
+        var completionTypeToStyleMap = {
+            "snippet": "font-style: italic;"
+        };
+        editor.renderer.on("afterRender", function () {
+            // Checking if a popup is open when the editor is re-rendered
+            if (editor.completer && editor.completer.popup) {
+                // Adding a on after render event for updating the popup styles
+                editor.completer.popup.renderer.on("afterRender", function () {
+                    var completionElements = document.querySelectorAll(
+                        ".ace_autocomplete > .ace_scroller > .ace_content > .ace_text-layer > .ace_line"
+                    );
+                    for (var i = 0; i < completionElements.length; i++) {
+                        var element = completionElements[i].getElementsByClassName("ace_rightAlignedText")[0];
+                        if (element && completionTypeToStyleMap[element.innerHTML]) {
+                            completionElements[i].setAttribute("style", completionTypeToStyleMap[element.innerHTML]);
+                        }
+                    }
+                });
+            }
         });
 
         /**
