@@ -25,16 +25,9 @@ CustomSiddhiListener.prototype = Object.create(SiddhiQLListener.prototype);
 CustomSiddhiListener.prototype.constructor = CustomSiddhiListener;
 
 /*
- * Completion engine & validation information update listeners starts here
- */
-
-CustomSiddhiListener.prototype.exitPlan_annotation = function (ctx) {
-    addStatement(ctx, this.editor, " ");
-};
-
-/*
  * Define statement listeners starts here
  */
+
 CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
     var streamName = ctx.source().start.text;
     var attributes = {};
@@ -44,8 +37,6 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
         i++;
     }
     this.editor.completionEngine.streamList[streamName] = attributes;
-
-    addStatement(ctx, this.editor, " ; ");
 };
 
 CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
@@ -57,8 +48,6 @@ CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
         i++;
     }
     this.editor.completionEngine.tableList[tableName] = attributes;
-
-    addStatement(ctx, this.editor, " ; ");
 };
 
 CustomSiddhiListener.prototype.exitDefinition_trigger = function (ctx) {
@@ -70,8 +59,6 @@ CustomSiddhiListener.prototype.exitDefinition_trigger = function (ctx) {
         time = ctx.string_value().start.text;
     }
     this.editor.completionEngine.triggerList[triggerName] = time;
-
-    addStatement(ctx, this.editor, " ; ");
 };
 
 CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
@@ -80,8 +67,6 @@ CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
         returnType: ctx.attribute_type().start.text,
         functionBody: ctx.function_body().start.text
     };
-
-    addStatement(ctx, this.editor, " ; ");
 };
 
 CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
@@ -100,30 +85,10 @@ CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
         window.output = ctx.output_event_type().start.text;
     }
     this.editor.completionEngine.windowList[windowName] = window;
-
-    addStatement(ctx, this.editor, " ; ");
 };
+
 /*
  * Define statement listeners ends here
- */
-
-CustomSiddhiListener.prototype.exitExecution_element = function (ctx) {
-    addStatement(ctx, this.editor, " ; ");
-};
-
-CustomSiddhiListener.prototype.exitError = function (ctx) {
-    addStatement(ctx, this.editor, " ");
-};
-
-function addStatement(ctx, editor, separator) {
-    editor.statementsList.push({
-        state: ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop) + separator,
-        line: ctx.start.line
-    });
-}
-
-/*
- * Completion engine & validation information update listeners ends here
  */
 
 /*

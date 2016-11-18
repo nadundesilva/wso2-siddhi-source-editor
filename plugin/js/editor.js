@@ -34,6 +34,16 @@
     SiddhiEditor.serverURL = "http://localhost:8080/";
     SiddhiEditor.serverSideValidationDelay = 2000;
 
+    // Used in separating statements
+    SiddhiEditor.statementStartToEndKeywordMap = {
+        "@": "\\)",
+        "define": ";",
+        "from": ";",
+        "partition": "end\\s*;",
+        "/\\*": "\\*/",
+        "--": "\n"
+    };
+
     /*
      * Annotations, Annotation Names and relevant tokens
      */
@@ -192,11 +202,6 @@
             // By now the current syntax errors are identified . following line shows the all the errors again.
             editor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
 
-            // To maintains the line numbers against the distinct query statements(streamDefinitions,query,functionDefinitions..).
-            // statementsList is important when checking semantic errors.
-            // The input execution plan is submitted to the server statement by statement for semantic error checking
-            editor.statementsList = [];
-
             var parserListener = new CustomSiddhiListener(editor);
 
             // Default walker will traverse through the parserTree and generate events.
@@ -220,23 +225,67 @@
         function checkForSemanticErrors() {
             editor.state.foundSemanticErrors = false;
 
-            if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay) {
+            if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                var editorText = editor.getValue();
                 // If the user has not typed anything after 3 seconds from his last change, then send the query for semantic check
                 // check whether the query contains errors or not
-                var isValid = submitToServerForSemanticErrorCheck(editor.getValue(), true);
+                var isValid = submitToServerForSemanticErrorCheck(editorText, true);
 
                 if (!isValid) {
+                    // Separating execution plan into statements and adding them to an array
+                    var statementsList = [];
+                    var lineNumber = 1;
+                    editorTextLoop: for (i = 0; i < editorText.length; i++) {
+                        for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
+                            if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
+                                new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
+                                var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
+                                var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
+
+                                // For storing the number of lines the statement spans across
+                                // lineNumber variable is not incremented since statement start line number is required
+                                var statementSpanningLines = 0;
+
+                                for (var j = i + keywordMatch.length; j < editorText.length; j++) {
+                                    if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
+                                        var endKeywordMatch =
+                                            new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
+                                        statementsList.push({
+                                            statement: editorText.substring(i, j + endKeywordMatch.length),
+                                            line: lineNumber
+                                        });
+                                        lineNumber += statementSpanningLines;
+
+                                        // -1 to adjust for the increment in i after iteration
+                                        // -1 to adjust for statements with end keyword as new line
+                                        i = j + endKeywordMatch.length - 2;
+
+                                        continue editorTextLoop;
+                                    }
+                                    if (editorText.charAt(j) == "\n") {
+                                        statementSpanningLines++;
+                                    }
+                                }
+                                break editorTextLoop;
+                            }
+                        }
+                        if (editorText.charAt(i) == "\n") {
+                            lineNumber++;
+                        }
+                    }
+
                     // If the query contains semantic errors
                     // send the query in a constructive manner to sever to get the line number with error
                     // This check is needed because the ServerSide compiler doesn't return line numbers of the semantic errors.
                     var query = "";
-                    for (var i = 0; i < editor.statementsList.length; i++) {
-                        query += editor.statementsList[i].state + "  \n";
-                        submitToServerForSemanticErrorCheck(
-                            query, false, editor.statementsList[i].line, editor.statementsList[i].state
-                        );
-                        if (editor.state.foundSemanticErrors) {
-                            break;
+                    for (var i = 0; i < statementsList.length; i++) {
+                        if (statementsList[i].statement.substring(0, 2) != "\\*" &&
+                                statementsList[i].statement.substring(0, 2) != "--") {
+                            query += statementsList[i].statement + "  \n";
+                            submitToServerForSemanticErrorCheck(query, false, statementsList[i].line);
+                            if (editor.state.foundSemanticErrors) {
+                                break;
+                            }
                         }
                     }
                 }
@@ -264,10 +313,9 @@
          * @param {string} executionPlan The input query
          * @param {boolean} errorCheck isValid check or not.
          * @param {int} [line] line number related to the current statement
-         * @param {string} [checkingQuery] currently checking query statement
          * @returns {boolean} query is valid or not
          */
-        function submitToServerForSemanticErrorCheck(executionPlan, errorCheck, line, checkingQuery) {
+        function submitToServerForSemanticErrorCheck(executionPlan, errorCheck, line) {
             if (executionPlan == "") {
                 return true;
             }
@@ -288,9 +336,9 @@
                         // Update the semanticErrorList
                         editor.state.semanticErrorList.push({
                             row: line - 1,
+                            // Change attribute "text" to "html" if html is sent from server
                             text: SiddhiEditor.utils.wordWrap(response.message, 100),
-                            type: "error",
-                            inputText: checkingQuery
+                            type: "error"
                         });
 
                         // Update the state of the editor.state.foundSemanticErrors to stop sending another server call

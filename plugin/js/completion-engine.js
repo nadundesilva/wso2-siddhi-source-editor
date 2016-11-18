@@ -430,19 +430,12 @@ function CompletionEngine() {
         editorText = editorText.replace(new RegExp(regex.comment, "ig"), "");       // Removing comments
         editorText = editorText.replace(/\s+/g, " ");           // Replacing all spaces with single white spaces
 
-        // Get the last statement
-        var statementStartToEndKeywordMap = {
-            "@": "\\)",
-            "define": ";",
-            "from": ";",
-            "partition": "end\\s*;"
-        };
         var currentStatementStartIndex = 0;
         editorTextLoop: for (var i = 0; i < editorText.length; i++) {
-            keywordMapLoop: for (var keyword in statementStartToEndKeywordMap) {
-                if (statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
+            keywordMapLoop: for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
+                if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
                     new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
-                    var endKeyword = statementStartToEndKeywordMap[keyword];
+                    var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
                     var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
                     for (var j = i + keywordMatch.length; j < editorText.length; j++) {
                         if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
