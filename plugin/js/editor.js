@@ -83,8 +83,6 @@
     SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
     SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT +
         SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
-    SiddhiEditor.Tracing = {NONE: "NONE", ERROR: "ERROR", DEBUG: "DEBUG", INFO: "INFO"};
-    SiddhiEditor.Tracing.traceLevel = SiddhiEditor.Tracing.NONE;
 
     /**
      * Initialize the editor
@@ -95,7 +93,6 @@
     SiddhiEditor.init = function (config) {
         var editor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
-        SiddhiEditor.Tracing.traceLevel = config.traceLevel;
         editor.realTimeValidation = config.realTimeValidation;
         editor.tokenTooltip = new TokenTooltip(editor);
         editor.setReadOnly(config.readOnly);
@@ -384,6 +381,76 @@
                 }
             }
             return str;
+        };
+
+        /**
+         * Generate description html string from meta data for processor
+         * Descriptions are intended to be shown in the tooltips for a completions
+         *
+         * @param {Object} metaData Meta data object containing parameters, return and description
+         * @return {string} html string of the description generated from the meta data provided
+         */
+        this.generateDescriptionForProcessor = function (metaData) {
+            var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
+            if (metaData.description) {
+                description += metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>";
+            }
+            if (metaData.parameters) {
+                description += "Parameters - ";
+                if (metaData.parameters.length > 0) {
+                    description += "<ul>";
+                    for (var j = 0; j < metaData.parameters.length; j++) {
+                        if (metaData.parameters[j].multiple) {
+                            for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
+                                description += "<li>" +
+                                    metaData.parameters[j].multiple[k].name +
+                                    (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
+                                    (metaData.parameters[j].multiple[k].type.length > 0 ?
+                                        metaData.parameters[j].multiple[k].type.join(" | ") :
+                                        "")
+                                    + "</li>";
+                            }
+                        } else {
+                            description += "<li>" +
+                                metaData.parameters[j].name +
+                                (metaData.parameters[j].optional ? " (optional)" : "") +
+                                (metaData.parameters[j].type.length > 0 ?
+                                " - " + metaData.parameters[j].type.join(" | ") :
+                                    "") +
+                                "</li>";
+                        }
+                    }
+                    description += "</ul>";
+                } else {
+                    description += "none<br><br>";
+                }
+            }
+            if (metaData.returnType) {
+                description += "Return Type - ";
+                if (metaData.returnType.length > 0) {
+                    description += metaData.returnType.join(" | ");
+                } else {
+                    description += "none";
+                }
+            }
+            description += "</div>";
+            return description;
+        };
+
+        /**
+         * Generate description html string from meta data for eval script
+         * Descriptions are intended to be shown in the tooltips for a completions
+         *
+         * @param {string} evalScriptName Name of the eval script for which
+         * @param {Object} metaData Meta data object containing parameters, return and description
+         * @return {string} html string of the description generated from the meta data provided
+         */
+        this.generateDescriptionForEvalScript = function (evalScriptName, metaData) {
+            return "<strong>Eval Script</strong> - " + evalScriptName + "<br><ul>" +
+                "<li>Language - " + metaData.language + "</li>" +
+                "<li>Return Type - " + metaData.returnType.join(" | ") + "</li>" +
+                "<li>Function Body -" + "<br><br>" + metaData.functionBody + "</li>" +
+                "</ul>";
         };
 
         return this;

@@ -62,11 +62,14 @@ CustomSiddhiListener.prototype.exitDefinition_trigger = function (ctx) {
 };
 
 CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
-    this.editor.completionEngine.evalScriptList[ctx.function_name().start.text] = {
+    var evalScriptName = ctx.function_name().start.text;
+    var metaData = {
         language: ctx.language_name().start.text,
-        returnType: ctx.attribute_type().start.text,
+        returnType: [ctx.attribute_type().start.text],
         functionBody: ctx.function_body().start.text
     };
+    metaData.description = SiddhiEditor.utils.generateDescriptionForEvalScript(evalScriptName, metaData);
+    this.editor.completionEngine.evalScriptList[evalScriptName] = metaData;
 };
 
 CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
@@ -92,7 +95,7 @@ CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
  */
 
 CustomSiddhiListener.prototype.exitQuery = function (ctx) {
-    if (ctx.query_output().children && ctx.query_output().target()) {
+    if (ctx.query_section() && ctx.query_output() && ctx.query_output().children && ctx.query_output().target()) {
         var outputTarget = ctx.query_output().target().start.text;
         if (!this.editor.completionEngine.tableList[outputTarget] &&
                 !this.editor.completionEngine.streamList[outputTarget] &&
@@ -145,28 +148,14 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
         // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
         var description;
         if (snippets) {
-            // Checking if the processor exists in window processors
             if (snippets.windowProcessors && snippets.windowProcessors[processorName]) {
                 description = snippets.windowProcessors[processorName].description;
-                // Checking if the processor exists in stream processors
             } else if (snippets.streamProcessors && snippets.streamProcessors[processorName]) {
                 description = snippets.streamProcessors[processorName].description;
-                // Checking if the processor exists in functions
             } else if (snippets.functions && snippets.functions[processorName]) {
                 description = snippets.functions[processorName].description;
-                // Checking if the processor exists in eval scripts
             } else if (this.editor.completionEngine.evalScriptList[processorName]) {
-                description = "<strong>Eval Script</strong> - " + processorName + "<br><ul>" +
-                    "<li>Language - " +
-                    this.editor.completionEngine.evalScriptList[processorName].language +
-                    "</li>" +
-                    "<li>Return Type - " +
-                    this.editor.completionEngine.evalScriptList[processorName].returnType +
-                    "</li>" +
-                    "<li>Function Body -" +
-                    "<br><br>" + this.editor.completionEngine.evalScriptList[processorName].functionBody +
-                    "</li>" +
-                    "</ul>";
+                description = this.editor.completionEngine.evalScriptList[processorName].description;
             }
         }
         if (description) {

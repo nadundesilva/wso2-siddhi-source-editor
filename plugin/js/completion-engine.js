@@ -752,11 +752,7 @@ function CompletionEngine() {
             addCompletions(Object.keys(self.evalScriptList).map(function (evalScript) {
                 return {
                     value: evalScript,
-                    description: "<strong>Eval Script</strong> - " + evalScript + "<br><ul>" +
-                    "<li>Language - " + self.evalScriptList[evalScript].language + "</li>" +
-                    "<li>Return Type - " + self.evalScriptList[evalScript].returnType + "</li>" +
-                    "<li>Function Body -" + "<br><br>" + self.evalScriptList[evalScript].functionBody + "</li></ul>",
-                    type: "Eval Script",
+                    description: self.evalScriptList[evalScript].description,
                     priority: 2
                 }
             }));
@@ -1053,7 +1049,10 @@ function CompletionEngine() {
                 }));
 
                 if (new RegExp("\s+$", "i")) {
-                    addCompletions([{value: "of "}, {value: "as "}, {value: "or ", type: "Logical Operator"}]);
+                    addCompletions([{value: "of "}, {value: "as "}, {
+                        value: "or ",
+                        type: "Logical Operator"
+                    }]);
                 }
             } else if (afterOfKeywordSuggestionRegex) {
                 addCompletions(getStreamsForAttributesInPartitionCondition().map(function (stream) {
@@ -1067,7 +1066,7 @@ function CompletionEngine() {
          *
          * @return {string[]} streams of the attributes in the partition condition
          */
-        function getStreamsForAttributesInPartitionCondition () {
+        function getStreamsForAttributesInPartitionCondition() {
             var streamAttributeSearchRegex = new RegExp("(?:(?:[0-9]+|(" + regex.identifier + "))\\s*" +
                 "(?:<|>|=|!){1,2}\\s*" +
                 "(?:[0-9]+|(" + regex.identifier + "))\\s+as|" +
@@ -1684,64 +1683,9 @@ function generateSnippet(processorMetaData) {
     var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
 
     if (processorMetaData.description || processorMetaData.returnType || processorMetaData.parameters) {
-        snippet.description = generateDescriptionFromProcessorMetaData(processorMetaData);
+        snippet.description = SiddhiEditor.utils.generateDescriptionForProcessor(processorMetaData);
     }
     return snippet;
 }
-
-/**
- * Generate description html string from meta data
- * Descriptions are intended to be shown in the tooltips for a completions
- *
- * @param {Object} metaData Meta data object containing parameters, return and description
- * @return {string} html string of the description generated from the meta data provided
- */
-function generateDescriptionFromProcessorMetaData(metaData) {
-    var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
-    if (metaData.description) {
-        description += metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>";
-    }
-    if (metaData.parameters) {
-        description += "Parameters - ";
-        if (metaData.parameters.length > 0) {
-            description += "<ul>";
-            for (var j = 0; j < metaData.parameters.length; j++) {
-                if (metaData.parameters[j].multiple) {
-                    for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
-                        description += "<li>" +
-                            metaData.parameters[j].multiple[k].name +
-                            (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
-                            (metaData.parameters[j].multiple[k].type.length > 0 ?
-                                metaData.parameters[j].multiple[k].type.join(" | ") :
-                                "")
-                            + "</li>";
-                    }
-                } else {
-                    description += "<li>" +
-                        metaData.parameters[j].name +
-                        (metaData.parameters[j].optional ? " (optional)" : "") +
-                        (metaData.parameters[j].type.length > 0 ?
-                        " - " + metaData.parameters[j].type.join(" | ") :
-                            "") +
-                        "</li>";
-                }
-            }
-            description += "</ul>";
-        } else {
-            description += "none<br><br>";
-        }
-    }
-    if (metaData.returnType) {
-        description += "Return Type - ";
-        if (metaData.returnType.length > 0) {
-            description += metaData.returnType.join(" | ");
-        } else {
-            description += "none";
-        }
-    }
-    description += "</div>";
-    return description;
-}
-
 
 exports.CompletionEngine = CompletionEngine;
