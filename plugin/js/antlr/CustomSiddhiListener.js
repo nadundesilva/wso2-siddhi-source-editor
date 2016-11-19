@@ -91,6 +91,31 @@ CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
  * Define statement listeners ends here
  */
 
+CustomSiddhiListener.prototype.exitQuery = function (ctx) {
+    if (ctx.query_output().children && ctx.query_output().target()) {
+        var outputTarget = ctx.query_output().target().start.text;
+        if (!this.editor.completionEngine.tableList[outputTarget] &&
+                !this.editor.completionEngine.streamList[outputTarget] &&
+                !this.editor.completionEngine.windowList[outputTarget]) {
+            // Creating the attributes to reference map
+            var querySelectionCtx = ctx.query_section();
+            var attributes = {};
+            var i = 0;
+            var outputAttributeCtx;
+            while (outputAttributeCtx = querySelectionCtx.output_attribute(i)) {
+                if (outputAttributeCtx.attribute_name()) {
+                    attributes[outputAttributeCtx.attribute_name().start.text] = undefined;
+                } else if (outputAttributeCtx.attribute_reference() &&
+                        outputAttributeCtx.attribute_reference().attribute_name()) {
+                    attributes[outputAttributeCtx.attribute_reference().attribute_name().start.text] = undefined;
+                }
+                i++;
+            }
+            this.editor.completionEngine.streamList[outputTarget] = attributes;
+        }
+    }
+};
+
 /*
  * Token Tooltip update listeners starts here
  */
@@ -102,11 +127,9 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
     var functionCtx = ctx.function_id(0);
 
     if (functionCtx) {
-        var processorName =
-            functionCtx.start.getInputStream().getText(functionCtx.start.start, functionCtx.stop.stop);
+        var processorName = functionCtx.start.text;
         if (namespaceCtx) {
-            var namespace =
-                namespaceCtx.start.getInputStream().getText(namespaceCtx.start.start, namespaceCtx.stop.stop);
+            var namespace = namespaceCtx.start.text;
             snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
 
             // Adding namespace tool tip
@@ -153,7 +176,7 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
 };
 
 CustomSiddhiListener.prototype.exitSource = function (ctx) {
-    var sourceName = ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
+    var sourceName = ctx.start.text;
     var type;
     var attributes;
 
@@ -177,7 +200,7 @@ CustomSiddhiListener.prototype.exitSource = function (ctx) {
             tooltip += "<ul>";
             for (var attribute in attributes) {
                 if (attributes.hasOwnProperty(attribute)) {
-                    tooltip += "<li>" + attribute + " - " + attributes[attribute] + "</li>";
+                    tooltip += "<li>" + attribute + (attributes[attribute] ? " - " + attributes[attribute] : "") + "</li>";
                 }
             }
             tooltip += "</ul>";
