@@ -178,7 +178,7 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
     }
 };
 
-CustomSiddhiListener.prototype.exitSource = function (ctx) {
+CustomSiddhiListener.prototype.exitStream_id = function (ctx) {
     var sourceName = ctx.start.text;
     var source;
 

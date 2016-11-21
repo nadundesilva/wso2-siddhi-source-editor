@@ -1029,8 +1029,8 @@ function CompletionEngine() {
             addCompletions({value: completionPrefix + "begin\n\t", caption: "begin"});
         } else if (unclosedBracketsCount == 1) {
             // Regexps used for identifying the suggestions
-            var beforeOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:(?:.(?!\\s+of))+.)?(?:\\s+[a-zA-Z_0-9]*)?$", "i");
-            var afterOfKeywordSuggestionRegex = new RegExp("^\\s*\\((?:.(?!\\s+of))*.\\s+of\\s+[a-zA-Z_0-9]*$", "i");
+            var beforeOfKeywordSuggestionRegex = new RegExp("(?:^\\s*\\(|,)(?:(?:.(?!\\s+of))+.)?(?:\\s+[a-zA-Z_0-9]*)?$", "i");
+            var afterOfKeywordSuggestionRegex = new RegExp("(?:^\\s*\\(|,)(?:.(?!\\s+of))*.\\s+of\\s+[a-zA-Z_0-9]*$", "i");
 
             // Testing to find the relevant suggestion
             if (beforeOfKeywordSuggestionRegex.test(partitionConditionStatement)) {
@@ -1077,7 +1077,7 @@ function CompletionEngine() {
             var streamAttributeSearchRegex = new RegExp("(?:(?:[0-9]+|(" + regex.identifier + "))\\s*" +
                 "(?:<|>|=|!){1,2}\\s*" +
                 "(?:[0-9]+|(" + regex.identifier + "))\\s+as|" +
-                "^\\s*\\(\\s*(" + regex.identifier + ")\\s+(?:of\\s+)?$)", "ig");
+                "(?:^\\s*\\(|,)\\s*(" + regex.identifier + ")\\s+(?:of\\s+)?$)", "ig");
 
             // Getting the attributes mentioned in the partition condition
             var attributeList = [];
