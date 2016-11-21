@@ -29,11 +29,11 @@ CustomSiddhiListener.prototype.constructor = CustomSiddhiListener;
  */
 
 CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
-    var streamName = ctx.source().start.text;
+    var streamName = getTextFromCtx(ctx.source());
     var attributes = {};
     var i = 0;
     while (ctx.attribute_name(i)) {
-        attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
+        attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
         i++;
     }
     this.editor.completionEngine.streamList[streamName] = {
@@ -43,11 +43,11 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
 };
 
 CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
-    var tableName = ctx.source().start.text;
+    var tableName = getTextFromCtx(ctx.source());
     var attributes = {};
     var i = 0;
     while (ctx.attribute_name(i)) {
-        attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
+        attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
         i++;
     }
     this.editor.completionEngine.tableList[tableName].attributes = {
@@ -57,12 +57,12 @@ CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
 };
 
 CustomSiddhiListener.prototype.exitDefinition_trigger = function (ctx) {
-    var triggerName = ctx.trigger_name().start.text;
+    var triggerName = getTextFromCtx(ctx.trigger_name());
     var metaData;
     if (ctx.time_value()) {
-        metaData = {type: "Time Value", time: ctx.time_value().start.text};
+        metaData = {type: "Time Value", time: getTextFromCtx(ctx.time_value())};
     } else if (ctx.string_value()) {
-        metaData = {type: "Cron Expression", time: ctx.string_value().start.text};
+        metaData = {type: "Cron Expression", time: getTextFromCtx(ctx.string_value())};
     }
     if (metaData) {
         metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
@@ -71,30 +71,30 @@ CustomSiddhiListener.prototype.exitDefinition_trigger = function (ctx) {
 };
 
 CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
-    var evalScriptName = ctx.function_name().start.text;
+    var evalScriptName = getTextFromCtx(ctx.function_name());
     var metaData = {
-        language: ctx.language_name().start.text,
-        returnType: [ctx.attribute_type().start.text],
-        functionBody: ctx.function_body().start.text
+        language: getTextFromCtx(ctx.language_name()),
+        returnType: [getTextFromCtx(ctx.attribute_type())],
+        functionBody: getTextFromCtx(ctx.function_body())
     };
     metaData.description = SiddhiEditor.utils.generateDescriptionForEvalScript(evalScriptName, metaData);
     this.editor.completionEngine.evalScriptList[evalScriptName] = metaData;
 };
 
 CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
-    var windowName = ctx.source().start.text;
+    var windowName = getTextFromCtx(ctx.source());
     var attributes = {};
     var i = 0;
     while (ctx.attribute_name(i)) {
-        attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
+        attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
         i++;
     }
     var metaData = {
         attributes: attributes,
-        functionOperation: ctx.function_operation().start.text
+        functionOperation: getTextFromCtx(ctx.function_operation())
     };
     if (ctx.output_event_type()) {
-        metaData.output = ctx.output_event_type().start.text;
+        metaData.output = getTextFromCtx(ctx.output_event_type());
     }
     metaData.description =
         SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
@@ -107,7 +107,7 @@ CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
 
 CustomSiddhiListener.prototype.exitQuery = function (ctx) {
     if (ctx.query_section() && ctx.query_output() && ctx.query_output().children && ctx.query_output().target()) {
-        var outputTarget = ctx.query_output().target().start.text;
+        var outputTarget = getTextFromCtx(ctx.query_output().target());
         if (!this.editor.completionEngine.tableList[outputTarget] &&
                 !this.editor.completionEngine.streamList[outputTarget] &&
                 !this.editor.completionEngine.windowList[outputTarget]) {
@@ -118,10 +118,10 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
             var outputAttributeCtx;
             while (outputAttributeCtx = querySelectionCtx.output_attribute(i)) {
                 if (outputAttributeCtx.attribute_name()) {
-                    attributes[outputAttributeCtx.attribute_name().start.text] = undefined;
+                    attributes[getTextFromCtx(outputAttributeCtx.attribute_name())] = undefined;
                 } else if (outputAttributeCtx.attribute_reference() &&
                         outputAttributeCtx.attribute_reference().attribute_name()) {
-                    attributes[outputAttributeCtx.attribute_reference().attribute_name().start.text] = undefined;
+                    attributes[getTextFromCtx(outputAttributeCtx.attribute_reference().attribute_name())] = undefined;
                 }
                 i++;
             }
@@ -144,9 +144,9 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
     var functionCtx = ctx.function_id(0);
 
     if (functionCtx) {
-        var processorName = functionCtx.start.text;
+        var processorName = getTextFromCtx(functionCtx);
         if (namespaceCtx) {
-            var namespace = namespaceCtx.start.text;
+            var namespace = getTextFromCtx(namespaceCtx);
             snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
 
             // Adding namespace tool tip
@@ -179,7 +179,7 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
 };
 
 CustomSiddhiListener.prototype.exitStream_id = function (ctx) {
-    var sourceName = ctx.start.text;
+    var sourceName = getTextFromCtx(ctx);
     var source;
 
     if (this.editor.completionEngine.streamList[sourceName]) {
@@ -202,6 +202,10 @@ function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
     if (token) {
         token.tooltip = tooltip;
     }
+}
+
+function getTextFromCtx(ctx) {
+    return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
 }
 
 /*

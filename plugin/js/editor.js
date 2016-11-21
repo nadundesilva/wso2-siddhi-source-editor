@@ -506,17 +506,19 @@
                 description += "</ul>";
             }
             if (metaData.functionOperation) {
-                description += "Type - " + metaData.functionOperation + "<br><br>";
+                description += "Window - " + metaData.functionOperation + "<br><br>";
             }
             if (metaData.output) {
                 description += "Output - " + metaData.output + "<br><br>";
             }
             if (metaData.functionOperation &&
                     SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
+                var windowName = /^\s*([a-zA-Z_][a-zA-Z_0-9]*)\s*\(/i.exec(metaData.functionOperation)[1];
                 var window =
-                    SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors[metaData.functionOperation];
+                    SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors[windowName];
                 if (window) {
-                    description += "Description of the window used - <br><br>" + window.description;
+                    description += "Description of the window used - <br><br>" +
+                        "<div style='margin-left: 25px;'>" + window.description + "</div>";
                 }
             }
             description += "</div>";
