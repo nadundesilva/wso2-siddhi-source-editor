@@ -48,12 +48,12 @@ var suggestions = {
  * Regex strings used by the engine starts here
  */
 var regex = {};
-regex.comment = "(?:\\/\\*[^\\*]*\\*\\/)|(?:--.*\n)";
+regex.comment = "(?:\\/\\*[^\\*]*\\*\\/)|(?:--.*\n)\\s*";
 regex.identifier = "[a-zA-Z_][a-zA-Z_0-9]*";
-regex.namespace = "([^\\(:]*):";
-regex.hash = "\\s*#";
+regex.namespace = "(" + regex.identifier + ")\\s*:\\s*";
+regex.hash = "#\\s*";
 regex.comma = ",\\s*";
-regex.functionOperation = regex.identifier + "\\s*\\((?:(?:.(?!\\)))*.\\)|\\))\\s*";
+regex.functionOperation = regex.identifier + "\\s*\\((?:(?:.(?!\\)))*.)?\\)";
 regex.dataTypes = suggestions.dataTypes.map(function (dataType) {
     return dataType.value;
 }).join("|");
@@ -61,27 +61,26 @@ regex.dataTypes = suggestions.dataTypes.map(function (dataType) {
 regex.query = {};
 
 regex.query.input = {};
-regex.query.input.windowKeywordAndDot = "window\\s*\\.";
-regex.query.input.sourceRegex = "(" + regex.identifier + ")\\s*";
+regex.query.input.windowKeywordAndDot = "window\\s*\\.\\s*";
+regex.query.input.sourceRegex = "(?:" + regex.hash + ")?(" + regex.identifier + ")\\s*";
 regex.query.input.filterRegex = "\\[(?:(?:.(?!\\]))*.\\]|\\])\\s*";
-regex.query.input.streamFunctionRegex = regex.hash + "\\s*(?:" + regex.identifier + "\\s*:\\s*)?" +
-    regex.functionOperation;
-regex.query.input.windowRegex = "(?:" + regex.hash + "\\s*(?:" + regex.query.input.windowKeywordAndDot + "\\s*)?" +
-    "(?:" + regex.identifier + "\\s*:\\s*)?" + regex.functionOperation + ")?";
-regex.query.input.sourceHandlersRegex = "(?:" + regex.query.input.filterRegex + "|" +
-    regex.query.input.streamFunctionRegex + ")*";
-regex.query.input.standardStreamRegex = regex.query.input.sourceRegex + regex.query.input.sourceHandlersRegex +
-    regex.query.input.windowRegex + regex.query.input.sourceHandlersRegex;
+regex.query.input.streamProcessorRegex = regex.hash + "(?:" + regex.namespace + ")?" + regex.functionOperation + "\\s*";
+regex.query.input.windowRegex = regex.hash + regex.query.input.windowKeywordAndDot + "(?:" + regex.namespace + ")?" +
+    regex.functionOperation + "\\s*";
+regex.query.input.sourceHandlersRegex = regex.query.input.filterRegex + "|" + regex.query.input.streamProcessorRegex;
+regex.query.input.standardStreamRegex = regex.query.input.sourceRegex + "(?:" + regex.query.input.sourceHandlersRegex +
+    ")*(?:" + regex.query.input.windowRegex + ")?(?:" + regex.query.input.sourceHandlersRegex + ")*";
 regex.query.input.streamReference = regex.query.input.standardStreamRegex + "\\s+as\\s+(" + regex.identifier + ")";
 regex.query.input.patternStreamRegex = "(" + regex.identifier + ")\\s*=\\s*(" + regex.identifier + ")\\s*";
 
 regex.query.selection = {};
-regex.query.selection.attribute = "(?:" + regex.identifier + "|" + regex.functionOperation + ")\\s*";
-regex.query.selection.attributesList = "(?:" + regex.query.selection.attribute + ")" +
-    "(?:" + regex.comma + regex.query.selection.attribute + ")*";
+regex.query.selection.outputAttribute = "(?:(?:" + regex.identifier + "\\s*\\.\\s*)?" + regex.identifier + "|" +
+    regex.functionOperation + ")(?:\\s+as\\s+" + regex.identifier + "\\s*|\\s*)?";
+regex.query.selection.outputAttributesList = regex.query.selection.outputAttribute +
+    "(?:" + regex.comma + regex.query.selection.outputAttribute + ")*";
 
 regex.query.outputRate = {};
-regex.query.outputRate.types = "all|first|last";
+regex.query.outputRate.types = "(?:all|first|last)\\s+";
 
 regex.query.output = {};
 regex.query.output.eventTypes = "(?:current|all|expired)\\s+";
@@ -457,7 +456,7 @@ function CompletionEngine() {
         self.suggestedSnippets = [];
         self.wordList = [];                                                         // Clear the previous suggestion list
 
-        if (editorText == "" || new RegExp("^" + regex.identifier + "$", "i").test(editorText)) {
+        if (/^[a-zA-Z_0-9]*$/i.test(editorText)) {
             self.$startOfStatement();
             SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
         } else {
@@ -572,21 +571,21 @@ function CompletionEngine() {
         // Regexps used for identifying the suggestions
         var sourceSuggestionsRegex = new RegExp("(?:" +
             "^[a-zA-Z_0-9]*|" +                                     // Source name at the start of query input
-            "\\s+join\\s+(?:[a-zA-Z_0-9]*)?|" +                     // Source name after "join" keyword
-            regex.identifier + "\\s*=\\s*(?:[a-zA-Z_0-9]*)?" +      // Source name after "=" in patterns
+            "\\s+join\\s+[a-zA-Z_0-9]*|" +                          // Source name after "join" keyword
+            regex.identifier + "\\s*=\\s*[a-zA-Z_0-9]*" +           // Source name after "=" in patterns
             ")$", "i");
-        var afterHashSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex +
-            regex.hash + "[^\\(\\.:]*$", "i");
-        var streamProcessorExtensionSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex +
-            regex.hash + regex.namespace + "[^\\(]*$", "i");
-        var windowSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex +
-            regex.hash + "\\s*" + regex.query.input.windowKeywordAndDot + "[^\\(:]*$", "i");
-        var windowExtensionSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex +
-            regex.hash + "\\s*" + regex.query.input.windowKeywordAndDot + regex.namespace + "[^\\(]*$", "i");
-        var windowAndStreamProcessorParameterSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "#" +
-            "(?:\\s*" + regex.query.input.windowKeywordAndDot + ")?" +
-            "(?:\\s*" + regex.identifier + "\\s*:)?" +
-            "\\s*" + regex.identifier + "\\s*\\([^\\)]*$", "i");
+        var afterHashSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash +
+            "[a-zA-Z_0-9]*$", "i");
+        var streamProcessorExtensionSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash +
+            regex.namespace + "[a-zA-Z_0-9]*$", "i");
+        var windowSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash +
+            regex.query.input.windowKeywordAndDot + "[a-zA-Z_0-9]*$", "i");
+        var windowExtensionSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash +
+            regex.query.input.windowKeywordAndDot + regex.namespace + "[a-zA-Z_0-9]*$", "i");
+        var windowAndStreamProcessorParameterSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash +
+            "(?:" + regex.query.input.windowKeywordAndDot + ")?" +
+            "(?:" + regex.namespace + ")?" +
+            regex.identifier + "\\s*\\([^\\)]*$", "i");
         var patternQueryFilterSuggestionsRegex = new RegExp(regex.query.input.patternStreamRegex + "\\[(?:.(?!\\]))*$", "i");
         var nonPatternQueryFilterSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "\\[(?:.(?!\\]))*$", "i");
         var afterStreamSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + "\\s+[^\\[#]*$", "i");
@@ -714,7 +713,7 @@ function CompletionEngine() {
                 });
             }));
             if (new RegExp(regex.query.input.sourceRegex +
-                    regex.query.input.sourceHandlersRegex +
+                    "(?:" + regex.query.input.sourceHandlersRegex + ")*" +
                     regex.hash + "[^\\(\\.:]*$", "i").test(queryInput)) {
                 // Only one window can be applied for a stream
                 addCompletions({caption: "window", value: "window.", priority: 2});
@@ -731,10 +730,10 @@ function CompletionEngine() {
         var querySelectionClause = regexResults[4];
 
         // Regexps used for identifying the suggestions
-        var extensionFunctionSuggestionsRegex = new RegExp(regex.query.selection.attributesList + regex.comma +
+        var extensionFunctionSuggestionsRegex = new RegExp(regex.query.selection.outputAttributesList + regex.comma +
             regex.namespace + "[a-zA-Z_0-9]*$", "i");
-        var afterQuerySelectionClauseSuggestionsRegex = new RegExp(regex.query.selection.attributesList + "\\s+[a-zA-Z_0-9]*$", "i");
-        var attributeAndInBuiltFunctionSuggestionsRegex = new RegExp("(?:" + regex.query.selection.attribute + regex.comma + ")*" +
+        var afterQuerySelectionClauseSuggestionsRegex = new RegExp(regex.query.selection.outputAttributesList + "\\s+[a-zA-Z_0-9]*$", "i");
+        var attributeAndInBuiltFunctionSuggestionsRegex = new RegExp("(?:" + regex.query.selection.outputAttribute + regex.comma + ")*" +
             "[a-zA-Z_0-9]*(?:\\s*\\((?:(?:.(?!\\)))*.)?\\s*)?$", "i");
 
         // Testing to find the relevant suggestion
@@ -1179,7 +1178,9 @@ function CompletionEngine() {
      * @param {int} streamPriority priority to be set as stream priority
      */
     function addAttributesOfStreamsAsCompletions(regexResults, streams, attributePriority, streamPriority) {
-        var afterStreamAndDotSuggestionsRegex = new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+        var afterStreamAndDotSuggestionsRegex =
+            new RegExp("(" + regex.identifier + ")\\s*\\[\\s*[0-9]*\\s*\\]\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+
         var streamBeforeDotMatch;
         if (streamBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
             if (streams.indexOf(streamBeforeDotMatch[1]) != -1) {
@@ -1220,7 +1221,9 @@ function CompletionEngine() {
      */
     function addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap,
                                                           attributePriority, streamPriority) {
-        var afterStreamAndDotSuggestionsRegex = new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+        var afterStreamAndDotSuggestionsRegex =
+            new RegExp("(" + regex.identifier + ")\\s*\\[\\s*[0-9]*\\s*\\]\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+
         var referenceBeforeDotMatch;
         if (referenceBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
             if (referenceToStreamMap[referenceBeforeDotMatch[1]]) {
