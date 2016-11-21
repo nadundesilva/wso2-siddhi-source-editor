@@ -36,7 +36,10 @@ CustomSiddhiListener.prototype.exitDefinition_stream = function (ctx) {
         attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
         i++;
     }
-    this.editor.completionEngine.streamList[streamName] = attributes;
+    this.editor.completionEngine.streamList[streamName] = {
+        attributes: attributes,
+        description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", streamName, attributes)
+    };
 };
 
 CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
@@ -47,18 +50,24 @@ CustomSiddhiListener.prototype.exitDefinition_table = function (ctx) {
         attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
         i++;
     }
-    this.editor.completionEngine.tableList[tableName] = attributes;
+    this.editor.completionEngine.tableList[tableName].attributes = {
+        attributes: attributes,
+        description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Event Table", tableName, attributes)
+    };
 };
 
 CustomSiddhiListener.prototype.exitDefinition_trigger = function (ctx) {
     var triggerName = ctx.trigger_name().start.text;
-    var time;
+    var metaData;
     if (ctx.time_value()) {
-        time = ctx.time_value().start.text;
+        metaData = {type: "Time Value", time: ctx.time_value().start.text};
     } else if (ctx.string_value()) {
-        time = ctx.string_value().start.text;
+        metaData = {type: "Cron Expression", time: ctx.string_value().start.text};
     }
-    this.editor.completionEngine.triggerList[triggerName] = time;
+    if (metaData) {
+        metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
+        this.editor.completionEngine.triggerList[triggerName] = metaData;
+    }
 };
 
 CustomSiddhiListener.prototype.exitDefinition_function = function (ctx) {
@@ -80,14 +89,16 @@ CustomSiddhiListener.prototype.exitDefinition_window = function (ctx) {
         attributes[ctx.attribute_name(i).start.text] = ctx.attribute_type(i).start.text;
         i++;
     }
-    var window = {
+    var metaData = {
         attributes: attributes,
         functionOperation: ctx.function_operation().start.text
     };
     if (ctx.output_event_type()) {
-        window.output = ctx.output_event_type().start.text;
+        metaData.output = ctx.output_event_type().start.text;
     }
-    this.editor.completionEngine.windowList[windowName] = window;
+    metaData.description =
+        SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
+    this.editor.completionEngine.windowList[windowName] = metaData;
 };
 
 /*
@@ -114,7 +125,9 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
                 }
                 i++;
             }
-            this.editor.completionEngine.streamList[outputTarget] = attributes;
+            this.editor.completionEngine.streamList[outputTarget] = {
+                attributes: attributes
+            };
         }
     }
 };
@@ -166,27 +179,20 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
 
 CustomSiddhiListener.prototype.exitSource = function (ctx) {
     var sourceName = ctx.start.text;
-    var type;
-    var metaData;
+    var source;
 
     if (this.editor.completionEngine.streamList[sourceName]) {
-        type = "Stream";
-        metaData = this.editor.completionEngine.streamList[sourceName];
+        source = this.editor.completionEngine.streamList[sourceName];
     } else if (this.editor.completionEngine.tableList[sourceName]) {
-        type = "Event Table";
-        metaData = this.editor.completionEngine.tableList[sourceName];
+        source = this.editor.completionEngine.tableList[sourceName];
     } else if (this.editor.completionEngine.windowList[sourceName]) {
-        type = "Event Window";
-        metaData = this.editor.completionEngine.windowList[sourceName];
+        source = this.editor.completionEngine.windowList[sourceName];
     } else if (this.editor.completionEngine.triggerList[sourceName]) {
-        type = "Event Trigger";
-        metaData = this.editor.completionEngine.triggerList[sourceName];
+        source = this.editor.completionEngine.triggerList[sourceName];
     }
 
-    if (type) {
-        updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1,
-            SiddhiEditor.utils.generateDescriptionForSource(type, sourceName, metaData)
-        );
+    if (source && source.description) {
+        updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, source.description);
     }
 };
 

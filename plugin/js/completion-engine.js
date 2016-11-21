@@ -507,9 +507,9 @@ function CompletionEngine() {
      * @param {string[]} regexResults Regex results from the regex test in the main rule base matching
      */
     self.$defineWindowStatementWindowParameters = function (regexResults) {
-        var stream = regexResults[1];
-        if (self.windowList[stream]) {
-            addCompletions(Object.keys(self.windowList[stream].attributes).map(function (attribute) {
+        var window = regexResults[1];
+        if (self.windowList[window].attributes) {
+            addCompletions(Object.keys(self.windowList[window].attributes).map(function (attribute) {
                 return {
                     value: attribute,
                     type: "Attribute"
@@ -1035,7 +1035,7 @@ function CompletionEngine() {
                 // Getting the attributes of the streams which has attributes in the partition condition already
                 var attributes = [];
                 for (i = 0; i < streams.length; i++) {
-                    var newAttributes = Object.keys(self.streamList[streams[i]]);
+                    var newAttributes = Object.keys(self.streamList[streams[i]].attributes);
                     for (var j = 0; j < newAttributes.length; j++) {
                         if (attributes.indexOf(newAttributes[j]) == -1) {
                             attributes.push(newAttributes[j]);
@@ -1090,7 +1090,7 @@ function CompletionEngine() {
                 streamListLoop: for (var streamName in self.streamList) {
                     if (self.streamList.hasOwnProperty(streamName)) {
                         for (i = 0; i < attributeList.length; i++) {
-                            if (!self.streamList[streamName][attributeList[i]]) {
+                            if (!self.streamList[streamName].attributes[attributeList[i]]) {
                                 continue streamListLoop;
                             }
                         }
@@ -1439,10 +1439,10 @@ function CompletionEngine() {
          */
         function getAttributesOfStreamOrTable(sourceName, reference) {
             var attributes = [];
-            if (self.streamList[sourceName]) {
-                attributes = Object.keys(self.streamList[sourceName]);
-            } else if (self.tableList[sourceName]) {
-                attributes = Object.keys(self.tableList[sourceName]);
+            if (self.streamList[sourceName].attributes) {
+                attributes = Object.keys(self.streamList[sourceName].attributes);
+            } else if (self.tableList[sourceName].attributes) {
+                attributes = Object.keys(self.tableList[sourceName].attributes);
             }
             return attributes.map(function (attribute) {
                 return {value: attribute, source: (reference ? reference : sourceName)};

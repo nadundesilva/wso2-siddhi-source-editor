@@ -446,34 +446,81 @@
          * @return {string} html string of the description generated from the meta data provided
          */
         this.generateDescriptionForEvalScript = function (evalScriptName, metaData) {
-            return "<strong>Eval Script</strong> - " + evalScriptName + "<br><ul>" +
+            return "<div><strong>Eval Script</strong> - " + evalScriptName + "<br><ul>" +
                 "<li>Language - " + metaData.language + "</li>" +
                 "<li>Return Type - " + metaData.returnType.join(" | ") + "</li>" +
                 "<li>Function Body -" + "<br><br>" + metaData.functionBody + "</li>" +
-                "</ul>";
+                "</ul></div>";
         };
 
         /**
-         * Generate description html string from source meta data for stream/table/window/trigger
+         * Generate description html string from stream/table meta data
          * Descriptions are intended to be shown in the tooltips for a completions
          *
-         * @param {string} type Type of the source. Should be one of ["Stream", "Event Table", "Event Window", "Event Trigger"]
-         * @param {string} sourceName Name of the eval script for which the description is generated
-         * @param {Object} metaData Metadata about the source
+         * @param {string} type Type of the source. Should be one of ["Stream", "Event Table"]
+         * @param {string} sourceName Name of the stream/table for which the description is generated
+         * @param {Object} attributes attributes of the stream/table
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForSource = function(type, sourceName, metaData) {
-            var tooltip = "<strong>" + type + "</strong> - " + sourceName + "<br>";
-            if (metaData && Object.keys(metaData).length > 0) {
-                tooltip += "<ul>";
-                for (var attribute in metaData) {
-                    if (metaData.hasOwnProperty(attribute)) {
-                        tooltip += "<li>" + attribute + (metaData[attribute] ? " - " + metaData[attribute] : "") + "</li>";
+        this.generateDescriptionForStreamOrTable = function(type, sourceName, attributes) {
+            var description = "<div><strong>" + type + "</strong> - " + sourceName + "<br>";
+            if (attributes && Object.keys(attributes).length > 0) {
+                description += "<ul>";
+                for (var attribute in attributes) {
+                    if (attributes.hasOwnProperty(attribute)) {
+                        description += "<li>" +
+                            attribute + (attributes[attribute] ? " - " + attributes[attribute] : "") +
+                            "</li>";
                     }
                 }
-                tooltip += "</ul>";
+                description += "</ul>";
             }
-            return tooltip;
+            description += "</div>";
+            return description;
+        };
+
+        /**
+         * Generate description html string from stream/table meta data
+         * Descriptions are intended to be shown in the tooltips for a completions
+         *
+         * @param {string} triggerName Name of the trigger for which the description is generated
+         * @param {string} metaData metaData of the trigger
+         * @return {string} html string of the description generated from the meta data provided
+         */
+        this.generateDescriptionForTrigger = function(triggerName, metaData) {
+            return "<div><strong>Trigger</strong> - " + triggerName + "<br><br>" +
+                metaData.type + " - " + metaData.time + "</div>";
+        };
+
+        this.generateDescriptionForWindow = function(windowName, metaData) {
+            var description = "<div><strong>Window</strong> - " + windowName + "<br><br>";
+            if (metaData.attributes && Object.keys(metaData.attributes).length > 0) {
+                description += "Attributes -<ul>";
+                for (var attribute in metaData.attributes) {
+                    if (metaData.attributes.hasOwnProperty(attribute)) {
+                        description += "<li>" +
+                            attribute + (metaData.attributes[attribute] ? " - " + metaData.attributes[attribute] : "") +
+                            "</li>";
+                    }
+                }
+                description += "</ul>";
+            }
+            if (metaData.functionOperation) {
+                description += "Type - " + metaData.functionOperation + "<br><br>";
+            }
+            if (metaData.output) {
+                description += "Output - " + metaData.output + "<br><br>";
+            }
+            if (metaData.functionOperation &&
+                    SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
+                var window =
+                    SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors[metaData.functionOperation];
+                if (window) {
+                    description += "Description of the window used - <br><br>" + window.description;
+                }
+            }
+            description += "</div>";
+            return description;
         };
 
         return this;
