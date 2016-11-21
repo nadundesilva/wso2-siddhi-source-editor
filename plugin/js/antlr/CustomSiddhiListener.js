@@ -167,34 +167,26 @@ CustomSiddhiListener.prototype.exitFunction_operation = function (ctx) {
 CustomSiddhiListener.prototype.exitSource = function (ctx) {
     var sourceName = ctx.start.text;
     var type;
-    var attributes;
+    var metaData;
 
     if (this.editor.completionEngine.streamList[sourceName]) {
         type = "Stream";
-        attributes = this.editor.completionEngine.streamList[sourceName];
+        metaData = this.editor.completionEngine.streamList[sourceName];
     } else if (this.editor.completionEngine.tableList[sourceName]) {
         type = "Event Table";
-        attributes = this.editor.completionEngine.tableList[sourceName];
+        metaData = this.editor.completionEngine.tableList[sourceName];
     } else if (this.editor.completionEngine.windowList[sourceName]) {
         type = "Event Window";
-        attributes = this.editor.completionEngine.windowList[sourceName];
+        metaData = this.editor.completionEngine.windowList[sourceName];
     } else if (this.editor.completionEngine.triggerList[sourceName]) {
         type = "Event Trigger";
-        attributes = this.editor.completionEngine.triggerList[sourceName];
+        metaData = this.editor.completionEngine.triggerList[sourceName];
     }
 
     if (type) {
-        var tooltip = "<strong>" + type + "</strong> - " + sourceName + "<br>";
-        if (attributes && Object.keys(attributes).length > 0) {
-            tooltip += "<ul>";
-            for (var attribute in attributes) {
-                if (attributes.hasOwnProperty(attribute)) {
-                    tooltip += "<li>" + attribute + (attributes[attribute] ? " - " + attributes[attribute] : "") + "</li>";
-                }
-            }
-            tooltip += "</ul>";
-        }
-        updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, tooltip);
+        updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1,
+            SiddhiEditor.utils.generateDescriptionForSource(type, sourceName, metaData)
+        );
     }
 };
 

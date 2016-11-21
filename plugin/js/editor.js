@@ -441,7 +441,7 @@
          * Generate description html string from meta data for eval script
          * Descriptions are intended to be shown in the tooltips for a completions
          *
-         * @param {string} evalScriptName Name of the eval script for which
+         * @param {string} evalScriptName Name of the eval script for which the description is generated
          * @param {Object} metaData Meta data object containing parameters, return and description
          * @return {string} html string of the description generated from the meta data provided
          */
@@ -451,6 +451,29 @@
                 "<li>Return Type - " + metaData.returnType.join(" | ") + "</li>" +
                 "<li>Function Body -" + "<br><br>" + metaData.functionBody + "</li>" +
                 "</ul>";
+        };
+
+        /**
+         * Generate description html string from source meta data for stream/table/window/trigger
+         * Descriptions are intended to be shown in the tooltips for a completions
+         *
+         * @param {string} type Type of the source. Should be one of ["Stream", "Event Table", "Event Window", "Event Trigger"]
+         * @param {string} sourceName Name of the eval script for which the description is generated
+         * @param {Object} metaData Metadata about the source
+         * @return {string} html string of the description generated from the meta data provided
+         */
+        this.generateDescriptionForSource = function(type, sourceName, metaData) {
+            var tooltip = "<strong>" + type + "</strong> - " + sourceName + "<br>";
+            if (metaData && Object.keys(metaData).length > 0) {
+                tooltip += "<ul>";
+                for (var attribute in metaData) {
+                    if (metaData.hasOwnProperty(attribute)) {
+                        tooltip += "<li>" + attribute + (metaData[attribute] ? " - " + metaData[attribute] : "") + "</li>";
+                    }
+                }
+                tooltip += "</ul>";
+            }
+            return tooltip;
         };
 
         return this;
