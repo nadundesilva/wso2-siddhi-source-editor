@@ -126,7 +126,8 @@ CustomSiddhiListener.prototype.exitQuery = function (ctx) {
                 i++;
             }
             this.editor.completionEngine.streamList[outputTarget] = {
-                attributes: attributes
+                attributes: attributes,
+                description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", outputTarget, attributes)
             };
         }
     }

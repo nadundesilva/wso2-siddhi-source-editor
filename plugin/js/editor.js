@@ -462,7 +462,7 @@
          * @param {Object} attributes attributes of the stream/table
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForStreamOrTable = function(type, sourceName, attributes) {
+        this.generateDescriptionForStreamOrTable = function (type, sourceName, attributes) {
             var description = "<div><strong>" + type + "</strong> - " + sourceName + "<br>";
             if (attributes && Object.keys(attributes).length > 0) {
                 description += "<ul>";
@@ -487,12 +487,12 @@
          * @param {string} metaData metaData of the trigger
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForTrigger = function(triggerName, metaData) {
+        this.generateDescriptionForTrigger = function (triggerName, metaData) {
             return "<div><strong>Trigger</strong> - " + triggerName + "<br><br>" +
                 metaData.type + " - " + metaData.time + "</div>";
         };
 
-        this.generateDescriptionForWindow = function(windowName, metaData) {
+        this.generateDescriptionForWindow = function (windowName, metaData) {
             var description = "<div><strong>Window</strong> - " + windowName + "<br><br>";
             if (metaData.attributes && Object.keys(metaData.attributes).length > 0) {
                 description += "Attributes -<ul>";
