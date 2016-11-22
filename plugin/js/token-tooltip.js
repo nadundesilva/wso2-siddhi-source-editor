@@ -1,3 +1,8 @@
+/*
+ * Taken from ace editor demos and updated to suit the siddhi editor
+ * Generates the token tool tips on mouse over
+ */
+
 var dom = ace.require("ace/lib/dom");
 var oop = ace.require("ace/lib/oop");
 var event = ace.require("ace/lib/event");
@@ -58,6 +63,7 @@ oop.inherits(TokenTooltip, Tooltip);
             return;
         }
 
+        // This had been changed to suit the siddhi editor implementation of token tool tips
         var tokenText = token.tooltip;
         if (!tokenText) {
             tokenText = token.type;

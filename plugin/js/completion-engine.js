@@ -425,28 +425,6 @@ function CompletionEngine() {
     };
 
     /**
-     * Dynamically select the completers suitable for current context
-     *
-     * @param {Object} editor ace editor instance
-     * @returns {Array|*} suitable completer list for current context
-     */
-    self.adjustAutoCompletionHandlers = function (editor) {
-        // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
-        // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-        var completerList = [self.SiddhiCompleter, self.SnippetCompleter];
-
-        // Adding keyword completor if the cursor is not in front of dot or colon
-        var objectNameRegex = new RegExp(regex.identifier + "\\s*\\.\\s*$", "i");
-        var namespaceRegex = new RegExp(regex.identifier + "\\s*:\\s*$", "i");
-        var editorText = editor.getValue();
-        if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText))) {
-            completerList.push(SiddhiEditor.langTools.keyWordCompleter);
-        }
-
-        editor.completers = completerList;
-    };
-
-    /**
      * Calculate the list of suggestions based on the context around the cursor position
      *
      * @param {Object} editor ace editor instance
@@ -458,9 +436,11 @@ function CompletionEngine() {
             column: 0
         }, pos));                               // All the text before the cursor
 
+        // Removing content not relevant to the completion engine
         editorText = editorText.replace(new RegExp(regex.comment, "ig"), "");       // Removing comments
         editorText = editorText.replace(/\s+/g, " ");           // Replacing all spaces with single white spaces
 
+        // Replacing editorText with the last statement of the execution plan
         var currentStatementStartIndex = 0;
         editorTextLoop: for (var i = 0; i < editorText.length; i++) {
             keywordMapLoop: for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
@@ -495,6 +475,7 @@ function CompletionEngine() {
             SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
         }
 
+        // Finding the relevant rule from the main rule base
         for (i = 0; i < mainRuleBase.length; i++) {
             var ruleRegex = new RegExp(mainRuleBase[i].regex, "i");
             if (ruleRegex.test(editorText)) {
@@ -1655,7 +1636,7 @@ function loadMetaData() {
                         if (response.inBuilt.hasOwnProperty(processorType)) {
                             var snippet = {};
                             for (var i = 0; i < response.inBuilt[processorType].length; i++) {
-                                snippet[response.inBuilt[processorType][i].name] = generateSnippet(
+                                snippet[response.inBuilt[processorType][i].name] = generateSnippetFromProcessorMetaData(
                                     response.inBuilt[processorType][i]
                                 );
                             }
@@ -1673,7 +1654,7 @@ function loadMetaData() {
                                 if (response.extensions[namespace].hasOwnProperty(processorType)) {
                                     var snippet = {};
                                     for (var i = 0; i < response.extensions[namespace][processorType].length; i++) {
-                                        snippets[response.extensions[namespace][processorType][i].name] = generateSnippet(
+                                        snippets[response.extensions[namespace][processorType][i].name] = generateSnippetFromProcessorMetaData(
                                             response.extensions[namespace][processorType][i]
                                         );
                                     }
@@ -1696,7 +1677,7 @@ function loadMetaData() {
  * @param {Object} processorMetaData The processor object with relevant parameters
  * @return {Object} snippet
  */
-function generateSnippet(processorMetaData) {
+function generateSnippetFromProcessorMetaData(processorMetaData) {
     var snippetVariableCount = 0;
     var snippetText = "snippet " + processorMetaData.name + "\n\t" + processorMetaData.name;
     if (processorMetaData.parameters) {

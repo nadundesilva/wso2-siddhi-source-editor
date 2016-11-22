@@ -29,7 +29,7 @@
     // (last tag in the array since tags after that are not yet added to it)
     var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
     SiddhiEditor.baseURL =
-        relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/editor.js".length);
+        relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/siddhi-editor.js".length);
 
     SiddhiEditor.serverURL = "http://localhost:8080/";
     SiddhiEditor.serverSideValidationDelay = 2000;
@@ -63,7 +63,7 @@
     };
     var ANTLR_CONSTANT = {
         ROOT: SiddhiEditor.baseURL + "js/antlr/",
-        ERROR_LISTENER: "AceErrorListener",
+        SYNTAX_ERROR_LISTENER: "SyntaxErrorListener",
         SIDDHI_DATA_POPULATION_LISTENER: "DataPopulationListener",
         SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER: "TokenToolTipUpdateListener",
         SIDDHI_PARSER: "gen/SiddhiQLParser",
@@ -77,11 +77,11 @@
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
     var DataPopulationListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_DATA_POPULATION_LISTENER).DataPopulationListener;
     var TokenToolTipUpdateListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER).TokenToolTipUpdateListener;
-    var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
+    var SyntaxErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SYNTAX_ERROR_LISTENER).SyntaxErrorListener;
     var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
+    var langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
 
     SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
-    SiddhiEditor.langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
     SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
     SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT +
@@ -141,9 +141,9 @@
         editor.getSession().on('change', editorChangeHandler);
 
         // For adjusting the completer list as required
-        editor.completionEngine.adjustAutoCompletionHandlers(editor);
+        adjustAutoCompletionHandlers();
         editor.commands.on('afterExec', function () {
-            editor.completionEngine.adjustAutoCompletionHandlers(editor);
+            adjustAutoCompletionHandlers();
         });
 
         // Adding events for adjusting the completions list styles
@@ -169,6 +169,26 @@
         });
 
         /**
+         * Dynamically select the completers suitable for current context
+         *
+         */
+        function adjustAutoCompletionHandlers() {
+            // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
+            // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
+            var completerList = [editor.completionEngine.SiddhiCompleter, editor.completionEngine.SnippetCompleter];
+
+            // Adding keyword completor if the cursor is not in front of dot or colon
+            var objectNameRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*\\.\\s*$", "i");
+            var namespaceRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*:\\s*$", "i");
+            var editorText = editor.getValue();
+            if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText))) {
+                completerList.push(langTools.keyWordCompleter);
+            }
+
+            editor.completers = completerList;
+        }
+
+        /**
          * Editor change handler
          */
         function editorChangeHandler() {
@@ -179,7 +199,7 @@
             editor.state.syntaxErrorList = [];
 
             // Following code segment parse the input query using antlr4's parser and lexer
-            var errorListener = new AceErrorListener(editor);
+            var errorListener = new SyntaxErrorListener(editor);
             var expression = editor.getValue().trim();          // Input text
             var txt = new antlr4.InputStream(expression);       // Input stream
             var lexer = new SiddhiQLLexer(txt);                 // Generating lexer
@@ -255,9 +275,9 @@
                             if (response.streams.hasOwnProperty(stream)) {
                                 var streamDefinition = response.streams[stream];
                                 var attributes = {};
-                                for (var i = 0; i < streamDefinition.attributeList.length; i++) {
-                                    attributes[streamDefinition.attributeList[i].name] =
-                                        streamDefinition.attributeList[i].type;
+                                for (var k = 0; k < streamDefinition.attributeList.length; k++) {
+                                    attributes[streamDefinition.attributeList[k].name] =
+                                        streamDefinition.attributeList[k].type;
                                 }
                                 editor.completionEngine.streamList[stream] = {
                                     attributes: attributes,
@@ -265,9 +285,15 @@
                                 };
                             }
                         }
+
+                        // Updating token tooltips
                         editor.completionEngine.clearIncompleteDataLists();
                         updateTokenToolTips(editor.state.previousParserTree);
                     } else {
+                        // Updating the token tooltips using the data available
+                        // Some data that was intended to be fetched from the server might be missing
+                        updateTokenToolTips(editor.state.previousParserTree);
+
                         // Separating execution plan into statements and adding them to an array
                         var statementsList = [];
                         var lineNumber = 1;

@@ -16,15 +16,15 @@
 
 var ErrorListener = require("../../lib/antlr4-js-runtime/error/ErrorListener").ErrorListener;
 
-function AceErrorListener(editor) {
+function SyntaxErrorListener(editor) {
     ErrorListener.call(this);
     this.editor = editor;
     return this;
 }
-AceErrorListener.prototype = Object.create(ErrorListener.prototype);
-AceErrorListener.prototype.constructor = AceErrorListener;
+SyntaxErrorListener.prototype = Object.create(ErrorListener.prototype);
+SyntaxErrorListener.prototype.constructor = SyntaxErrorListener;
 
-AceErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, line, column, msg, e) {
+SyntaxErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, line, column, msg, e) {
     if (this.editor.realTimeValidation)
         this.editor.state.syntaxErrorList.push({
             row: line - 1,
@@ -34,4 +34,4 @@ AceErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, 
         });
 };
 
-exports.AceErrorListener = AceErrorListener;
+exports.SyntaxErrorListener = SyntaxErrorListener;

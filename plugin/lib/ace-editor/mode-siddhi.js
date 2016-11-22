@@ -20,17 +20,17 @@ ace.define("ace/mode/siddhi_highlight_rules", ["require", "exports", "module", "
     var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
     var SiddhiHighlightRules = function () {
-        var keywords = "STREAM|DEFINE|TABLE|FUNCTION|FROM|PARTITION|WINDOW|SELECT|GROUP|BY|HAVING|" +
-            "INSERT|DELETE|UPDATE|RETURN|EVENTS|INTO|OUTPUT|EXPIRED|CURRENT|SNAPSHOT|FOR|RAW|OF|AS|" +
-            "OR|AND|ON|IS|NOT|WITHIN|WITH|BEGIN|END|NULL|EVERY|LAST|ALL|FIRST|JOIN|INNER|OUTER|" +
-            "RIGHT|LEFT|FULL|UNIDIRECTIONAL|YEARS|YEAR|MONTHS|MONTH|WEEKS|WEEK|DAYS|DAY|HOURS|HOUR|" +
-            "MINUTES|MIN|MINUTE|SECONDS|SECOND|SEC|MILLISECONDS|MILLISECOND";
+        var keywords = "STREAM|DEFINE|FUNCTION|TRIGGER|TABLE|PLAN|FROM|PARTITION|WINDOW|SELECT|GROUP|BY|" +
+            "HAVING|INSERT|OVERWRITE|DELETE|UPDATE|RETURN|EVENTS|INTO|OUTPUT|EXPIRED|CURRENT|SNAPSHOT|" +
+            "FOR|RAW|OF|AS|AT|OR|AND|IN|ON|IS|NOT|WITHIN|WITH|BEGIN|END|EVERY|LAST|ALL|FIRST|JOIN|" +
+            "INNER|OUTER|RIGHT|LEFT|FULL|UNIDIRECTIONAL|YEARS|MONTHS|WEEKS|DAYS|HOURS|MINUTES|SECONDS|" +
+            "MILLISECONDS|STRING|INT|LONG|FLOAT|DOUBLE|BOOL|OBJECT";
 
-        var builtInConstants = "true|false|null";
+        var builtInConstants = "TRUE|FALSE|NULL";
 
-        var builtInBooleanConstants = "true|false";
+        var builtInBooleanConstants = "TRUE|FALSE";
 
-        var builtInTypes = "int|string|bool|float|double|object|long";
+        var builtInTypes = "STRING|INT|LONG|FLOAT|DOUBLE|BOOL|OBJECT";
 
         var keywordMapper = this.createKeywordMapper({
             "keyword": keywords,
