@@ -97,7 +97,7 @@
         var editor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
         editor.realTimeValidation = config.realTimeValidation;
-        editor.tokenTooltip = new TokenTooltip(editor);
+        new TokenTooltip(editor);
         editor.setReadOnly(config.readOnly);
 
         // Setting the editor options
@@ -200,8 +200,8 @@
 
             // Following code segment parse the input query using antlr4's parser and lexer
             var errorListener = new SyntaxErrorListener(editor);
-            var expression = editor.getValue().trim();          // Input text
-            var txt = new antlr4.InputStream(expression);       // Input stream
+            var editorText = editor.getValue().trim();          // Input text
+            var txt = new antlr4.InputStream(editorText);       // Input stream
             var lexer = new SiddhiQLLexer(txt);                 // Generating lexer
             lexer._listeners = [];
             lexer._listeners.push(errorListener);
@@ -221,11 +221,11 @@
             // By now the current syntax errors are identified . following line shows the all the errors again.
             editor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
 
-            var parserListener = new DataPopulationListener(editor);
+            var dataPopulationListener = new DataPopulationListener(editor);
 
             // Default walker will traverse through the parserTree and generate events.
             // Those events are listen by the parserListener and update the statementsList with line numbers.
-            antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, tree);
+            antlr4.tree.ParseTreeWalker.DEFAULT.walk(dataPopulationListener, tree);
 
             if (parser._syntaxErrors == 0 && config.realTimeValidation && editor.state.previousParserTree &&
                 editor.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
@@ -234,21 +234,16 @@
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
                 setTimeout(function () {
                     if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                        // Updating the token tooltips using the data available
+                        // Some data that was intended to be fetched from the server might be missing
                         updateTokenToolTips(tree);
+
                         checkForSemanticErrors();
                     }
                 }, SiddhiEditor.serverSideValidationDelay);
             }
             editor.state.previousParserTree = tree;     // Save the current parser tree
             editor.state.lastEdit = Date.now();         // Save user's last edit time
-        }
-
-        /**
-         * Update the token tool tips
-         */
-        function updateTokenToolTips(parseTree) {
-            var parserListener = new TokenToolTipUpdateListener(editor);
-            antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, parseTree);
         }
 
         /**
@@ -268,6 +263,7 @@
                 },
                 function (response) {
                     if (response.status == "SUCCESS") {
+                        // Execution plan is valid
                         editor.completionEngine.clearData();                // Clear the exiting completion engine data
 
                         // Populating the fetched data for incomplete data items into the completion engine's data
@@ -290,51 +286,10 @@
                         editor.completionEngine.clearIncompleteDataLists();
                         updateTokenToolTips(editor.state.previousParserTree);
                     } else {
-                        // Updating the token tooltips using the data available
-                        // Some data that was intended to be fetched from the server might be missing
-                        updateTokenToolTips(editor.state.previousParserTree);
+                        // Error found in execution plan
 
-                        // Separating execution plan into statements and adding them to an array
-                        var statementsList = [];
-                        var lineNumber = 1;
-                        editorTextLoop: for (i = 0; i < editorText.length; i++) {
-                            for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
-                                if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
-                                    new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
-                                    var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
-                                    var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
-
-                                    // For storing the number of lines the statement spans across
-                                    // lineNumber variable is not incremented since statement start line number is required
-                                    var statementSpanningLines = 0;
-
-                                    for (var j = i + keywordMatch.length; j < editorText.length; j++) {
-                                        if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
-                                            var endKeywordMatch =
-                                                new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
-                                            statementsList.push({
-                                                statement: editorText.substring(i, j + endKeywordMatch.length),
-                                                line: lineNumber
-                                            });
-                                            lineNumber += statementSpanningLines;
-
-                                            // -1 to adjust for the increment in i after iteration
-                                            // -1 to adjust for statements with end keyword as new line
-                                            i = j + endKeywordMatch.length - 2;
-
-                                            continue editorTextLoop;
-                                        }
-                                        if (editorText.charAt(j) == "\n") {
-                                            statementSpanningLines++;
-                                        }
-                                    }
-                                    break editorTextLoop;
-                                }
-                            }
-                            if (editorText.charAt(i) == "\n") {
-                                lineNumber++;
-                            }
-                        }
+                        // Generate the statements list from the editor text
+                        var statementsList = generateStatementsListFromText(editorText);
 
                         // If the query contains semantic errors
                         // send the query in a constructive manner to sever to get the line number with error
@@ -342,7 +297,7 @@
                         var query = "";
                         for (var i = 0; i < statementsList.length; i++) {
                             if (statementsList[i].statement.substring(0, 2) != "\\*" &&
-                                statementsList[i].statement.substring(0, 2) != "--") {
+                                    statementsList[i].statement.substring(0, 2) != "--") {  // Appending statements excepts comments
                                 query += statementsList[i].statement + "  \n";
                                 (function (line, query) {
                                     submitToServerForSemanticErrorCheck({
@@ -377,6 +332,66 @@
                     }
                 }
             );
+        }
+
+        /**
+         * Update the token tool tips
+         */
+        function updateTokenToolTips(parseTree) {
+            var parserListener = new TokenToolTipUpdateListener(editor);
+            antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, parseTree);
+        }
+
+        /**
+         * Generate list of statements from the editor text
+         *
+         * @param editorText Text in the editor
+         * @return {string[]} The list of statements
+         */
+        function generateStatementsListFromText(editorText) {
+            // Separating execution plan into statements and adding them to an array
+            var statementsList = [];
+            var lineNumber = 1;
+            editorTextLoop: for (var i = 0; i < editorText.length; i++) {
+                for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
+                    if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
+                        new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
+                        var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
+                        var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
+
+                        // For storing the number of lines the statement spans across
+                        // lineNumber variable is not incremented since statement start line number is required
+                        var statementSpanningLines = 0;
+
+                        for (var j = i + keywordMatch.length; j < editorText.length; j++) {
+                            if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
+                                var endKeywordMatch =
+                                    new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
+                                statementsList.push({
+                                    statement: editorText.substring(i, j + endKeywordMatch.length),
+                                    line: lineNumber
+                                });
+                                lineNumber += statementSpanningLines;
+
+                                // -1 to adjust for the increment in i after iteration
+                                // -1 to adjust for statements with end keyword as new line
+                                i = j + endKeywordMatch.length - 2;
+
+                                continue editorTextLoop;
+                            }
+                            if (editorText.charAt(j) == "\n") {
+                                statementSpanningLines++;
+                            }
+                        }
+                        break editorTextLoop;
+                    }
+                }
+                if (editorText.charAt(i) == "\n") {
+                    lineNumber++;
+                }
+            }
+
+            return statementsList;
         }
 
         /**
