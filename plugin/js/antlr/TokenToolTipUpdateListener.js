@@ -84,6 +84,14 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
     }
 };
 
+TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
+    var triggerName = getTextFromCtx(ctx);
+    var trigger = this.editor.completionEngine.triggerList[triggerName];
+    if (trigger && trigger.description) {
+        updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, trigger.description);
+    }
+};
+
 function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
     var token = editor.session.getTokenAt(tokenRow, tokenColumn);
     if (token) {
