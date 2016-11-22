@@ -33,6 +33,7 @@
 
     SiddhiEditor.serverURL = "http://localhost:8080/";
     SiddhiEditor.serverSideValidationDelay = 2000;
+    SiddhiEditor.tokenTooltipUpdateDelay = 1000;
 
     // Used in separating statements
     SiddhiEditor.statementStartToEndKeywordMap = {
@@ -41,7 +42,7 @@
         "from": ";",
         "partition": "end\\s*;",
         "/\\*": "\\*/",
-        "--": "\n"
+        "--": "[\r\n]"
     };
 
     /*
@@ -63,7 +64,8 @@
     var ANTLR_CONSTANT = {
         ROOT: SiddhiEditor.baseURL + "js/antlr/",
         ERROR_LISTENER: "AceErrorListener",
-        SIDDHI_LISTENER: "CustomSiddhiListener",
+        SIDDHI_DATA_POPULATION_LISTENER: "DataPopulationListener",
+        SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER: "TokenToolTipUpdateListener",
         SIDDHI_PARSER: "gen/SiddhiQLParser",
         SIDDHI_LEXER: "gen/SiddhiQLLexer"
     };
@@ -73,7 +75,8 @@
     var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                                          // ANTLR4 JS runtime
     var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
-    var CustomSiddhiListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LISTENER).CustomSiddhiListener;      // Custom listener for Siddhi
+    var DataPopulationListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_DATA_POPULATION_LISTENER).DataPopulationListener;
+    var TokenToolTipUpdateListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER).TokenToolTipUpdateListener;
     var AceErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.ERROR_LISTENER).AceErrorListener;
     var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
 
@@ -123,7 +126,6 @@
         editor.state.syntaxErrorList = [];      // To save the syntax Errors with line numbers
         editor.state.semanticErrorList = [];    // To save semanticErrors with line numbers
         editor.state.lastEdit = 0;              // Last edit time
-        editor.state.foundSemanticErrors = false;
 
         // Adding the default text into the editor
         editor.setValue("/* Enter a unique ExecutionPlan */\n" +
@@ -170,7 +172,7 @@
          * Editor change handler
          */
         function editorChangeHandler() {
-            editor.completionEngine.streamList = {};            // Clear the exiting streams
+            editor.completionEngine.clearData();                // Clear the exiting completion engine data
 
             // Clearing all errors before finding the errors again
             editor.state.semanticErrorList = [];
@@ -199,156 +201,174 @@
             // By now the current syntax errors are identified . following line shows the all the errors again.
             editor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
 
-            var parserListener = new CustomSiddhiListener(editor);
+            var parserListener = new DataPopulationListener(editor);
 
             // Default walker will traverse through the parserTree and generate events.
             // Those events are listen by the parserListener and update the statementsList with line numbers.
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, tree);
 
-            if (parser._syntaxErrors == 0 && config.realTimeValidation &&
-                (editor.state.previousParserTree != tree.toStringTree(tree, parser))) {
+            if (parser._syntaxErrors == 0 && config.realTimeValidation && editor.state.previousParserTree &&
+                editor.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
                 // If there are no syntax errors and there is a change in parserTree
                 // check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
-                setTimeout(checkForSemanticErrors, SiddhiEditor.serverSideValidationDelay);
+                setTimeout(function () {
+                    if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                        updateTokenToolTips(tree);
+                        checkForSemanticErrors();
+                    }
+                }, SiddhiEditor.serverSideValidationDelay);
             }
-            editor.state.previousParserTree = tree.toStringTree(tree, parser);  // Save the current parser tree
-            editor.state.lastEdit = Date.now();                                 // Keep user's last edit time
+            editor.state.previousParserTree = tree;     // Save the current parser tree
+            editor.state.lastEdit = Date.now();         // Save user's last edit time
+        }
+
+        /**
+         * Update the token tool tips
+         */
+        function updateTokenToolTips(parseTree) {
+            var parserListener = new TokenToolTipUpdateListener(editor);
+            antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, parseTree);
         }
 
         /**
          * This method send server calls to check the semantic errors
+         * Also retrieves the missing completion engine data from the server if the execution plan is valid
          */
         function checkForSemanticErrors() {
-            editor.state.foundSemanticErrors = false;
+            var foundSemanticErrors = false;
 
-            if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
-                var editorText = editor.getValue();
-                // If the user has not typed anything after 3 seconds from his last change, then send the query for semantic check
-                // check whether the query contains errors or not
-                var isValid = submitToServerForSemanticErrorCheck(editorText, true);
+            var editorText = editor.getValue();
+            // If the user has not typed anything after 3 seconds from his last change, then send the query for semantic check
+            // check whether the query contains errors or not
+            submitToServerForSemanticErrorCheck(
+                {
+                    executionPlan: editorText,
+                    missingStreams: editor.completionEngine.incompleteData.streams
+                },
+                function (response) {
+                    if (response.status == "SUCCESS") {
+                        editor.completionEngine.clearData();                // Clear the exiting completion engine data
 
-                if (!isValid) {
-                    // Separating execution plan into statements and adding them to an array
-                    var statementsList = [];
-                    var lineNumber = 1;
-                    editorTextLoop: for (i = 0; i < editorText.length; i++) {
-                        for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
-                            if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
-                                new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
-                                var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
-                                var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
-
-                                // For storing the number of lines the statement spans across
-                                // lineNumber variable is not incremented since statement start line number is required
-                                var statementSpanningLines = 0;
-
-                                for (var j = i + keywordMatch.length; j < editorText.length; j++) {
-                                    if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
-                                        var endKeywordMatch =
-                                            new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
-                                        statementsList.push({
-                                            statement: editorText.substring(i, j + endKeywordMatch.length),
-                                            line: lineNumber
-                                        });
-                                        lineNumber += statementSpanningLines;
-
-                                        // -1 to adjust for the increment in i after iteration
-                                        // -1 to adjust for statements with end keyword as new line
-                                        i = j + endKeywordMatch.length - 2;
-
-                                        continue editorTextLoop;
-                                    }
-                                    if (editorText.charAt(j) == "\n") {
-                                        statementSpanningLines++;
-                                    }
+                        // Populating the fetched data for incomplete data items into the completion engine's data
+                        for (var stream in response.streams) {
+                            if (response.streams.hasOwnProperty(stream)) {
+                                var streamDefinition = response.streams[stream];
+                                var attributes = {};
+                                for (var i = 0; i < streamDefinition.attributeList.length; i++) {
+                                    attributes[streamDefinition.attributeList[i].name] =
+                                        streamDefinition.attributeList[i].type;
                                 }
-                                break editorTextLoop;
+                                editor.completionEngine.streamList[stream] = {
+                                    attributes: attributes,
+                                    description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", stream, attributes)
+                                };
                             }
                         }
-                        if (editorText.charAt(i) == "\n") {
-                            lineNumber++;
-                        }
-                    }
+                        editor.completionEngine.clearIncompleteDataLists();
+                        updateTokenToolTips(editor.state.previousParserTree);
+                    } else {
+                        // Separating execution plan into statements and adding them to an array
+                        var statementsList = [];
+                        var lineNumber = 1;
+                        editorTextLoop: for (i = 0; i < editorText.length; i++) {
+                            for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
+                                if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
+                                    new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
+                                    var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
+                                    var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
 
-                    // If the query contains semantic errors
-                    // send the query in a constructive manner to sever to get the line number with error
-                    // This check is needed because the ServerSide compiler doesn't return line numbers of the semantic errors.
-                    var query = "";
-                    for (var i = 0; i < statementsList.length; i++) {
-                        if (statementsList[i].statement.substring(0, 2) != "\\*" &&
+                                    // For storing the number of lines the statement spans across
+                                    // lineNumber variable is not incremented since statement start line number is required
+                                    var statementSpanningLines = 0;
+
+                                    for (var j = i + keywordMatch.length; j < editorText.length; j++) {
+                                        if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
+                                            var endKeywordMatch =
+                                                new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
+                                            statementsList.push({
+                                                statement: editorText.substring(i, j + endKeywordMatch.length),
+                                                line: lineNumber
+                                            });
+                                            lineNumber += statementSpanningLines;
+
+                                            // -1 to adjust for the increment in i after iteration
+                                            // -1 to adjust for statements with end keyword as new line
+                                            i = j + endKeywordMatch.length - 2;
+
+                                            continue editorTextLoop;
+                                        }
+                                        if (editorText.charAt(j) == "\n") {
+                                            statementSpanningLines++;
+                                        }
+                                    }
+                                    break editorTextLoop;
+                                }
+                            }
+                            if (editorText.charAt(i) == "\n") {
+                                lineNumber++;
+                            }
+                        }
+
+                        // If the query contains semantic errors
+                        // send the query in a constructive manner to sever to get the line number with error
+                        // This check is needed because the ServerSide compiler doesn't return line numbers of the semantic errors.
+                        var query = "";
+                        for (var i = 0; i < statementsList.length; i++) {
+                            if (statementsList[i].statement.substring(0, 2) != "\\*" &&
                                 statementsList[i].statement.substring(0, 2) != "--") {
-                            query += statementsList[i].statement + "  \n";
-                            submitToServerForSemanticErrorCheck(query, false, statementsList[i].line);
-                            if (editor.state.foundSemanticErrors) {
-                                break;
+                                query += statementsList[i].statement + "  \n";
+                                (function (line) {
+                                    submitToServerForSemanticErrorCheck({
+                                        executionPlan: editorText,
+                                        missingStreams: []
+                                    }, function (response) {
+                                        if (!foundSemanticErrors && response.status != "SUCCESS") {
+                                            // Update the semanticErrorList
+                                            editor.state.semanticErrorList.push({
+                                                row: line - 1,
+                                                // Change attribute "text" to "html" if html is sent from server
+                                                text: SiddhiEditor.utils.wordWrap(response.message, 100),
+                                                type: "error"
+                                            });
+
+                                            // Update the state of the foundSemanticErrors to stop sending another server call
+                                            foundSemanticErrors = true;
+
+                                            // Show the errors
+                                            editor.session.setAnnotations(
+                                                editor.state.semanticErrorList.concat(editor.state.syntaxErrorList)
+                                            );
+                                        }
+                                    });
+                                })(statementsList[i].line);
+                                if (foundSemanticErrors) {
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
+            );
         }
 
         /**
-         * This Method submit the query to server for semantic error checking
-         * if(errorCheck)
-         *      => This method is called to check the validity of the complete query
-         * else
-         *      => This method is called to check the validity of the sub statements.
+         * Submit the execution plan to server for semantic error checking
+         * Also fetched the incomplete data from the server for the completion engine
          *
-         * Ex: suppose the query is like below
-         *     1. define stream Abc( def int) -> A
-         *     2. from Abc      -> B
-         *     3. select def
-         *     4. insert into Ghi
-         *
-         *     ***To check complete query -> submitToServerForSemanticErrorCheck(executionPlan,true)
-         *     ***To find the line number with the error->
-         *                  submitToServerForSemanticErrorCheck(A , false , 1 , "define ...")
-         *                  submitToServerForSemanticErrorCheck(A+B,false , 3 , "from abc ..")
-         *
-         * @param {string} executionPlan The input query
-         * @param {boolean} errorCheck isValid check or not.
-         * @param {int} [line] line number related to the current statement
-         * @returns {boolean} query is valid or not
+         * @param {Object} data The execution plan and the missing data in a java script object
+         * @param {function} callback Missing streams whose definitions should be fetched after validation
          */
-        function submitToServerForSemanticErrorCheck(executionPlan, errorCheck, line) {
-            if (executionPlan == "") {
-                return true;
+        function submitToServerForSemanticErrorCheck(data, callback) {
+            if (data.executionPlan == "") {
+                return;
             }
-
-            var ajaxConfig = {
+            jQuery.ajax({
                 type: "POST",
                 url: SiddhiEditor.serverURL + "siddhi-editor/validate",
-                data: executionPlan
-            };
-            if (errorCheck) {
-                ajaxConfig.async = false;
-                var response = JSON.parse(jQuery.ajax(ajaxConfig).responseText);
-                return response.status == "SUCCESS";
-            } else {
-                ajaxConfig.async = true;
-                ajaxConfig.success = function (response) {
-                    if (!editor.state.foundSemanticErrors && response.status != "SUCCESS") {
-                        // Update the semanticErrorList
-                        editor.state.semanticErrorList.push({
-                            row: line - 1,
-                            // Change attribute "text" to "html" if html is sent from server
-                            text: SiddhiEditor.utils.wordWrap(response.message, 100),
-                            type: "error"
-                        });
-
-                        // Update the state of the editor.state.foundSemanticErrors to stop sending another server call
-                        editor.state.foundSemanticErrors = true;
-
-                        // Show the errors
-                        editor.session.setAnnotations(
-                            editor.state.semanticErrorList.concat(editor.state.syntaxErrorList)
-                        );
-                    }
-                };
-                jQuery.ajax(ajaxConfig);
-            }
+                data: JSON.stringify(data),
+                success: callback
+            });
         }
 
         return editor;
@@ -406,7 +426,7 @@
                                     metaData.parameters[j].multiple[k].name +
                                     (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
                                     (metaData.parameters[j].multiple[k].type.length > 0 ?
-                                        metaData.parameters[j].multiple[k].type.join(" | ") :
+                                        metaData.parameters[j].multiple[k].type.join(" | ").toUpperCase() :
                                         "")
                                     + "</li>";
                             }
@@ -415,7 +435,7 @@
                                 metaData.parameters[j].name +
                                 (metaData.parameters[j].optional ? " (optional)" : "") +
                                 (metaData.parameters[j].type.length > 0 ?
-                                " - " + metaData.parameters[j].type.join(" | ") :
+                                " - " + metaData.parameters[j].type.join(" | ").toUpperCase() :
                                     "") +
                                 "</li>";
                         }
@@ -428,7 +448,7 @@
             if (metaData.returnType) {
                 description += "Return Type - ";
                 if (metaData.returnType.length > 0) {
-                    description += metaData.returnType.join(" | ");
+                    description += metaData.returnType.join(" | ").toUpperCase();
                 } else {
                     description += "none";
                 }
@@ -448,7 +468,7 @@
         this.generateDescriptionForEvalScript = function (evalScriptName, metaData) {
             return "<div><strong>Eval Script</strong> - " + evalScriptName + "<br><ul>" +
                 "<li>Language - " + metaData.language + "</li>" +
-                "<li>Return Type - " + metaData.returnType.join(" | ") + "</li>" +
+                "<li>Return Type - " + metaData.returnType.join(" | ").toUpperCase() + "</li>" +
                 "<li>Function Body -" + "<br><br>" + metaData.functionBody + "</li>" +
                 "</ul></div>";
         };
@@ -469,7 +489,7 @@
                 for (var attribute in attributes) {
                     if (attributes.hasOwnProperty(attribute)) {
                         description += "<li>" +
-                            attribute + (attributes[attribute] ? " - " + attributes[attribute] : "") +
+                            attribute + (attributes[attribute] ? " - " + attributes[attribute].toUpperCase() : "") +
                             "</li>";
                     }
                 }
@@ -499,7 +519,7 @@
                 for (var attribute in metaData.attributes) {
                     if (metaData.attributes.hasOwnProperty(attribute)) {
                         description += "<li>" +
-                            attribute + (metaData.attributes[attribute] ? " - " + metaData.attributes[attribute] : "") +
+                            attribute + (metaData.attributes[attribute] ? " - " + metaData.attributes[attribute].toUpperCase() : "") +
                             "</li>";
                     }
                 }
@@ -512,7 +532,7 @@
                 description += "Output - " + metaData.output + "<br><br>";
             }
             if (metaData.functionOperation &&
-                    SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
+                SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
                 var windowName = /^\s*([a-zA-Z_][a-zA-Z_0-9]*)\s*\(/i.exec(metaData.functionOperation)[1];
                 var window =
                     SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors[windowName];

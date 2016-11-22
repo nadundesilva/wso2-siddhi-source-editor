@@ -332,6 +332,38 @@ function CompletionEngine() {
     self.windowList = {};
 
     /*
+     * Incomplete data which will be retrieved from the server along with the validation
+     * Information about these data items will be fetched from the server upon validation
+     */
+    self.incompleteData = {
+        streams: []
+    };
+
+    /**
+     * clear the completion engine data
+     * Includes clearing the incomplete data lists
+     */
+    self.clearData = function () {
+        self.streamList = {};
+        self.tableList = {};
+        self.triggerList = {};
+        self.evalScriptList = {};
+        self.windowList = {};
+        self.clearIncompleteDataLists();
+    };
+
+    /**
+     * clear the incomplete data lists
+     */
+    self.clearIncompleteDataLists = function() {
+        for (var incompleteDataSet in self.incompleteData) {
+            if (self.incompleteData.hasOwnProperty(incompleteDataSet)) {
+                self.incompleteData[incompleteDataSet] = [];
+            }
+        }
+    };
+
+    /*
      * CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
      * wordList = {
      *       caption: "suggestion name",

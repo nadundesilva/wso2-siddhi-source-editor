@@ -1,18 +1,20 @@
 package org.wso2.siddhi.editor.api;
 
 import com.google.gson.Gson;
+import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
+import org.wso2.siddhi.editor.api.commons.request.ValidateRequest;
 import org.wso2.siddhi.editor.api.commons.response.ErrorResponse;
-import org.wso2.siddhi.editor.api.commons.response.GeneralResponse;
 import org.wso2.siddhi.editor.api.commons.response.ResponseFactory;
-import org.wso2.siddhi.editor.api.commons.response.Status;
 import org.wso2.siddhi.editor.api.core.MetaDataUtils;
+import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -22,13 +24,32 @@ import java.util.Map;
 public class SiddhiEditorEndpoint {
     @POST
     @Path("/validate")
-    public Response validateExecutionPlan(String executionPlan) {
+    public Response validateExecutionPlan(String validationRequestString) {
+        ValidateRequest validateRequest = new Gson().fromJson(validationRequestString, ValidateRequest.class);
         String jsonString;
 
         try {
+            // validating the execution plan
             SiddhiManager siddhiManager = new SiddhiManager();
-            siddhiManager.validateExecutionPlan(executionPlan);
-            jsonString = new Gson().toJson(new GeneralResponse(Status.SUCCESS));
+            ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(validateRequest.getExecutionPlan());
+            executionPlanRuntime.start();
+            executionPlanRuntime.shutdown();
+
+            // Fetching the missing streams requested by the editor
+            Map<String, Object> response = ResponseFactory.getCustomSuccessResponse();
+            if (validateRequest.getMissingStreams() != null) {
+                Map<String, AbstractDefinition> streamDefinitionMap = executionPlanRuntime.getStreamDefinitionMap();
+                Map<String, AbstractDefinition> requiredStreamDefinitions = new HashMap<>();
+                for (String stream : validateRequest.getMissingStreams()) {
+                    AbstractDefinition streamDefinition = streamDefinitionMap.get(stream);
+                    if (streamDefinition != null) {
+                        requiredStreamDefinitions.put(stream, streamDefinition);
+                    }
+                }
+                response.put("streams", requiredStreamDefinitions);
+            }
+
+            jsonString = new Gson().toJson(response);
         } catch (Throwable t) {
             jsonString = new Gson().toJson(new ErrorResponse(t.getMessage()));
         }
