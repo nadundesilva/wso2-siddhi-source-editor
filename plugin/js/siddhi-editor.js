@@ -344,9 +344,9 @@
                             if (statementsList[i].statement.substring(0, 2) != "\\*" &&
                                 statementsList[i].statement.substring(0, 2) != "--") {
                                 query += statementsList[i].statement + "  \n";
-                                (function (line) {
+                                (function (line, query) {
                                     submitToServerForSemanticErrorCheck({
-                                        executionPlan: editorText,
+                                        executionPlan: query,
                                         missingStreams: []
                                     }, function (response) {
                                         if (!foundSemanticErrors && response.status != "SUCCESS") {
@@ -367,7 +367,8 @@
                                             );
                                         }
                                     });
-                                })(statementsList[i].line);
+                                })(statementsList[i].line, query);
+
                                 if (foundSemanticErrors) {
                                     break;
                                 }
