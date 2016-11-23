@@ -106,32 +106,34 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
  */
 
 DataPopulationListener.prototype.exitQuery = function (ctx) {
-    if (ctx.query_section() && ctx.query_output() && ctx.query_output().children && ctx.query_output().target()) {
-        // Updating the data for streams inserted into without defining
+    if (ctx.query_output() && ctx.query_output().children && ctx.query_output().target()) {
         var outputTarget = getTextFromCtx(ctx.query_output().target());
-        if (!this.editor.completionEngine.tableList[outputTarget] &&
-            !this.editor.completionEngine.streamList[outputTarget] &&
-            !this.editor.completionEngine.windowList[outputTarget]) {
-            // Creating the attributes to reference map
-            var querySelectionCtx = ctx.query_section();
-            var attributes = {};
-            var i = 0;
-            var outputAttributeCtx;
-            while (outputAttributeCtx = querySelectionCtx.output_attribute(i)) {
-                if (outputAttributeCtx.attribute_name()) {
-                    attributes[getTextFromCtx(outputAttributeCtx.attribute_name())] = undefined;
-                } else if (outputAttributeCtx.attribute_reference() &&
-                    outputAttributeCtx.attribute_reference().attribute_name()) {
-                    attributes[getTextFromCtx(outputAttributeCtx.attribute_reference().attribute_name())] = undefined;
+        if (ctx.query_section()) {
+            // Updating the data for streams inserted into without defining if select section is available
+            if (!this.editor.completionEngine.tableList[outputTarget] &&
+                !this.editor.completionEngine.streamList[outputTarget] &&
+                !this.editor.completionEngine.windowList[outputTarget]) {
+                // Creating the attributes to reference map
+                var querySelectionCtx = ctx.query_section();
+                var attributes = {};
+                var i = 0;
+                var outputAttributeCtx;
+                while (outputAttributeCtx = querySelectionCtx.output_attribute(i)) {
+                    if (outputAttributeCtx.attribute_name()) {
+                        attributes[getTextFromCtx(outputAttributeCtx.attribute_name())] = undefined;
+                    } else if (outputAttributeCtx.attribute_reference() &&
+                        outputAttributeCtx.attribute_reference().attribute_name()) {
+                        attributes[getTextFromCtx(outputAttributeCtx.attribute_reference().attribute_name())] = undefined;
+                    }
+                    i++;
                 }
-                i++;
+                this.editor.completionEngine.streamList[outputTarget] = {
+                    attributes: attributes,
+                    description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", outputTarget, attributes)
+                };
             }
-            this.editor.completionEngine.streamList[outputTarget] = {
-                attributes: attributes,
-                description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", outputTarget, attributes)
-            };
-            this.editor.completionEngine.incompleteData.streams.push(outputTarget);
         }
+        this.editor.completionEngine.incompleteData.streams.push(outputTarget);
     }
 };
 
