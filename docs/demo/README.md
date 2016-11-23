@@ -1,6 +1,6 @@
 # Siddhi Editor - Demo
 
-This directory contains demos provided to demonstrate the Siddhi Editor capabilities. Single editor and multiple editors in one page is supported by this plugin and demos are provided for each case.
+This directory contains demos provided to demonstrate the Siddhi Editor's functionalities. Single editor and multiple editors in one page is supported by this plugin and demos are provided for each case.
 
 ### Getting Started
 
