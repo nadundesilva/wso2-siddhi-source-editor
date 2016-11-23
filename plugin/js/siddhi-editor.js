@@ -52,7 +52,7 @@
         SNIPPET_MANAGER: "ace/snippets",
         LANG_TOOLS: "ace/ext/language_tools",
         SIDDHI_MODE: "ace/mode/siddhi",
-        THEME: "ace/theme/crimson_editor",
+        DEFAULT_THEME: "ace/theme/crimson_editor",
         ACE_RANGE: "ace/range",
         LANG_LIB: "ace/lib/lang"
     };
@@ -102,7 +102,7 @@
 
         // Setting the editor options
         editor.session.setMode(ACE_CONSTANT.SIDDHI_MODE);   // Language mode located at ace_editor/mode-siddhi.js
-        editor.setTheme(ACE_CONSTANT.THEME);                // Theme located at ace_editor/theme/crimson_editor.js
+        editor.setTheme(config.theme ? "ace/theme/" + config.theme : ACE_CONSTANT.DEFAULT_THEME);
         editor.getSession().setUseWrapMode(true);
         editor.getSession().setTabSize(4);
         editor.getSession().setUseSoftTabs(true);
@@ -115,7 +115,7 @@
         editor.setOptions({
             enableBasicAutocompletion: !config.readOnly && config.autoCompletion,
             enableSnippets: !config.readOnly && config.autoCompletion,
-            enableLiveAutocompletion: true,
+            enableLiveAutocompletion: config.autoCompletion,
             autoScrollEditorIntoView: true,
             enableMultiselect: false
         });
