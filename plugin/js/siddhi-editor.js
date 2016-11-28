@@ -180,8 +180,11 @@
             // Adding keyword completor if the cursor is not in front of dot or colon
             var objectNameRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*\\.\\s*$", "i");
             var namespaceRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*:\\s*$", "i");
+            var singleLineCommentRegex = new RegExp("--(?:.(?!\n))*$");
+            var blockCommentRegex = new RegExp("\\/\\*(?:(?:.|\n)(?!\\*\\/))*$");
             var editorText = editor.getValue();
-            if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText))) {
+            if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText) ||
+                    singleLineCommentRegex.test(editorText) || blockCommentRegex.test(editorText))) {
                 completerList.push(langTools.keyWordCompleter);
             }
 
@@ -264,8 +267,6 @@
                 function (response) {
                     if (response.status == "SUCCESS") {
                         // Execution plan is valid
-                        editor.completionEngine.clearData();                // Clear the exiting completion engine data
-
                         // Populating the fetched data for incomplete data items into the completion engine's data
                         for (var stream in response.streams) {
                             if (response.streams.hasOwnProperty(stream)) {
@@ -304,7 +305,8 @@
                                         executionPlan: query,
                                         missingStreams: []
                                     }, function (response) {
-                                        if (!foundSemanticErrors && response.status != "SUCCESS") {
+                                        if (!foundSemanticErrors && response.status != "SUCCESS" &&
+                                                Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
                                             // Update the semanticErrorList
                                             editor.state.semanticErrorList.push({
                                                 row: line - 1,
@@ -324,7 +326,8 @@
                                     });
                                 })(statementsList[i].line, query);
 
-                                if (foundSemanticErrors) {
+                                if (foundSemanticErrors ||
+                                        Date.now() - editor.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
                                     break;
                                 }
                             }

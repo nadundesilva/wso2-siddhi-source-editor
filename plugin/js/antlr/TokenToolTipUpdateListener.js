@@ -69,14 +69,18 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
     var sourceName = getTextFromCtx(ctx);
     var source;
 
-    if (this.editor.completionEngine.streamList[sourceName]) {
-        source = this.editor.completionEngine.streamList[sourceName];
-    } else if (this.editor.completionEngine.tableList[sourceName]) {
-        source = this.editor.completionEngine.tableList[sourceName];
-    } else if (this.editor.completionEngine.windowList[sourceName]) {
-        source = this.editor.completionEngine.windowList[sourceName];
-    } else if (this.editor.completionEngine.triggerList[sourceName]) {
-        source = this.editor.completionEngine.triggerList[sourceName];
+    if (ctx.parentCtx.inner && this.editor.completionEngine.streamList["#" + sourceName]) {
+        source = this.editor.completionEngine.streamList["#" + sourceName];
+    } else {
+        if (this.editor.completionEngine.streamList[sourceName]) {
+            source = this.editor.completionEngine.streamList[sourceName];
+        } else if (this.editor.completionEngine.tableList[sourceName]) {
+            source = this.editor.completionEngine.tableList[sourceName];
+        } else if (this.editor.completionEngine.windowList[sourceName]) {
+            source = this.editor.completionEngine.windowList[sourceName];
+        } else if (this.editor.completionEngine.triggerList[sourceName]) {
+            source = this.editor.completionEngine.triggerList[sourceName];
+        }
     }
 
     if (source && source.description) {

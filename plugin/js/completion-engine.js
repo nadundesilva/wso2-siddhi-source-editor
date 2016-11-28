@@ -583,7 +583,7 @@ function CompletionEngine() {
         var sourceSuggestionsRegex = new RegExp("(?:" +
             "^[a-zA-Z_0-9]*|" +                                     // Source name at the start of query input
             "\\s+join\\s+[a-zA-Z_0-9]*|" +                          // Source name after "join" keyword
-            regex.identifier + "\\s*=\\s*[a-zA-Z_0-9]*" +           // Source name after "=" in patterns
+            regex.identifier + "\\s*=\\s*(#)?\\s*[a-zA-Z_0-9]*" +   // Source name after "=" in patterns
             ")$", "i");
         var afterHashSuggestionsRegex = new RegExp(regex.query.input.standardStreamRegex + regex.hash +
             "[a-zA-Z_0-9]*$", "i");
@@ -609,10 +609,15 @@ function CompletionEngine() {
 
         // Testing to find the relevant suggestion
         if (sourceSuggestionsRegex.test(queryInput)) {
-            addCompletions(Object.keys(self.streamList).map(function (stream) {
+            var streams = Object.keys(self.streamList);
+            var isInnerStream = sourceSuggestionsRegex.exec(queryInput)[1] == "#";
+            streams = streams.filter(function (stream) {
+                return (stream.charAt(0) == "#") == isInnerStream;
+            });
+            addCompletions(streams.map(function (stream) {
                 return {
-                    value: stream,
-                    type: "Stream",
+                    value: (stream.charAt(0) == "#" ? stream.substring(1) : stream),
+                    type: (stream.charAt(0) == "#" ? "Inner " : "") + "Stream",
                     description: self.streamList[stream].description,
                     priority: 6
                 }
@@ -1072,7 +1077,7 @@ function CompletionEngine() {
                         type: "Logical Operator"
                     }]);
                 }
-            } else if (afterOfKeywordSuggestionRegex) {
+            } else if (afterOfKeywordSuggestionRegex.test(partitionConditionStatement)) {
                 addCompletions(getStreamsForAttributesInPartitionCondition().map(function (stream) {
                     return {value: stream, type: "Stream"};
                 }));
@@ -1088,7 +1093,7 @@ function CompletionEngine() {
             var streamAttributeSearchRegex = new RegExp("(?:(?:[0-9]+|(" + regex.identifier + "))\\s*" +
                 "(?:<|>|=|!){1,2}\\s*" +
                 "(?:[0-9]+|(" + regex.identifier + "))\\s+as|" +
-                "(?:^\\s*\\(|,)\\s*(" + regex.identifier + ")\\s+(?:of\\s+)?$)", "ig");
+                "(?:^\\s*\\(|,)\\s*(" + regex.identifier + ")\\s+(?:of\\s+)?[a-zA-Z_0-9]*$)", "ig");
 
             // Getting the attributes mentioned in the partition condition
             var attributeList = [];
@@ -1462,9 +1467,9 @@ function CompletionEngine() {
          */
         function getAttributesOfStreamOrTable(sourceName, reference) {
             var attributes = [];
-            if (self.streamList[sourceName].attributes) {
+            if (self.streamList[sourceName] && self.streamList[sourceName].attributes) {
                 attributes = Object.keys(self.streamList[sourceName].attributes);
-            } else if (self.tableList[sourceName].attributes) {
+            } else if (self.tableList[sourceName] && self.tableList[sourceName].attributes) {
                 attributes = Object.keys(self.tableList[sourceName].attributes);
             }
             return attributes.map(function (attribute) {

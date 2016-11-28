@@ -50,7 +50,7 @@ DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
         attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
         i++;
     }
-    this.editor.completionEngine.tableList[tableName].attributes = {
+    this.editor.completionEngine.tableList[tableName] = {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Event Table", tableName, attributes)
     };
@@ -129,7 +129,9 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                 }
                 this.editor.completionEngine.streamList[outputTarget] = {
                     attributes: attributes,
-                    description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", outputTarget, attributes)
+                    description: SiddhiEditor.utils.generateDescriptionForStreamOrTable(
+                        (ctx.query_output().target().source().inner ? "Inner " : "") + "Stream", outputTarget, attributes
+                    )
                 };
             }
         }
