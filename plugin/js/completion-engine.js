@@ -1141,7 +1141,9 @@ function CompletionEngine() {
         var referenceToStreamMap = [];
         var streamReferenceMatch;
         while (streamReferenceMatch = streamReferenceSearchRegex.exec(queryInput)) {
-            referenceToStreamMap[streamReferenceMatch[2]] = streamReferenceMatch[1];
+            if (self.streamList[streamReferenceMatch[1]]) {
+                referenceToStreamMap[streamReferenceMatch[2]] = streamReferenceMatch[1];
+            }
         }
         addAttributesOfStreamReferencesAsCompletions(
             regexResults, referenceToStreamMap, attributePriority, streamPriority
@@ -1163,7 +1165,9 @@ function CompletionEngine() {
         var eventToStreamMap = [];
         var standardStatefulSourceMatch;
         while (standardStatefulSourceMatch = standardStatefulSourceSearchRegex.exec(queryInput)) {
-            eventToStreamMap[standardStatefulSourceMatch[1]] = standardStatefulSourceMatch[2];
+            if (self.streamList[standardStatefulSourceMatch[2]]) {
+                eventToStreamMap[standardStatefulSourceMatch[1]] = standardStatefulSourceMatch[2];
+            }
         }
         addAttributesOfStreamReferencesAsCompletions(
             regexResults, eventToStreamMap, attributePriority, streamPriority
@@ -1171,7 +1175,7 @@ function CompletionEngine() {
     }
 
     /**
-     * add attributes in the streams or tables in the query
+     * add attributes in the streams or tables in the query by searching the query input section
      *
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {int} attributePriority priority to be set as attribute priority
@@ -1184,7 +1188,7 @@ function CompletionEngine() {
         var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
         var streamMatch;
         while (streamMatch = streamFinderRegex.exec(queryInput)) {
-            if (["join", "every"].indexOf(streamMatch[1]) == -1) {
+            if (["join", "every"].indexOf(streamMatch[1]) == -1 && self.streamList[streamMatch[1]]) {
                 queryInStreams.push(streamMatch[1]);
             }
         }
@@ -1194,7 +1198,7 @@ function CompletionEngine() {
     }
 
     /**
-     * add attributes in the streams or tables in the query
+     * add attributes in the streams or tables provided
      *
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {string[]} streams Array of streams of which attributes will be added
@@ -1203,7 +1207,7 @@ function CompletionEngine() {
      */
     function addAttributesOfStreamsAsCompletions(regexResults, streams, attributePriority, streamPriority) {
         var afterStreamAndDotSuggestionsRegex =
-            new RegExp("(" + regex.identifier + ")\\s*\\[\\s*[0-9]*\\s*\\]\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+            new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
 
         var streamBeforeDotMatch;
         if (streamBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
@@ -1248,7 +1252,7 @@ function CompletionEngine() {
     function addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap,
                                                           attributePriority, streamPriority) {
         var afterStreamAndDotSuggestionsRegex =
-            new RegExp("(" + regex.identifier + ")\\s*\\[\\s*[0-9]*\\s*\\]\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
+            new RegExp("(" + regex.identifier + ")\\s*(?:\\[\\s*[0-9]*\\s*\\])?\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
 
         var referenceBeforeDotMatch;
         if (referenceBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
@@ -1278,11 +1282,11 @@ function CompletionEngine() {
                     ));
                 }
             }
-            addCompletions(Object.keys(referenceToStreamMap).map(function (stream) {
+            addCompletions(Object.keys(referenceToStreamMap).map(function (reference) {
                 return {
-                    value: stream + ".",
+                    value: reference + ".",
                     type: "Stream",
-                    description: self.streamList[stream].description,
+                    description: self.streamList[referenceToStreamMap[reference]].description,
                     priority: streamPriority
                 };
             }));
