@@ -330,6 +330,11 @@ var mainRuleBase = [
      */
 ];
 
+/**
+ * Siddhi Editor Completion Engine prototype constructor
+ *
+ * @constructor
+ */
 function CompletionEngine() {
     var self = this;
 

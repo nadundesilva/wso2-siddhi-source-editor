@@ -20,7 +20,6 @@
  **/
 (function () {
     // Adding SiddhiEditor to global scope
-    var SiddhiEditor = window.SiddhiEditor || {};
     window.SiddhiEditor = SiddhiEditor;
 
     // Finding the base url of the plugin
@@ -78,7 +77,7 @@
     var TokenToolTipUpdateListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER).TokenToolTipUpdateListener;
     var SyntaxErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SYNTAX_ERROR_LISTENER).SyntaxErrorListener;
     var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
-    var langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                              // Required for auto completion
+    var langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                                       // Required for auto completion
 
     SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
@@ -101,16 +100,16 @@
     }
 
     /**
-     * Initialize the editor
+     * Siddhi Editor prototype constructor
      *
+     * @constructor
      * @param {Object} config The configuration object to be used in the initialization
-     * @return {Object} ace editor instance
      */
-    SiddhiEditor.init = function (config) {
-        var editor = {};
+    function SiddhiEditor(config) {
+        var self = this;
         var aceEditor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
-        editor.realTimeValidation = config.realTimeValidation;
+        self.realTimeValidation = config.realTimeValidation;
         new TokenTooltip(aceEditor);
         aceEditor.setReadOnly(config.readOnly);
 
@@ -143,13 +142,13 @@
         aceEditor.focus();
 
         // State variables for error checking and highlighting
-        editor.state = {};
-        editor.state.previousParserTree = "";
-        editor.state.syntaxErrorList = [];      // To save the syntax Errors with line numbers
-        editor.state.semanticErrorList = [];    // To save semanticErrors with line numbers
-        editor.state.lastEdit = 0;              // Last edit time
+        self.state = {};
+        self.state.previousParserTree = "";
+        self.state.syntaxErrorList = [];      // To save the syntax Errors with line numbers
+        self.state.semanticErrorList = [];    // To save semanticErrors with line numbers
+        self.state.lastEdit = 0;              // Last edit time
 
-        editor.completionEngine = new SiddhiEditor.CompletionEngine();
+        self.completionEngine = new SiddhiEditor.CompletionEngine();
 
         // Attaching editor's onChange event handler
         aceEditor.getSession().on('change', editorChangeHandler);
@@ -186,7 +185,7 @@
          * Returns the ace editor object
          * Can be used for getting the ace editor object and making custom changes
          */
-        editor.getAceEditorObject = function () {
+        self.getAceEditorObject = function () {
             return aceEditor;
         };
 
@@ -195,7 +194,7 @@
          *
          * @return {string} Content in the editor when the method is invoked
          */
-        editor.getContent = function () {
+        self.getContent = function () {
             return aceEditor.getValue();
         };
 
@@ -204,18 +203,17 @@
          *
          * @param content Content to set into the ace editor
          */
-        editor.setContent = function (content) {
+        self.setContent = function (content) {
             aceEditor.setValue(content);
         };
 
         /**
          * Dynamically select the completers suitable for current context
-         *
          */
         function adjustAutoCompletionHandlers() {
             // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
             // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-            var completerList = [editor.completionEngine.SiddhiCompleter, editor.completionEngine.SnippetCompleter];
+            var completerList = [self.completionEngine.SiddhiCompleter, self.completionEngine.SnippetCompleter];
 
             // Adding keyword completor if the cursor is not in front of dot or colon
             var objectNameRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*\\.\\s*$", "i");
@@ -235,14 +233,14 @@
          * Editor change handler
          */
         function editorChangeHandler() {
-            editor.completionEngine.clearData();                // Clear the exiting completion engine data
+            self.completionEngine.clearData();                  // Clear the exiting completion engine data
 
             // Clearing all errors before finding the errors again
-            editor.state.semanticErrorList = [];
-            editor.state.syntaxErrorList = [];
+            self.state.semanticErrorList = [];
+            self.state.syntaxErrorList = [];
 
             // Following code segment parse the input query using antlr4's parser and lexer
-            var errorListener = new SyntaxErrorListener(editor);
+            var errorListener = new SyntaxErrorListener(self);
             var editorText = aceEditor.getValue().trim();          // Input text
             var txt = new antlr4.InputStream(editorText);       // Input stream
             var lexer = new SiddhiQLLexer(txt);                 // Generating lexer
@@ -262,21 +260,21 @@
             var tree = parser.parse();
 
             // By now the current syntax errors are identified . following line shows the all the errors again.
-            aceEditor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
+            aceEditor.session.setAnnotations(self.state.syntaxErrorList.concat(self.state.semanticErrorList));
 
-            var dataPopulationListener = new DataPopulationListener(editor);
+            var dataPopulationListener = new DataPopulationListener(self);
 
             // Default walker will traverse through the parserTree and generate events.
             // Those events are listen by the parserListener and update the statementsList with line numbers.
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(dataPopulationListener, tree);
 
-            if (parser._syntaxErrors == 0 && config.realTimeValidation && editor.state.previousParserTree &&
-                editor.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
+            if (parser._syntaxErrors == 0 && config.realTimeValidation && self.state.previousParserTree &&
+                self.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
                 // If there are no syntax errors and there is a change in parserTree
                 // check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
                 setTimeout(function () {
-                    if (Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                    if (Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
                         // Updating the token tooltips using the data available
                         // Some data that was intended to be fetched from the server might be missing
                         updateTokenToolTips(tree);
@@ -285,8 +283,8 @@
                     }
                 }, SiddhiEditor.serverSideValidationDelay);
             }
-            editor.state.previousParserTree = tree;     // Save the current parser tree
-            editor.state.lastEdit = Date.now();         // Save user's last edit time
+            self.state.previousParserTree = tree;     // Save the current parser tree
+            self.state.lastEdit = Date.now();         // Save user's last edit time
         }
 
         /**
@@ -302,7 +300,7 @@
             submitToServerForSemanticErrorCheck(
                 {
                     executionPlan: editorText,
-                    missingStreams: editor.completionEngine.incompleteData.streams
+                    missingStreams: self.completionEngine.incompleteData.streams
                 },
                 function (response) {
                     if (response.status == "SUCCESS") {
@@ -316,7 +314,7 @@
                                     attributes[streamDefinition.attributeList[k].name] =
                                         streamDefinition.attributeList[k].type;
                                 }
-                                editor.completionEngine.streamsList[stream] = {
+                                self.completionEngine.streamsList[stream] = {
                                     attributes: attributes,
                                     description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", stream, attributes)
                                 };
@@ -324,8 +322,8 @@
                         }
 
                         // Updating token tooltips
-                        editor.completionEngine.clearIncompleteDataLists();
-                        updateTokenToolTips(editor.state.previousParserTree);
+                        self.completionEngine.clearIncompleteDataLists();
+                        updateTokenToolTips(self.state.previousParserTree);
                     } else {
                         // Error found in execution plan
 
@@ -346,9 +344,9 @@
                                         missingStreams: []
                                     }, function (response) {
                                         if (!foundSemanticErrors && response.status != "SUCCESS" &&
-                                            Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                                            Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
                                             // Update the semanticErrorList
-                                            editor.state.semanticErrorList.push({
+                                            self.state.semanticErrorList.push({
                                                 row: line - 1,
                                                 // Change attribute "text" to "html" if html is sent from server
                                                 text: SiddhiEditor.utils.wordWrap(response.message, 100),
@@ -360,14 +358,14 @@
 
                                             // Show the errors
                                             aceEditor.session.setAnnotations(
-                                                editor.state.semanticErrorList.concat(editor.state.syntaxErrorList)
+                                                self.state.semanticErrorList.concat(self.state.syntaxErrorList)
                                             );
                                         }
                                     });
                                 })(statementsList[i].line, query);
 
                                 if (foundSemanticErrors ||
-                                    Date.now() - editor.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
+                                    Date.now() - self.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
                                     break;
                                 }
                             }
@@ -381,7 +379,7 @@
          * Update the token tool tips
          */
         function updateTokenToolTips(parseTree) {
-            var parserListener = new TokenToolTipUpdateListener(editor);
+            var parserListener = new TokenToolTipUpdateListener(self);
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, parseTree);
         }
 
@@ -456,8 +454,8 @@
             });
         }
 
-        return editor;
-    };
+        return self;
+    }
 
     /**
      * Utils used by the SiddhiEditor
