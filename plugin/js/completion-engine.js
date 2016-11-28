@@ -98,71 +98,71 @@ regex.query.output.eventTypes = "(?:current|all|expired)\\s+";
  */
 var initialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n" +
     "snippet define-Stream\n" +
-        "\tdefine stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
+    "\tdefine stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
     "snippet define-Table\n" +
-        "\tdefine table ${1:table_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
+    "\tdefine table ${1:table_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
     "snippet define-Function\n" +
-        "\tdefine function ${1:function_name}[${2:lang_name}] return ${3:return_type} { \n" +
-            "\t\t${4:function_body} \n" +
-        "\t};\n" +
+    "\tdefine function ${1:function_name}[${2:lang_name}] return ${3:return_type} { \n" +
+    "\t\t${4:function_body} \n" +
+    "\t};\n" +
     "snippet annotation-IndexedBy\n" +
-        "\t@IndexedBy('${1:attribute_name}')\n" +
+    "\t@IndexedBy('${1:attribute_name}')\n" +
     "snippet annotation-From\n" +
-        "\t@From(eventtable='${1:rdbms}', jdbc.url=${2:'jdbc:mysql://host:3306/db}', username='${3:root}', password='${4:root}', driver.name='${5:com.mysql.jdbc.Driver}', datasource.name='${6:datasource}', table.name='${7:tableName}', cache='${8:lru}', cache.size='${9:3000}')\n" +
+    "\t@From(eventtable='${1:rdbms}', jdbc.url=${2:'jdbc:mysql://host:3306/db}', username='${3:root}', password='${4:root}', driver.name='${5:com.mysql.jdbc.Driver}', datasource.name='${6:datasource}', table.name='${7:tableName}', cache='${8:lru}', cache.size='${9:3000}')\n" +
     "snippet annotation-PlanName\n" +
-        "\t@Plan:name(\"${1:Plan_Name}\")\n" +
+    "\t@Plan:name(\"${1:Plan_Name}\")\n" +
     "snippet annotation-PlanDesc\n" +
-        "\t@Plan:Description(\"${1:Plan_Description}\")\n" +
+    "\t@Plan:Description(\"${1:Plan_Description}\")\n" +
     "snippet annotation-PlanStat\n" +
-        "\t@Plan:Statistics(\"${1:Plan_Statistics}\")\n" +
+    "\t@Plan:Statistics(\"${1:Plan_Statistics}\")\n" +
     "snippet annotation-PlanTrace\n" +
-        "\t@Plan:Trace(\"${1:Plan_Trace}\")\n" +
+    "\t@Plan:Trace(\"${1:Plan_Trace}\")\n" +
     "snippet annotation-Import\n" +
-        "\t@Import(\"${1:Stream_ID}\")\n" +
+    "\t@Import(\"${1:Stream_ID}\")\n" +
     "snippet annotation-Export\n" +
-        "\t@Export(\"${1:Stream_ID}\")\n" +
+    "\t@Export(\"${1:Stream_ID}\")\n" +
     "snippet annotation-Info\n" +
-        "\t@info(name = \"${1:Stream_ID}\")\n" +
+    "\t@info(name = \"${1:Stream_ID}\")\n" +
     "snippet annotation-Config\n" +
-        "\t@config(async = \'true\')\n" +
+    "\t@config(async = \'true\')\n" +
     "snippet query-Filter\n" +
-        "\tfrom ${1:stream_name}[${2:filter_condition}]\n" +
-        "\tselect ${3:attribute1}, ${4:attribute2}\n" +
-        "\tinsert into ${5:output_stream}\n" +
+    "\tfrom ${1:stream_name}[${2:filter_condition}]\n" +
+    "\tselect ${3:attribute1}, ${4:attribute2}\n" +
+    "\tinsert into ${5:output_stream}\n" +
     "snippet query-Window\n" +
-        "\tfrom ${1:stream_name}#window.${2:namespace}:${3:window_name}(${4:args})\n" +
-        "\tselect ${5:attribute1}, ${6:attribute2}\n" +
-        "\tinsert into ${7:output_stream}\n" +
+    "\tfrom ${1:stream_name}#window.${2:namespace}:${3:window_name}(${4:args})\n" +
+    "\tselect ${5:attribute1}, ${6:attribute2}\n" +
+    "\tinsert into ${7:output_stream}\n" +
     "snippet query-WindowFilter\n" +
-        "\tfrom ${1:stream_name}[${2:filter_condition}]#window.${3:namespace}:${4:window_name}(${5:args})\n" +
-        "\tselect ${6:attribute1} , ${7:attribute2}\n" +
-        "\tinsert into ${8:output_stream}\n" +
+    "\tfrom ${1:stream_name}[${2:filter_condition}]#window.${3:namespace}:${4:window_name}(${5:args})\n" +
+    "\tselect ${6:attribute1} , ${7:attribute2}\n" +
+    "\tinsert into ${8:output_stream}\n" +
     "snippet query-Join\n" +
-        "\tfrom ${1:stream_name}[${2:filter_condition}]#window.${3:window_name}(${4:args}) as ${5:reference}\n" +
-            "\t\tjoin ${6:stream_name}[${7:filter_condition}]#window.${8:window_name}(${9:args}) as ${10:reference}\n" +
-            "\t\ton ${11:join_condition}\n" +
-            "\t\twithin ${12: time_gap}\n" +
-        "\tselect ${13:attribute1}, ${14:attribute2}\n" +
-        "\tinsert into ${15:output_stream}\n" +
+    "\tfrom ${1:stream_name}[${2:filter_condition}]#window.${3:window_name}(${4:args}) as ${5:reference}\n" +
+    "\t\tjoin ${6:stream_name}[${7:filter_condition}]#window.${8:window_name}(${9:args}) as ${10:reference}\n" +
+    "\t\ton ${11:join_condition}\n" +
+    "\t\twithin ${12: time_gap}\n" +
+    "\tselect ${13:attribute1}, ${14:attribute2}\n" +
+    "\tinsert into ${15:output_stream}\n" +
     "snippet query-Pattern\n" +
-        "\tfrom every ${1:stream_reference}=${2:stream_name}[${3:filter_condition}] -> \n" +
-            "\t\tevery ${4:stream_reference2}=${5:stream_name2}[${6:filter_condition2}]\n" +
-            "\t\twithin ${7: time_gap}\n" +
-        "\tselect ${8:stream_reference}.${9:attribute1}, ${10:stream_reference}.${11:attribute1}\n" +
-        "\tinsert into ${12:output_stream}\n" +
+    "\tfrom every ${1:stream_reference}=${2:stream_name}[${3:filter_condition}] -> \n" +
+    "\t\tevery ${4:stream_reference2}=${5:stream_name2}[${6:filter_condition2}]\n" +
+    "\t\twithin ${7: time_gap}\n" +
+    "\tselect ${8:stream_reference}.${9:attribute1}, ${10:stream_reference}.${11:attribute1}\n" +
+    "\tinsert into ${12:output_stream}\n" +
     "snippet query\n" +
-        "\tfrom ${1:stream_name}\n" +
-        "\tselect ${2:attribute1} , ${3:attribute2}\n" +
-        "\tinsert into ${4:output_stream}\n" +
+    "\tfrom ${1:stream_name}\n" +
+    "\tselect ${2:attribute1} , ${3:attribute2}\n" +
+    "\tinsert into ${4:output_stream}\n" +
     "snippet partition\n" +
-        "\tpartition with (${1:attribute_name} of ${2:stream_name}, ${3:attribute2_name} of ${4:stream2_name})\n" +
-        "\tbegin\n" +
-            "\t\t${5:query1}\n" +
-            "\t\t\n" +
-            "\t\t${6:query2}\n" +
-            "\t\t\n" +
-            "\t\t${7:query3}\n" +
-        "\tend;\n"
+    "\tpartition with (${1:attribute_name} of ${2:stream_name}, ${3:attribute2_name} of ${4:stream2_name})\n" +
+    "\tbegin\n" +
+    "\t\t${5:query1}\n" +
+    "\t\t\n" +
+    "\t\t${6:query2}\n" +
+    "\t\t\n" +
+    "\t\t${7:query3}\n" +
+    "\tend;\n"
 );
 
 /*
@@ -358,7 +358,7 @@ function CompletionEngine() {
     /**
      * clear the incomplete data lists
      */
-    self.clearIncompleteDataLists = function() {
+    self.clearIncompleteDataLists = function () {
         for (var incompleteDataSet in self.incompleteData) {
             if (self.incompleteData.hasOwnProperty(incompleteDataSet)) {
                 self.incompleteData[incompleteDataSet] = [];
@@ -666,9 +666,9 @@ function CompletionEngine() {
         } else if (windowExtensionSuggestionsRegex.test(queryInput)) {
             addSnippets(getExtensionWindowProcessors(windowExtensionSuggestionsRegex.exec(queryInput)[1].trim()));
         } else if (windowAndStreamProcessorParameterSuggestionsRegex.test(queryInput)) {
-            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
+            addCompletions(getAttributesFromSourcesWithPrefixedDuplicates({
                 name: windowAndStreamProcessorParameterSuggestionsRegex.exec(queryInput)[1].trim()
-            }));
+            }, [constants.STREAMS, constants.WINDOWS]));
         } else if (afterUnidirectionalKeywordSuggestionsRegex.test(queryInput)) {
             addCompletions(["join", "on", "within"].map(function (suggestion) {
                 return {
@@ -676,7 +676,9 @@ function CompletionEngine() {
                 };
             }));
         } else if (afterOnKeywordSuggestionsRegex.test(queryInput)) {
-            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 4, 3);
+            addAttributesOfSourcesAsCompletionsFromQueryIn(
+                regexResults, 4, 3, [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.TRIGGERS]
+            );
             addCompletions(suggestions.logicalOperatorList.map(function (operator) {
                 return Object.assign({}, operator, {
                     value: operator.value + " ", priority: 2
@@ -685,12 +687,14 @@ function CompletionEngine() {
             addCompletions({value: "within ", priority: 3});
         } else if (patternQueryFilterSuggestionsRegex.test(queryInput)) {
             var patternMatch = patternQueryFilterSuggestionsRegex.exec(queryInput);
-            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({name: patternMatch[2]}));
+            addCompletions(getAttributesFromSourcesWithPrefixedDuplicates(
+                {name: patternMatch[2]}, [constants.STREAMS, constants.WINDOWS]
+            ));
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
         } else if (nonPatternQueryFilterSuggestionsRegex.test(queryInput)) {
-            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
+            addCompletions(getAttributesFromSourcesWithPrefixedDuplicates({
                 name: nonPatternQueryFilterSuggestionsRegex.exec(queryInput)[1].trim()
-            }).map(function (suggestion) {
+            }, [constants.STREAMS, constants.WINDOWS]).map(function (suggestion) {
                     return Object.assign({}, suggestion, {
                         value: suggestion.value + " ", priority: 3
                     });
@@ -770,9 +774,11 @@ function CompletionEngine() {
                 return {value: completion + " "};
             }));
         } else if (attributeAndInBuiltFunctionSuggestionsRegex.test(querySelectionClause)) {
-            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfSourcesAsCompletionsFromQueryIn(
+                regexResults, 3, 2, [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS]
+            );
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
-            addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStreamOrTableReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addCompletions(Object.keys(self.evalScriptsList).map(function (evalScript) {
                 return {
                     value: evalScript,
@@ -813,9 +819,11 @@ function CompletionEngine() {
                 return {value: completion + " ", priority: 2};
             }));
         } else if (generalSuggestionsRegex.test(groupByClause)) {
-            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfSourcesAsCompletionsFromQueryIn(
+                regexResults, 3, 2, [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS]
+            );
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
-            addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStreamOrTableReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
         }
     }
 
@@ -836,9 +844,11 @@ function CompletionEngine() {
                 return {value: completion + " ", priority: 2};
             }));
         }
-        addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
+        addAttributesOfSourcesAsCompletionsFromQueryIn(
+            regexResults, 3, 2, [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS]
+        );
         addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
-        addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
+        addAttributesOfStreamOrTableReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
         addCompletions(suggestions.logicalOperatorList.map(function (suggestion) {
             return Object.assign({}, suggestion, {
                 priority: 2
@@ -994,7 +1004,9 @@ function CompletionEngine() {
         } else if (eventsKeywordSuggestionsRegex.test(tableOutputClause)) {
             addCompletions({value: "events "});
         } else if (afterOnKeywordSuggestionsRegex.test(tableOutputClause)) {
-            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfSourcesAsCompletionsFromQueryIn(
+                regexResults, 3, 2, [constants.EVENT_TABLES]
+            );
             addCompletions(suggestions.logicalOperatorList.map(function (suggestion) {
                 return Object.assign({}, suggestion, {
                     priority: 2
@@ -1123,11 +1135,11 @@ function CompletionEngine() {
                                 continue streamListLoop;
                             }
                         }
-                        streamsList.push(streamName);
+                        streamList.push(streamName);
                     }
                 }
             }
-            return streamsList;
+            return streamList;
         }
     };
 
@@ -1139,8 +1151,8 @@ function CompletionEngine() {
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, attributePriority,
-                                                                     streamPriority) {
+    function addAttributesOfStreamOrTableReferencesAsCompletionsFromQueryIn(regexResults, attributePriority,
+                                                                            streamPriority) {
         var queryInput = regexResults[2];
         var sourceReferenceSearchRegex = new RegExp(regex.query.input.streamReference, "ig");
         var sourceToStreamMap = [];
@@ -1151,7 +1163,7 @@ function CompletionEngine() {
             }
         }
         addAttributesOfStreamOrTableReferencesAsCompletions(
-            regexResults, sourceToStreamMap, attributePriority, streamPriority
+            regexResults, sourceToStreamMap, attributePriority, streamPriority, [constants.STREAMS, constants.EVENT_TABLES]
         );
     }
 
@@ -1175,7 +1187,7 @@ function CompletionEngine() {
             }
         }
         addAttributesOfStreamOrTableReferencesAsCompletions(
-            regexResults, eventToStreamMap, attributePriority, streamPriority
+            regexResults, eventToStreamMap, attributePriority, streamPriority, [constants.STREAMS]
         );
     }
 
@@ -1185,20 +1197,21 @@ function CompletionEngine() {
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      */
-    function addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, attributePriority,
-                                                            streamPriority) {
+    function addAttributesOfSourcesAsCompletionsFromQueryIn(regexResults, attributePriority,
+                                                            streamPriority, sourceTypes) {
         var queryInput = regexResults[2];
         var queryInSources = [];
         var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
         var streamMatch;
         while (streamMatch = streamFinderRegex.exec(queryInput)) {
-            if (["join", "every"].indexOf(streamMatch[1]) == -1 && getSource(streamMatch[1], [constants.STREAMS, constants.EVENT_TABLES])) {
+            if (["join", "every"].indexOf(streamMatch[1]) == -1 && getSource(streamMatch[1], sourceTypes)) {
                 queryInSources.push(streamMatch[1]);
             }
         }
-        addAttributesOfStreamsOrTablesAsCompletions(
-            regexResults, queryInSources, attributePriority, streamPriority
+        addAttributesOfSourcesAsCompletions(
+            regexResults, queryInSources, attributePriority, streamPriority, sourceTypes
         );
     }
 
@@ -1209,26 +1222,30 @@ function CompletionEngine() {
      * @param {string[]} sources Array of streams of which attributes will be added
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      */
-    function addAttributesOfStreamsOrTablesAsCompletions(regexResults, sources, attributePriority, streamPriority) {
+    function addAttributesOfSourcesAsCompletions(regexResults, sources, attributePriority, streamPriority, sourceTypes) {
         var afterSourceAndDotSuggestionsRegex =
             new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
 
         var sourceBeforeDotMatch;
         if (sourceBeforeDotMatch = afterSourceAndDotSuggestionsRegex.exec(regexResults.input)) {
             if (sources.indexOf(sourceBeforeDotMatch[1]) != -1) {
-                addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
-                    name: sourceBeforeDotMatch[1]
-                }).map(function (attribute) {
+                addCompletions(getAttributesFromSourcesWithPrefixedDuplicates(
+                    {name: sourceBeforeDotMatch[1]}, sourceTypes
+                ).map(function (attribute) {
                     return Object.assign({}, attribute, {
                         priority: attributePriority
                     });
                 }));
             }
         } else {
-            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(sources.map(function (source) {
-                return {name: source};
-            })).map(function (attribute) {
+            addCompletions(getAttributesFromSourcesWithPrefixedDuplicates(
+                sources.map(function (source) {
+                    return {name: source};
+                }),
+                sourceTypes
+            ).map(function (attribute) {
                 return Object.assign({}, attribute, {
                     priority: attributePriority
                 });
@@ -1258,19 +1275,23 @@ function CompletionEngine() {
      * @param {string[]} sourceToStreamMap Array of streams of which attributes will be added
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      */
     function addAttributesOfStreamOrTableReferencesAsCompletions(regexResults, sourceToStreamMap,
-                                                          attributePriority, streamPriority) {
+                                                                 attributePriority, streamPriority, sourceTypes) {
         var afterSourceAndDotSuggestionsRegex =
             new RegExp("(" + regex.identifier + ")\\s*(?:\\[\\s*[0-9]*\\s*\\])?\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
 
         var sourceBeforeDotMatch;
         if (sourceBeforeDotMatch = afterSourceAndDotSuggestionsRegex.exec(regexResults.input)) {
             if (sourceToStreamMap[sourceBeforeDotMatch[1]]) {
-                addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
-                    name: sourceToStreamMap[sourceBeforeDotMatch[1]],
-                    reference: sourceBeforeDotMatch[1]
-                }).map(function (attribute) {
+                addCompletions(getAttributesFromSourcesWithPrefixedDuplicates(
+                    {
+                        name: sourceToStreamMap[sourceBeforeDotMatch[1]],
+                        reference: sourceBeforeDotMatch[1]
+                    },
+                    sourceTypes
+                ).map(function (attribute) {
                     return Object.assign({}, attribute, {
                         priority: attributePriority
                     });
@@ -1279,10 +1300,10 @@ function CompletionEngine() {
         } else {
             for (var reference in sourceToStreamMap) {
                 if (sourceToStreamMap.hasOwnProperty(reference)) {
-                    addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
-                        name: sourceToStreamMap[reference],
-                        reference: reference
-                    }).map(function (attribute) {
+                    addCompletions(getAttributesFromSourcesWithPrefixedDuplicates(
+                        {name: sourceToStreamMap[reference], reference: reference},
+                        sourceTypes
+                    ).map(function (attribute) {
                         return Object.assign({}, attribute, {
                             value: reference + "." + attribute.value,
                             priority: attributePriority
@@ -1291,7 +1312,7 @@ function CompletionEngine() {
                 }
             }
             addCompletions(Object.keys(sourceToStreamMap).map(function (reference) {
-                var source =  {
+                var source = {
                     value: reference + ".",
                     description: getSource(sourceToStreamMap[reference], [constants.STREAMS, constants.EVENT_TABLES]).description,
                     priority: streamPriority
@@ -1428,15 +1449,18 @@ function CompletionEngine() {
      * get the attributes of the streams or tables specified
      * Duplicate attribute names will be prefixed with the stream or table names
      *
-     * @param {Object|Object[]} streamOrTable name of the streams or tables of which attributes are returned
+     * @param {Object|Object[]} sourceName name of the source of which attributes are returned
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      * @return {Object[]} arrays of attribute names of the stream or table
      */
-    function getAttributesFromStreamsOrTablesWithPrefixedDuplicates(streamOrTable) {
+    function getAttributesFromSourcesWithPrefixedDuplicates(sourceName, sourceTypes) {
         var attributes = [];
-        if (streamOrTable.constructor === Array) {
+        if (sourceName.constructor === Array) {
             var newAttributes = [];
-            for (var i = 0; i < streamOrTable.length; i++) {
-                newAttributes = newAttributes.concat(getAttributesOfStreamOrTable(streamOrTable[i].name, streamOrTable[i].reference));
+            for (var i = 0; i < sourceName.length; i++) {
+                newAttributes = newAttributes.concat(getAttributesOfSource(
+                    sourceName[i].name, sourceTypes, sourceName[i].reference
+                ));
             }
 
             // Prefixing duplicates attribute names with stream
@@ -1469,25 +1493,9 @@ function CompletionEngine() {
                 }
             }
         } else {
-            attributes = getAttributesOfStreamOrTable(streamOrTable.name, streamOrTable.reference);
-        }
-
-        /**
-         * get the attributes of a single stream or table
-         *
-         * @param {string} sourceName name of the stream or table of which attributes are returned
-         * @param {string} [reference] reference name used to refer to the stream or table
-         * @return {Object[]} arrays of attribute names of the stream or table
-         */
-        function getAttributesOfStreamOrTable(sourceName, reference) {
-            var attributes = [];
-            var source = getSource(sourceName, [constants.STREAMS, constants.EVENT_TABLES]);
-            if (source && source.attributes) {
-                attributes = Object.keys(source.attributes);
-            }
-            return attributes.map(function (attribute) {
-                return {value: attribute, source: (reference ? reference : sourceName)};
-            });
+            attributes = getAttributesOfSource(
+                sourceName.name, sourceTypes, sourceName.reference
+            );
         }
 
         return attributes.map(function (attribute) {
@@ -1498,10 +1506,29 @@ function CompletionEngine() {
     }
 
     /**
+     * get the attributes of a single stream or table
+     *
+     * @param {string} sourceName name of the source of which attributes are returned
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
+     * @param {string} [reference] reference name used to refer to the stream or table
+     * @return {Object[]} arrays of attribute names of the stream or table
+     */
+    function getAttributesOfSource(sourceName, sourceTypes, reference) {
+        var attributes = [];
+        var source = getSource(sourceName, sourceTypes);
+        if (source && source.attributes) {
+            attributes = Object.keys(source.attributes);
+        }
+        return attributes.map(function (attribute) {
+            return {value: attribute, source: (reference ? reference : sourceName)};
+        });
+    }
+
+    /**
      * get a single stream or table
      *
-     * @param {string} sourceName Name of the stream or table to fetch
-     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [STREAMS, EVENT_TABLES, WINDOWS, EVAL_SCRIPTS, TRIGGERS]
+     * @param {string} sourceName Name of the source to fetch
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      * @return {Object[]} arrays of attribute names of the stream or table
      */
     function getSource(sourceName, sourceTypes) {

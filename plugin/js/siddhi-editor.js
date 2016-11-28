@@ -184,7 +184,7 @@
             var blockCommentRegex = new RegExp("\\/\\*(?:(?:.|\n)(?!\\*\\/))*$");
             var editorText = editor.getValue();
             if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText) ||
-                    singleLineCommentRegex.test(editorText) || blockCommentRegex.test(editorText))) {
+                singleLineCommentRegex.test(editorText) || blockCommentRegex.test(editorText))) {
                 completerList.push(langTools.keyWordCompleter);
             }
 
@@ -298,7 +298,7 @@
                         var query = "";
                         for (var i = 0; i < statementsList.length; i++) {
                             if (statementsList[i].statement.substring(0, 2) != "\\*" &&
-                                    statementsList[i].statement.substring(0, 2) != "--") {  // Appending statements excepts comments
+                                statementsList[i].statement.substring(0, 2) != "--") {  // Appending statements excepts comments
                                 query += statementsList[i].statement + "  \n";
                                 (function (line, query) {
                                     submitToServerForSemanticErrorCheck({
@@ -306,7 +306,7 @@
                                         missingStreams: []
                                     }, function (response) {
                                         if (!foundSemanticErrors && response.status != "SUCCESS" &&
-                                                Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                                            Date.now() - editor.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
                                             // Update the semanticErrorList
                                             editor.state.semanticErrorList.push({
                                                 row: line - 1,
@@ -327,7 +327,7 @@
                                 })(statementsList[i].line, query);
 
                                 if (foundSemanticErrors ||
-                                        Date.now() - editor.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
+                                    Date.now() - editor.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
                                     break;
                                 }
                             }

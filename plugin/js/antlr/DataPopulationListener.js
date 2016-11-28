@@ -110,9 +110,7 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
         var outputTarget = getTextFromCtx(ctx.query_output().target());
         if (ctx.query_section()) {
             // Updating the data for streams inserted into without defining if select section is available
-            if (!this.editor.completionEngine.eventTablesList[outputTarget] &&
-                !this.editor.completionEngine.streamsList[outputTarget] &&
-                !this.editor.completionEngine.windowsList[outputTarget]) {
+            if (!this.editor.completionEngine.eventTablesList[outputTarget] && !this.editor.completionEngine.streamsList[outputTarget] && !this.editor.completionEngine.windowsList[outputTarget]) {
                 // Creating the attributes to reference map
                 var querySelectionCtx = ctx.query_section();
                 var attributes = {};
