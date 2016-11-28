@@ -21,7 +21,12 @@ loadMetaData();
 var constants = {
     FUNCTIONS: "functions",
     STREAM_PROCESSORS: "streamProcessors",
-    WINDOW_PROCESSORS: "windowProcessors"
+    WINDOW_PROCESSORS: "windowProcessors",
+    STREAMS: "streams",
+    EVENT_TABLES: "eventTables",
+    TRIGGERS: "triggers",
+    WINDOWS: "windows",
+    EVAL_SCRIPTS: "evalScripts"
 };
 
 // Suggestion lists used by the engine
@@ -1141,7 +1146,7 @@ function CompletionEngine() {
         var sourceToStreamMap = [];
         var sourceReferenceMatch;
         while (sourceReferenceMatch = sourceReferenceSearchRegex.exec(queryInput)) {
-            if (getStreamOrTable(sourceReferenceMatch[1])) {
+            if (getSource(sourceReferenceMatch[1], [constants.STREAMS, constants.EVENT_TABLES])) {
                 sourceToStreamMap[sourceReferenceMatch[2]] = sourceReferenceMatch[1];
             }
         }
@@ -1188,7 +1193,7 @@ function CompletionEngine() {
         var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
         var streamMatch;
         while (streamMatch = streamFinderRegex.exec(queryInput)) {
-            if (["join", "every"].indexOf(streamMatch[1]) == -1 && getStreamOrTable(streamMatch[1])) {
+            if (["join", "every"].indexOf(streamMatch[1]) == -1 && getSource(streamMatch[1], [constants.STREAMS, constants.EVENT_TABLES])) {
                 queryInSources.push(streamMatch[1]);
             }
         }
@@ -1231,7 +1236,7 @@ function CompletionEngine() {
             addCompletions(sources.map(function (sourceName) {
                 var source = {
                     value: sourceName + ".",
-                    description: getStreamOrTable(sourceName).description,
+                    description: getSource(sourceName, [constants.STREAMS, constants.EVENT_TABLES]).description,
                     priority: streamPriority
                 };
                 if (self.streamsList[sourceName]) {
@@ -1288,7 +1293,7 @@ function CompletionEngine() {
             addCompletions(Object.keys(sourceToStreamMap).map(function (reference) {
                 var source =  {
                     value: reference + ".",
-                    description: getStreamOrTable(sourceToStreamMap[reference]).description,
+                    description: getSource(sourceToStreamMap[reference], [constants.STREAMS, constants.EVENT_TABLES]).description,
                     priority: streamPriority
                 };
                 if (self.streamsList[sourceToStreamMap[reference]]) {
@@ -1476,7 +1481,7 @@ function CompletionEngine() {
          */
         function getAttributesOfStreamOrTable(sourceName, reference) {
             var attributes = [];
-            var source = getStreamOrTable(sourceName);
+            var source = getSource(sourceName, [constants.STREAMS, constants.EVENT_TABLES]);
             if (source && source.attributes) {
                 attributes = Object.keys(source.attributes);
             }
@@ -1495,15 +1500,16 @@ function CompletionEngine() {
     /**
      * get a single stream or table
      *
-     * @param {string} sourceName name of the stream or table to fetch
+     * @param {string} sourceName Name of the stream or table to fetch
+     * @param {string[]} sourceTypes Source types to search for. Should be a subset of [STREAMS, EVENT_TABLES, WINDOWS, EVAL_SCRIPTS, TRIGGERS]
      * @return {Object[]} arrays of attribute names of the stream or table
      */
-    function getStreamOrTable(sourceName) {
+    function getSource(sourceName, sourceTypes) {
         var source;
-        if (self.streamsList[sourceName] && self.streamsList[sourceName].attributes) {
-            source = self.streamsList[sourceName];
-        } else if (self.eventTablesList[sourceName] && self.eventTablesList[sourceName].attributes) {
-            source = self.eventTablesList[sourceName];
+        for (var i = 0; i < sourceTypes.length; i++) {
+            if (self[sourceTypes[i] + "List"][sourceName] && self[sourceTypes[i] + "List"][sourceName].attributes) {
+                source = self[sourceTypes[i] + "List"][sourceName];
+            }
         }
         return source;
     }
