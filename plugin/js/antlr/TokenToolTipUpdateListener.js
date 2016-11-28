@@ -76,10 +76,10 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
             source = this.editor.completionEngine.streamsList[sourceName];
         } else if (this.editor.completionEngine.eventTablesList[sourceName]) {
             source = this.editor.completionEngine.eventTablesList[sourceName];
-        } else if (this.editor.completionEngine.windowsList[sourceName]) {
-            source = this.editor.completionEngine.windowsList[sourceName];
-        } else if (this.editor.completionEngine.triggersList[sourceName]) {
-            source = this.editor.completionEngine.triggersList[sourceName];
+        } else if (this.editor.completionEngine.eventWindowsList[sourceName]) {
+            source = this.editor.completionEngine.eventWindowsList[sourceName];
+        } else if (this.editor.completionEngine.eventTriggersList[sourceName]) {
+            source = this.editor.completionEngine.eventTriggersList[sourceName];
         }
     }
 
@@ -90,14 +90,14 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
 
 TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
     var triggerName = getTextFromCtx(ctx);
-    var trigger = this.editor.completionEngine.triggersList[triggerName];
+    var trigger = this.editor.completionEngine.eventTriggersList[triggerName];
     if (trigger && trigger.description) {
         updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, trigger.description);
     }
 };
 
 function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
-    var token = editor.session.getTokenAt(tokenRow, tokenColumn);
+    var token = editor.getAceEditorObject().session.getTokenAt(tokenRow, tokenColumn);
     if (token) {
         token.tooltip = tooltip;
     }

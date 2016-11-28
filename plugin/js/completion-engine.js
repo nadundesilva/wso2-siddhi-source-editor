@@ -24,20 +24,44 @@ var constants = {
     WINDOW_PROCESSORS: "windowProcessors",
     STREAMS: "streams",
     EVENT_TABLES: "eventTables",
-    TRIGGERS: "triggers",
-    WINDOWS: "windows",
-    EVAL_SCRIPTS: "evalScripts"
+    TRIGGERS: "eventTriggers",
+    WINDOWS: "eventWindows",
+    EVAL_SCRIPTS: "evalScripts",
+    ATTRIBUTES: "attributes",
+    LOGICAL_OPERATORS: "logicalOperators",
+    DATA_TYPES: "dataTypes",
+    SNIPPETS: "snippet",
+    SNIPPET_SIDDHI_CONTEXT: "siddhi"        // Context provided to the snippet manager to register the snippets
 };
+CompletionEngine.constants = constants;
+
+// Names displayed in the editor
+constants.typeToDisplayNameMap = {};
+constants.typeToDisplayNameMap[constants.FUNCTIONS] = "Function";
+constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS] = "Stream Processor";
+constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS] = "Window Processor";
+constants.typeToDisplayNameMap[constants.STREAMS] = "Stream";
+constants.typeToDisplayNameMap[constants.EVENT_TABLES] = "Event Table";
+constants.typeToDisplayNameMap[constants.TRIGGERS] = "Event Trigger";
+constants.typeToDisplayNameMap[constants.WINDOWS] = "Event Window";
+constants.typeToDisplayNameMap[constants.EVAL_SCRIPTS] = "Eval Script";
+constants.typeToDisplayNameMap[constants.ATTRIBUTES] = "Attribute";
+constants.typeToDisplayNameMap[constants.LOGICAL_OPERATORS] = "Logical Operator";
+constants.typeToDisplayNameMap[constants.DATA_TYPES] = "Data Type";
+constants.typeToDisplayNameMap[constants.SNIPPETS] = "Snippet";
 
 // Suggestion lists used by the engine
 var suggestions = {
     logicalOperatorList: ["and", "or", "not", "in", "is null"]
         .map(function (operator) {
-            return {value: operator, type: "Logical Operator"};
+            return {
+                value: operator,
+                type: constants.typeToDisplayNameMap[constants.LOGICAL_OPERATORS]
+            };
         }),
     dataTypes: ["int", "long", "double", "float", "string", "bool", "object"]
         .map(function (dataType) {
-            return {value: dataType, type: "Data Type"};
+            return {value: dataType, type: constants.typeToDisplayNameMap[constants.DATA_TYPES]};
         }),
     outputEventTypes: ["current", "all", "expired"]
         .map(function (eventType) {
@@ -322,7 +346,7 @@ function CompletionEngine() {
     /*
      * List of triggers defined
      */
-    self.triggersList = {};
+    self.eventTriggersList = {};
 
     /*
      * List of functions defined
@@ -332,7 +356,7 @@ function CompletionEngine() {
     /*
      * List of windows defined
      */
-    self.windowsList = {};
+    self.eventWindowsList = {};
 
     /*
      * Incomplete data which will be retrieved from the server along with the validation
@@ -349,9 +373,9 @@ function CompletionEngine() {
     self.clearData = function () {
         self.streamsList = {};
         self.eventTablesList = {};
-        self.triggersList = {};
+        self.eventTriggersList = {};
         self.evalScriptsList = {};
-        self.windowsList = {};
+        self.eventWindowsList = {};
         self.clearIncompleteDataLists();
     };
 
@@ -377,8 +401,10 @@ function CompletionEngine() {
      */
     self.wordList = [];
 
-    // Snippets that had been added to the SnippetManager
-    // This is stored so that they can be unregistered when the next suggestion need to be calculated
+    /*
+     * Snippets that had been added to the SnippetManager
+     * This is stored so that they can be unregistered when the next suggestion need to be calculated
+     */
     self.suggestedSnippets = [];
 
     // SiddhiCompleter provides language specific suggestions
@@ -409,16 +435,17 @@ function CompletionEngine() {
                     completions.push({
                         caption: caption,
                         snippet: s.content,
-                        meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " : (s.type != undefined ? s.type : "snippet"),
+                        meta: s.tabTrigger && !s.name ? s.tabTrigger + "\u21E5 " :
+                            (s.type != undefined ? s.type : constants.typeToDisplayNameMap[constants.SNIPPETS]),
                         docHTML: s.description,
-                        type: (s.type != undefined ? s.type : "snippet")
+                        type: (s.type != undefined ? s.type : constants.typeToDisplayNameMap[constants.SNIPPETS])
                     });
                 }
             }, this);
             callback(null, completions);
         },
         getDocTooltip: function (item) {
-            if (item.type == "snippet" && !item.docHTML) {
+            if (item.type == constants.typeToDisplayNameMap[constants.SNIPPETS] && !item.docHTML) {
                 item.docHTML = [
                     "<div>", "<strong>", SiddhiEditor.lang.escapeHTML(item.caption), "</strong>", "<p>",
                     SiddhiEditor.lang.escapeHTML(item.snippet), "</p>", "</div>"
@@ -467,15 +494,15 @@ function CompletionEngine() {
         editorText = editorText.substring(currentStatementStartIndex).replace(/^\s+/, "");
 
         // Clear the suggestion lists
-        SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, "siddhi");   // Clear the previous snippet suggestions
+        SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, constants.SNIPPET_SIDDHI_CONTEXT);   // Clear the previous snippet suggestions
         self.suggestedSnippets = [];
         self.wordList = [];                                                         // Clear the previous suggestion list
 
         if (/^[a-zA-Z_0-9]*$/i.test(editorText)) {
             self.$startOfStatement();
-            SiddhiEditor.SnippetManager.register(initialSnippets, "siddhi");
+            SiddhiEditor.SnippetManager.register(initialSnippets, constants.SNIPPET_SIDDHI_CONTEXT);
         } else {
-            SiddhiEditor.SnippetManager.unregister(initialSnippets, "siddhi");
+            SiddhiEditor.SnippetManager.unregister(initialSnippets, constants.SNIPPET_SIDDHI_CONTEXT);
         }
 
         // Finding the relevant rule from the main rule base
@@ -524,11 +551,11 @@ function CompletionEngine() {
      */
     self.$defineWindowStatementWindowParameters = function (regexResults) {
         var window = regexResults[1];
-        if (self.windowsList[window].attributes) {
-            addCompletions(Object.keys(self.windowsList[window].attributes).map(function (attribute) {
+        if (self.eventWindowsList[window].attributes) {
+            addCompletions(Object.keys(self.eventWindowsList[window].attributes).map(function (attribute) {
                 return {
                     value: attribute,
-                    type: "Attribute"
+                    type: constants.typeToDisplayNameMap[constants.ATTRIBUTES]
                 }
             }));
         }
@@ -622,7 +649,7 @@ function CompletionEngine() {
             addCompletions(streams.map(function (stream) {
                 return {
                     value: (stream.charAt(0) == "#" ? stream.substring(1) : stream),
-                    type: (stream.charAt(0) == "#" ? "Inner " : "") + "Stream",
+                    type: (stream.charAt(0) == "#" ? "Inner " : "") + constants.typeToDisplayNameMap[constants.STREAMS],
                     description: self.streamsList[stream].description,
                     priority: 6
                 }
@@ -630,24 +657,24 @@ function CompletionEngine() {
             addCompletions(Object.keys(self.eventTablesList).map(function (table) {
                 return {
                     value: table,
-                    type: "Event Table",
+                    type: constants.typeToDisplayNameMap[constants.EVENT_TABLES],
                     description: self.eventTablesList[table].description,
                     priority: 5
                 }
             }));
-            addCompletions(Object.keys(self.windowsList).map(function (window) {
+            addCompletions(Object.keys(self.eventWindowsList).map(function (window) {
                 return {
                     value: window,
-                    type: "Event Window",
-                    description: self.windowsList[window].description,
+                    type: constants.typeToDisplayNameMap[constants.WINDOWS],
+                    description: self.eventWindowsList[window].description,
                     priority: 4
                 }
             }));
-            addCompletions(Object.keys(self.triggersList).map(function (trigger) {
+            addCompletions(Object.keys(self.eventTriggersList).map(function (trigger) {
                 return {
                     value: trigger,
-                    type: "Event Trigger",
-                    description: self.triggersList[trigger].description,
+                    type: constants.typeToDisplayNameMap[constants.TRIGGERS],
+                    description: self.eventTriggersList[trigger].description,
                     priority: 3
                 }
             }));
@@ -934,7 +961,7 @@ function CompletionEngine() {
                 return {
                     caption: stream,
                     value: stream + ";",
-                    type: "Stream",
+                    type: constants.typeToDisplayNameMap[constants.STREAMS],
                     description: self.streamsList[stream].description
                 }
             }));
@@ -942,16 +969,16 @@ function CompletionEngine() {
                 return {
                     caption: table,
                     value: table + ";",
-                    type: "Event Table",
+                    type: constants.typeToDisplayNameMap[constants.EVENT_TABLES],
                     description: self.eventTablesList[table].description
                 }
             }));
-            addCompletions(Object.keys(self.windowsList).map(function (window) {
+            addCompletions(Object.keys(self.eventWindowsList).map(function (window) {
                 return {
                     caption: window,
                     value: window + ";",
-                    type: "Event Window",
-                    description: self.windowsList[window].description
+                    type: constants.typeToDisplayNameMap[constants.WINDOWS],
+                    description: self.eventWindowsList[window].description
                 }
             }));
         } else if (afterQuerySuggestionsRegex.test(streamOutputClause)) {
@@ -985,7 +1012,7 @@ function CompletionEngine() {
             addCompletions(Object.keys(self.eventTablesList).map(function (table) {
                 return {
                     value: table + " ",
-                    type: "Event Table",
+                    type: constants.typeToDisplayNameMap[constants.EVENT_TABLES],
                     description: self.eventTablesList[table].description
                 }
             }));
@@ -1085,18 +1112,22 @@ function CompletionEngine() {
                 }
 
                 addCompletions(attributes.map(function (attribute) {
-                    return {value: attribute, priority: 2, type: "Attribute"};
+                    return {
+                        value: attribute,
+                        priority: 2,
+                        type: constants.typeToDisplayNameMap[constants.ATTRIBUTES]
+                    };
                 }));
 
                 if (new RegExp("\s+$", "i")) {
                     addCompletions([{value: "of "}, {value: "as "}, {
                         value: "or ",
-                        type: "Logical Operator"
+                        type: constants.typeToDisplayNameMap[constants.LOGICAL_OPERATORS]
                     }]);
                 }
             } else if (afterOfKeywordSuggestionRegex.test(partitionConditionStatement)) {
                 addCompletions(getStreamsForAttributesInPartitionCondition().map(function (stream) {
-                    return {value: stream, type: "Stream"};
+                    return {value: stream, type: constants.typeToDisplayNameMap[constants.STREAMS]};
                 }));
             }
         }
@@ -1251,17 +1282,13 @@ function CompletionEngine() {
                 });
             }));
             addCompletions(sources.map(function (sourceName) {
-                var source = {
+                var source = getSource(sourceName, sourceTypes).description;
+                return {
                     value: sourceName + ".",
-                    description: getSource(sourceName, [constants.STREAMS, constants.EVENT_TABLES]).description,
+                    description: source.description,
+                    type: source.type,
                     priority: streamPriority
                 };
-                if (self.streamsList[sourceName]) {
-                    source.type = "Stream";
-                } else if (self.eventTablesList[sourceName]) {
-                    source.type = "Event Table";
-                }
-                return source;
             }));
         }
     }
@@ -1312,17 +1339,13 @@ function CompletionEngine() {
                 }
             }
             addCompletions(Object.keys(sourceToStreamMap).map(function (reference) {
-                var source = {
+                var source = getSource(sourceToStreamMap[reference], [constants.STREAMS, constants.EVENT_TABLES]).description;
+                return {
                     value: reference + ".",
-                    description: getSource(sourceToStreamMap[reference], [constants.STREAMS, constants.EVENT_TABLES]).description,
+                    description: source.description,
+                    type: source.type,
                     priority: streamPriority
                 };
-                if (self.streamsList[sourceToStreamMap[reference]]) {
-                    source.type = "Stream";
-                } else if (self.eventTablesList[sourceToStreamMap[reference]]) {
-                    source.type = "Event Table";
-                }
-                return source;
             }));
         }
     }
@@ -1362,7 +1385,7 @@ function CompletionEngine() {
         if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
             return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].functions)
                 .map(function (processor) {
-                    processor.type = "Function";
+                    processor.type = constants.typeToDisplayNameMap[constants.FUNCTIONS];
                     return processor;
                 });
         } else {
@@ -1380,7 +1403,7 @@ function CompletionEngine() {
         if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
             return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].windowProcessors)
                 .map(function (processor) {
-                    processor.type = "Window Processor";
+                    processor.type = constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS];
                     return processor;
                 });
         } else {
@@ -1398,7 +1421,7 @@ function CompletionEngine() {
         if (CompletionEngine.functionOperationSnippets.extensions[namespace]) {
             return Object.values(CompletionEngine.functionOperationSnippets.extensions[namespace].streamProcessors)
                 .map(function (processor) {
-                    processor.type = "Stream Processor";
+                    processor.type = constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS];
                     return processor;
                 });
         } else {
@@ -1414,7 +1437,7 @@ function CompletionEngine() {
     function getInBuiltFunctionNames() {
         return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.functions)
             .map(function (processor) {
-                processor.type = "Function";
+                processor.type = constants.typeToDisplayNameMap[constants.FUNCTIONS];
                 return processor;
             });
     }
@@ -1427,7 +1450,7 @@ function CompletionEngine() {
     function getInBuiltWindowProcessors() {
         return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors)
             .map(function (processor) {
-                processor.type = "Window Processor";
+                processor.type = constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS];
                 return processor;
             });
     }
@@ -1440,7 +1463,7 @@ function CompletionEngine() {
     function getInBuiltStreamProcessors() {
         return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors)
             .map(function (processor) {
-                processor.type = "Stream Processor";
+                processor.type = constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS];
                 return processor;
             });
     }
@@ -1500,7 +1523,7 @@ function CompletionEngine() {
 
         return attributes.map(function (attribute) {
             return Object.assign({}, attribute, {
-                type: "Attribute"
+                type: constants.typeToDisplayNameMap[constants.ATTRIBUTES]
             });
         });
     }
@@ -1536,6 +1559,8 @@ function CompletionEngine() {
         for (var i = 0; i < sourceTypes.length; i++) {
             if (self[sourceTypes[i] + "List"][sourceName] && self[sourceTypes[i] + "List"][sourceName].attributes) {
                 source = self[sourceTypes[i] + "List"][sourceName];
+                source.type = constants.typeToDisplayNameMap[sourceTypes[i]];
+                break;
             }
         }
         return source;
@@ -1579,11 +1604,11 @@ function CompletionEngine() {
     function addSnippets(suggestions) {
         if (suggestions.constructor === Array) {
             for (var i = 0; i < suggestions.length; i++) {
-                SiddhiEditor.SnippetManager.register(suggestions[i], "siddhi");
+                SiddhiEditor.SnippetManager.register(suggestions[i], constants.SNIPPET_SIDDHI_CONTEXT);
                 self.suggestedSnippets.push(suggestions[i]);
             }
         } else {
-            SiddhiEditor.SnippetManager.register(suggestions, "siddhi");
+            SiddhiEditor.SnippetManager.register(suggestions, constants.SNIPPET_SIDDHI_CONTEXT);
             self.suggestedSnippets.push(suggestions);
         }
     }

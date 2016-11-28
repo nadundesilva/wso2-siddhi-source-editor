@@ -26,14 +26,13 @@
     // Finding the base url of the plugin
     var scripts = document.getElementsByTagName("script");
     // Get "src" attribute of the <script> tag for the current file
-    // (last tag in the array since tags after that are not yet added to it)
+    // Last tag in the array since tags after that are not yet added to it
     var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
     SiddhiEditor.baseURL =
         relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/siddhi-editor.js".length);
 
     SiddhiEditor.serverURL = "http://localhost:8080/";
-    SiddhiEditor.serverSideValidationDelay = 2000;
-    SiddhiEditor.tokenTooltipUpdateDelay = 1000;
+    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
 
     // Used in separating statements
     SiddhiEditor.statementStartToEndKeywordMap = {
@@ -87,6 +86,20 @@
     SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT +
         SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
 
+    // Map for completion list styles
+    var completionTypeToStyleMap = {};
+    completionTypeToStyleMap[SiddhiEditor.CompletionEngine.constants.SNIPPETS] = "font-style: italic;";
+
+    // Generating the displayNameToStyleMap from completionTypeToStyleMap
+    // This is done to support defining completion popup styles using the completion type name rather than the display name
+    var displayNameToStyleMap = {};
+    for (var completionType in completionTypeToStyleMap) {
+        if (completionTypeToStyleMap.hasOwnProperty(completionType)) {
+            displayNameToStyleMap[SiddhiEditor.CompletionEngine.constants.typeToDisplayNameMap[completionType]] =
+                completionTypeToStyleMap[completionType];
+        }
+    }
+
     /**
      * Initialize the editor
      *
@@ -94,31 +107,40 @@
      * @return {Object} ace editor instance
      */
     SiddhiEditor.init = function (config) {
-        var editor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
+        var editor = {};
+        var aceEditor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
         editor.realTimeValidation = config.realTimeValidation;
-        new TokenTooltip(editor);
-        editor.setReadOnly(config.readOnly);
+        new TokenTooltip(aceEditor);
+        aceEditor.setReadOnly(config.readOnly);
 
         // Setting the editor options
-        editor.session.setMode(ACE_CONSTANT.SIDDHI_MODE);   // Language mode located at ace_editor/mode-siddhi.js
-        editor.setTheme(config.theme ? "ace/theme/" + config.theme : ACE_CONSTANT.DEFAULT_THEME);
-        editor.getSession().setUseWrapMode(true);
-        editor.getSession().setTabSize(4);
-        editor.getSession().setUseSoftTabs(true);
-        editor.setShowFoldWidgets(true);
-        editor.setBehavioursEnabled(true);
-        editor.setHighlightSelectedWord(true);
-        editor.setHighlightActiveLine(true);
-        editor.setDisplayIndentGuides(true);
-        editor.setShowPrintMargin(false);
-        editor.setOptions({
+        aceEditor.session.setMode(ACE_CONSTANT.SIDDHI_MODE);   // Language mode located at ace-editor/mode-siddhi.js
+        aceEditor.setTheme(config.theme ? "ace/theme/" + config.theme : ACE_CONSTANT.DEFAULT_THEME);
+        aceEditor.getSession().setUseWrapMode(true);
+        aceEditor.getSession().setTabSize(4);
+        aceEditor.getSession().setUseSoftTabs(true);
+        aceEditor.setShowFoldWidgets(true);
+        aceEditor.setBehavioursEnabled(true);
+        aceEditor.setHighlightSelectedWord(true);
+        aceEditor.setHighlightActiveLine(true);
+        aceEditor.setDisplayIndentGuides(true);
+        aceEditor.setShowPrintMargin(false);
+        aceEditor.setOptions({
             enableBasicAutocompletion: !config.readOnly && config.autoCompletion,
             enableSnippets: !config.readOnly && config.autoCompletion,
             enableLiveAutocompletion: config.autoCompletion,
             autoScrollEditorIntoView: true,
             enableMultiselect: false
         });
+
+        // Adding the default text into the editor
+        aceEditor.setValue("/* Enter a unique ExecutionPlan */\n" +
+            "@Plan:name('ExecutionPlan')\n\n" +
+            "/* Enter a unique description for ExecutionPlan */\n" +
+            "-- @Plan:description('ExecutionPlan')\n\n" +
+            "/* define streams/tables and write queries here ... */\n\n", 1);
+        aceEditor.focus();
 
         // State variables for error checking and highlighting
         editor.state = {};
@@ -127,46 +149,64 @@
         editor.state.semanticErrorList = [];    // To save semanticErrors with line numbers
         editor.state.lastEdit = 0;              // Last edit time
 
-        // Adding the default text into the editor
-        editor.setValue("/* Enter a unique ExecutionPlan */\n" +
-            "@Plan:name('ExecutionPlan')\n\n" +
-            "/* Enter a unique description for ExecutionPlan */\n" +
-            "-- @Plan:description('ExecutionPlan')\n\n" +
-            "/* define streams/tables and write queries here ... */\n\n", 1);
-        editor.focus();
-
         editor.completionEngine = new SiddhiEditor.CompletionEngine();
 
         // Attaching editor's onChange event handler
-        editor.getSession().on('change', editorChangeHandler);
+        aceEditor.getSession().on('change', editorChangeHandler);
 
         // For adjusting the completer list as required
         adjustAutoCompletionHandlers();
-        editor.commands.on('afterExec', function () {
+        aceEditor.commands.on('afterExec', function () {
             adjustAutoCompletionHandlers();
         });
 
         // Adding events for adjusting the completions list styles
-        var completionTypeToStyleMap = {
-            "snippet": "font-style: italic;"
-        };
-        editor.renderer.on("afterRender", function () {
+        aceEditor.renderer.on("afterRender", function () {
             // Checking if a popup is open when the editor is re-rendered
-            if (editor.completer && editor.completer.popup) {
+            if (aceEditor.completer && aceEditor.completer.popup) {
                 // Adding a on after render event for updating the popup styles
-                editor.completer.popup.renderer.on("afterRender", function () {
+                aceEditor.completer.popup.renderer.on("afterRender", function () {
                     var completionElements = document.querySelectorAll(
                         ".ace_autocomplete > .ace_scroller > .ace_content > .ace_text-layer > .ace_line"
                     );
                     for (var i = 0; i < completionElements.length; i++) {
                         var element = completionElements[i].getElementsByClassName("ace_rightAlignedText")[0];
-                        if (element && completionTypeToStyleMap[element.innerHTML]) {
-                            completionElements[i].setAttribute("style", completionTypeToStyleMap[element.innerHTML]);
+                        if (element && displayNameToStyleMap[element.innerHTML]) {
+                            completionElements[i].setAttribute(
+                                "style",
+                                displayNameToStyleMap[element.innerHTML]
+                            );
                         }
                     }
                 });
             }
         });
+
+        /**
+         * Returns the ace editor object
+         * Can be used for getting the ace editor object and making custom changes
+         */
+        editor.getAceEditorObject = function () {
+            return aceEditor;
+        };
+
+        /**
+         * Returns the content in the ace editor when the method is invoked
+         *
+         * @return {string} Content in the editor when the method is invoked
+         */
+        editor.getContent = function () {
+            return aceEditor.getValue();
+        };
+
+        /**
+         * Sets the content in the ace editor
+         *
+         * @param content Content to set into the ace editor
+         */
+        editor.setContent = function (content) {
+            aceEditor.setValue(content);
+        };
 
         /**
          * Dynamically select the completers suitable for current context
@@ -182,13 +222,13 @@
             var namespaceRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*:\\s*$", "i");
             var singleLineCommentRegex = new RegExp("--(?:.(?!\n))*$");
             var blockCommentRegex = new RegExp("\\/\\*(?:(?:.|\n)(?!\\*\\/))*$");
-            var editorText = editor.getValue();
+            var editorText = aceEditor.getValue();
             if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText) ||
                 singleLineCommentRegex.test(editorText) || blockCommentRegex.test(editorText))) {
                 completerList.push(langTools.keyWordCompleter);
             }
 
-            editor.completers = completerList;
+            aceEditor.completers = completerList;
         }
 
         /**
@@ -203,7 +243,7 @@
 
             // Following code segment parse the input query using antlr4's parser and lexer
             var errorListener = new SyntaxErrorListener(editor);
-            var editorText = editor.getValue().trim();          // Input text
+            var editorText = aceEditor.getValue().trim();          // Input text
             var txt = new antlr4.InputStream(editorText);       // Input stream
             var lexer = new SiddhiQLLexer(txt);                 // Generating lexer
             lexer._listeners = [];
@@ -222,7 +262,7 @@
             var tree = parser.parse();
 
             // By now the current syntax errors are identified . following line shows the all the errors again.
-            editor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
+            aceEditor.session.setAnnotations(editor.state.syntaxErrorList.concat(editor.state.semanticErrorList));
 
             var dataPopulationListener = new DataPopulationListener(editor);
 
@@ -256,7 +296,7 @@
         function checkForSemanticErrors() {
             var foundSemanticErrors = false;
 
-            var editorText = editor.getValue();
+            var editorText = aceEditor.getValue();
             // If the user has not typed anything after 3 seconds from his last change, then send the query for semantic check
             // check whether the query contains errors or not
             submitToServerForSemanticErrorCheck(
@@ -319,7 +359,7 @@
                                             foundSemanticErrors = true;
 
                                             // Show the errors
-                                            editor.session.setAnnotations(
+                                            aceEditor.session.setAnnotations(
                                                 editor.state.semanticErrorList.concat(editor.state.syntaxErrorList)
                                             );
                                         }
@@ -578,7 +618,6 @@
             }
             if (metaData.functionOperation &&
                 SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
-                var windowName = /^\s*([a-zA-Z_][a-zA-Z_0-9]*)\s*\(/i.exec(metaData.functionOperation)[1];
                 var window =
                     SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors[windowName];
                 if (window) {

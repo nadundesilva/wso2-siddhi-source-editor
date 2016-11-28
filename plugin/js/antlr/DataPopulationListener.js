@@ -66,7 +66,7 @@ DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
     }
     if (metaData) {
         metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
-        this.editor.completionEngine.triggersList[triggerName] = metaData;
+        this.editor.completionEngine.eventTriggersList[triggerName] = metaData;
     }
 };
 
@@ -98,7 +98,7 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
     }
     metaData.description =
         SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
-    this.editor.completionEngine.windowsList[windowName] = metaData;
+    this.editor.completionEngine.eventWindowsList[windowName] = metaData;
 };
 
 /*
@@ -110,7 +110,7 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
         var outputTarget = getTextFromCtx(ctx.query_output().target());
         if (ctx.query_section()) {
             // Updating the data for streams inserted into without defining if select section is available
-            if (!this.editor.completionEngine.eventTablesList[outputTarget] && !this.editor.completionEngine.streamsList[outputTarget] && !this.editor.completionEngine.windowsList[outputTarget]) {
+            if (!this.editor.completionEngine.eventTablesList[outputTarget] && !this.editor.completionEngine.streamsList[outputTarget] && !this.editor.completionEngine.eventWindowsList[outputTarget]) {
                 // Creating the attributes to reference map
                 var querySelectionCtx = ctx.query_section();
                 var attributes = {};
