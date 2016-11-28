@@ -307,27 +307,27 @@ function CompletionEngine() {
     /*
      * List of streams defined
      */
-    self.streamList = {};
+    self.streamsList = {};
 
     /*
      * List of tables defined
      */
-    self.tableList = {};
+    self.eventTablesList = {};
 
     /*
      * List of triggers defined
      */
-    self.triggerList = {};
+    self.triggersList = {};
 
     /*
      * List of functions defined
      */
-    self.evalScriptList = {};
+    self.evalScriptsList = {};
 
     /*
      * List of windows defined
      */
-    self.windowList = {};
+    self.windowsList = {};
 
     /*
      * Incomplete data which will be retrieved from the server along with the validation
@@ -342,11 +342,11 @@ function CompletionEngine() {
      * Includes clearing the incomplete data lists
      */
     self.clearData = function () {
-        self.streamList = {};
-        self.tableList = {};
-        self.triggerList = {};
-        self.evalScriptList = {};
-        self.windowList = {};
+        self.streamsList = {};
+        self.eventTablesList = {};
+        self.triggersList = {};
+        self.evalScriptsList = {};
+        self.windowsList = {};
         self.clearIncompleteDataLists();
     };
 
@@ -519,8 +519,8 @@ function CompletionEngine() {
      */
     self.$defineWindowStatementWindowParameters = function (regexResults) {
         var window = regexResults[1];
-        if (self.windowList[window].attributes) {
-            addCompletions(Object.keys(self.windowList[window].attributes).map(function (attribute) {
+        if (self.windowsList[window].attributes) {
+            addCompletions(Object.keys(self.windowsList[window].attributes).map(function (attribute) {
                 return {
                     value: attribute,
                     type: "Attribute"
@@ -609,7 +609,7 @@ function CompletionEngine() {
 
         // Testing to find the relevant suggestion
         if (sourceSuggestionsRegex.test(queryInput)) {
-            var streams = Object.keys(self.streamList);
+            var streams = Object.keys(self.streamsList);
             var isInnerStream = sourceSuggestionsRegex.exec(queryInput)[1] == "#";
             streams = streams.filter(function (stream) {
                 return (stream.charAt(0) == "#") == isInnerStream;
@@ -618,31 +618,31 @@ function CompletionEngine() {
                 return {
                     value: (stream.charAt(0) == "#" ? stream.substring(1) : stream),
                     type: (stream.charAt(0) == "#" ? "Inner " : "") + "Stream",
-                    description: self.streamList[stream].description,
+                    description: self.streamsList[stream].description,
                     priority: 6
                 }
             }));
-            addCompletions(Object.keys(self.tableList).map(function (table) {
+            addCompletions(Object.keys(self.eventTablesList).map(function (table) {
                 return {
                     value: table,
                     type: "Event Table",
-                    description: self.tableList[table].description,
+                    description: self.eventTablesList[table].description,
                     priority: 5
                 }
             }));
-            addCompletions(Object.keys(self.windowList).map(function (window) {
+            addCompletions(Object.keys(self.windowsList).map(function (window) {
                 return {
                     value: window,
                     type: "Event Window",
-                    description: self.windowList[window].description,
+                    description: self.windowsList[window].description,
                     priority: 4
                 }
             }));
-            addCompletions(Object.keys(self.triggerList).map(function (trigger) {
+            addCompletions(Object.keys(self.triggersList).map(function (trigger) {
                 return {
                     value: trigger,
                     type: "Event Trigger",
-                    description: self.triggerList[trigger].description,
+                    description: self.triggersList[trigger].description,
                     priority: 3
                 }
             }));
@@ -768,10 +768,10 @@ function CompletionEngine() {
             addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
-            addCompletions(Object.keys(self.evalScriptList).map(function (evalScript) {
+            addCompletions(Object.keys(self.evalScriptsList).map(function (evalScript) {
                 return {
                     value: evalScript,
-                    description: self.evalScriptList[evalScript].description,
+                    description: self.evalScriptsList[evalScript].description,
                     priority: 2
                 }
             }));
@@ -915,28 +915,28 @@ function CompletionEngine() {
         } else if (afterOutputEventTypesSuggestionRegex.test(streamOutputClause)) {
             addCompletions({value: "into "});
         } else if (afterIntoKeywordSuggestionsRegex.test(streamOutputClause)) {
-            addCompletions(Object.keys(self.streamList).map(function (stream) {
+            addCompletions(Object.keys(self.streamsList).map(function (stream) {
                 return {
                     caption: stream,
                     value: stream + ";",
                     type: "Stream",
-                    description: self.streamList[stream].description
+                    description: self.streamsList[stream].description
                 }
             }));
-            addCompletions(Object.keys(self.tableList).map(function (table) {
+            addCompletions(Object.keys(self.eventTablesList).map(function (table) {
                 return {
                     caption: table,
                     value: table + ";",
                     type: "Event Table",
-                    description: self.tableList[table].description
+                    description: self.eventTablesList[table].description
                 }
             }));
-            addCompletions(Object.keys(self.windowList).map(function (window) {
+            addCompletions(Object.keys(self.windowsList).map(function (window) {
                 return {
                     caption: window,
                     value: window + ";",
                     type: "Event Window",
-                    description: self.windowList[window].description
+                    description: self.windowsList[window].description
                 }
             }));
         } else if (afterQuerySuggestionsRegex.test(streamOutputClause)) {
@@ -967,11 +967,11 @@ function CompletionEngine() {
 
         // Testing to find the relevant suggestion
         if (tableOutputClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(tableOutputClause)) {
-            addCompletions(Object.keys(self.tableList).map(function (table) {
+            addCompletions(Object.keys(self.eventTablesList).map(function (table) {
                 return {
                     value: table + " ",
                     type: "Event Table",
-                    description: self.tableList[table].description
+                    description: self.eventTablesList[table].description
                 }
             }));
         } else if (eventTypeSuggestionsRegex.test(tableOutputClause)) {
@@ -1053,13 +1053,13 @@ function CompletionEngine() {
                 var streams = getStreamsForAttributesInPartitionCondition();
                 if (streams.length == 0) {
                     // Adding all streams if no streams has attributes in the partition condition
-                    streams = Object.keys(self.streamList);
+                    streams = Object.keys(self.streamsList);
                 }
 
                 // Getting the attributes of the streams which has attributes in the partition condition already
                 var attributes = [];
                 for (i = 0; i < streams.length; i++) {
-                    var newAttributes = Object.keys(self.streamList[streams[i]].attributes);
+                    var newAttributes = Object.keys(self.streamsList[streams[i]].attributes);
                     for (var j = 0; j < newAttributes.length; j++) {
                         if (attributes.indexOf(newAttributes[j]) == -1) {
                             attributes.push(newAttributes[j]);
@@ -1111,18 +1111,18 @@ function CompletionEngine() {
             // Getting the streams with all the attributes in them
             var streamList = [];
             if (attributeList.length > 0) {
-                streamListLoop: for (var streamName in self.streamList) {
-                    if (self.streamList.hasOwnProperty(streamName)) {
+                streamListLoop: for (var streamName in self.streamsList) {
+                    if (self.streamsList.hasOwnProperty(streamName)) {
                         for (i = 0; i < attributeList.length; i++) {
-                            if (!self.streamList[streamName].attributes[attributeList[i]]) {
+                            if (!self.streamsList[streamName].attributes[attributeList[i]]) {
                                 continue streamListLoop;
                             }
                         }
-                        streamList.push(streamName);
+                        streamsList.push(streamName);
                     }
                 }
             }
-            return streamList;
+            return streamsList;
         }
     };
 
@@ -1165,7 +1165,7 @@ function CompletionEngine() {
         var eventToStreamMap = [];
         var standardStatefulSourceMatch;
         while (standardStatefulSourceMatch = standardStatefulSourceSearchRegex.exec(queryInput)) {
-            if (self.streamList[standardStatefulSourceMatch[2]]) {
+            if (self.streamsList[standardStatefulSourceMatch[2]]) {
                 eventToStreamMap[standardStatefulSourceMatch[1]] = standardStatefulSourceMatch[2];
             }
         }
@@ -1234,9 +1234,9 @@ function CompletionEngine() {
                     description: getStreamOrTable(sourceName).description,
                     priority: streamPriority
                 };
-                if (self.streamList[sourceName]) {
+                if (self.streamsList[sourceName]) {
                     source.type = "Stream";
-                } else if (self.tableList[sourceName]) {
+                } else if (self.eventTablesList[sourceName]) {
                     source.type = "Event Table";
                 }
                 return source;
@@ -1291,9 +1291,9 @@ function CompletionEngine() {
                     description: getStreamOrTable(sourceToStreamMap[reference]).description,
                     priority: streamPriority
                 };
-                if (self.streamList[sourceToStreamMap[reference]]) {
+                if (self.streamsList[sourceToStreamMap[reference]]) {
                     source.type = "Stream";
-                } else if (self.tableList[sourceToStreamMap[reference]]) {
+                } else if (self.eventTablesList[sourceToStreamMap[reference]]) {
                     source.type = "Event Table";
                 }
                 return source;
@@ -1500,10 +1500,10 @@ function CompletionEngine() {
      */
     function getStreamOrTable(sourceName) {
         var source;
-        if (self.streamList[sourceName] && self.streamList[sourceName].attributes) {
-            source = self.streamList[sourceName];
-        } else if (self.tableList[sourceName] && self.tableList[sourceName].attributes) {
-            source = self.tableList[sourceName];
+        if (self.streamsList[sourceName] && self.streamsList[sourceName].attributes) {
+            source = self.streamsList[sourceName];
+        } else if (self.eventTablesList[sourceName] && self.eventTablesList[sourceName].attributes) {
+            source = self.eventTablesList[sourceName];
         }
         return source;
     }

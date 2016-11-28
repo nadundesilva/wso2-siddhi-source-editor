@@ -36,7 +36,7 @@ DataPopulationListener.prototype.exitDefinition_stream = function (ctx) {
         attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
         i++;
     }
-    this.editor.completionEngine.streamList[streamName] = {
+    this.editor.completionEngine.streamsList[streamName] = {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", streamName, attributes)
     };
@@ -50,7 +50,7 @@ DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
         attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
         i++;
     }
-    this.editor.completionEngine.tableList[tableName] = {
+    this.editor.completionEngine.eventTablesList[tableName] = {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Event Table", tableName, attributes)
     };
@@ -66,7 +66,7 @@ DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
     }
     if (metaData) {
         metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
-        this.editor.completionEngine.triggerList[triggerName] = metaData;
+        this.editor.completionEngine.triggersList[triggerName] = metaData;
     }
 };
 
@@ -78,7 +78,7 @@ DataPopulationListener.prototype.exitDefinition_function = function (ctx) {
         functionBody: getTextFromCtx(ctx.function_body())
     };
     metaData.description = SiddhiEditor.utils.generateDescriptionForEvalScript(evalScriptName, metaData);
-    this.editor.completionEngine.evalScriptList[evalScriptName] = metaData;
+    this.editor.completionEngine.evalScriptsList[evalScriptName] = metaData;
 };
 
 DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
@@ -98,7 +98,7 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
     }
     metaData.description =
         SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
-    this.editor.completionEngine.windowList[windowName] = metaData;
+    this.editor.completionEngine.windowsList[windowName] = metaData;
 };
 
 /*
@@ -110,9 +110,9 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
         var outputTarget = getTextFromCtx(ctx.query_output().target());
         if (ctx.query_section()) {
             // Updating the data for streams inserted into without defining if select section is available
-            if (!this.editor.completionEngine.tableList[outputTarget] &&
-                !this.editor.completionEngine.streamList[outputTarget] &&
-                !this.editor.completionEngine.windowList[outputTarget]) {
+            if (!this.editor.completionEngine.eventTablesList[outputTarget] &&
+                !this.editor.completionEngine.streamsList[outputTarget] &&
+                !this.editor.completionEngine.windowsList[outputTarget]) {
                 // Creating the attributes to reference map
                 var querySelectionCtx = ctx.query_section();
                 var attributes = {};
@@ -127,7 +127,7 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                     }
                     i++;
                 }
-                this.editor.completionEngine.streamList[outputTarget] = {
+                this.editor.completionEngine.streamsList[outputTarget] = {
                     attributes: attributes,
                     description: SiddhiEditor.utils.generateDescriptionForStreamOrTable(
                         (ctx.query_output().target().source().inner ? "Inner " : "") + "Stream", outputTarget, attributes

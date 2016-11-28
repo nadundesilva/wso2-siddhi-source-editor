@@ -276,7 +276,7 @@
                                     attributes[streamDefinition.attributeList[k].name] =
                                         streamDefinition.attributeList[k].type;
                                 }
-                                editor.completionEngine.streamList[stream] = {
+                                editor.completionEngine.streamsList[stream] = {
                                     attributes: attributes,
                                     description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", stream, attributes)
                                 };

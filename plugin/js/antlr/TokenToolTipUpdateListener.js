@@ -55,8 +55,8 @@ TokenToolTipUpdateListener.prototype.exitFunction_operation = function (ctx) {
                 description = snippets.streamProcessors[processorName].description;
             } else if (snippets.functions && snippets.functions[processorName]) {
                 description = snippets.functions[processorName].description;
-            } else if (this.editor.completionEngine.evalScriptList[processorName]) {
-                description = this.editor.completionEngine.evalScriptList[processorName].description;
+            } else if (this.editor.completionEngine.evalScriptsList[processorName]) {
+                description = this.editor.completionEngine.evalScriptsList[processorName].description;
             }
         }
         if (description) {
@@ -69,17 +69,17 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
     var sourceName = getTextFromCtx(ctx);
     var source;
 
-    if (ctx.parentCtx.inner && this.editor.completionEngine.streamList["#" + sourceName]) {
-        source = this.editor.completionEngine.streamList["#" + sourceName];
+    if (ctx.parentCtx.inner && this.editor.completionEngine.streamsList["#" + sourceName]) {
+        source = this.editor.completionEngine.streamsList["#" + sourceName];
     } else {
-        if (this.editor.completionEngine.streamList[sourceName]) {
-            source = this.editor.completionEngine.streamList[sourceName];
-        } else if (this.editor.completionEngine.tableList[sourceName]) {
-            source = this.editor.completionEngine.tableList[sourceName];
-        } else if (this.editor.completionEngine.windowList[sourceName]) {
-            source = this.editor.completionEngine.windowList[sourceName];
-        } else if (this.editor.completionEngine.triggerList[sourceName]) {
-            source = this.editor.completionEngine.triggerList[sourceName];
+        if (this.editor.completionEngine.streamsList[sourceName]) {
+            source = this.editor.completionEngine.streamsList[sourceName];
+        } else if (this.editor.completionEngine.eventTablesList[sourceName]) {
+            source = this.editor.completionEngine.eventTablesList[sourceName];
+        } else if (this.editor.completionEngine.windowsList[sourceName]) {
+            source = this.editor.completionEngine.windowsList[sourceName];
+        } else if (this.editor.completionEngine.triggersList[sourceName]) {
+            source = this.editor.completionEngine.triggersList[sourceName];
         }
     }
 
@@ -90,7 +90,7 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
 
 TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
     var triggerName = getTextFromCtx(ctx);
-    var trigger = this.editor.completionEngine.triggerList[triggerName];
+    var trigger = this.editor.completionEngine.triggersList[triggerName];
     if (trigger && trigger.description) {
         updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, trigger.description);
     }
