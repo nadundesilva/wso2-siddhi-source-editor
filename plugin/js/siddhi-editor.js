@@ -99,6 +99,9 @@
         }
     }
 
+    // Loading meta data for the completion engine from the server
+    SiddhiEditor.CompletionEngine.loadMetaData();
+
     /**
      * Siddhi Editor prototype constructor
      *
@@ -279,6 +282,7 @@
                         // Some data that was intended to be fetched from the server might be missing
                         updateTokenToolTips(tree);
 
+                        // Check for semantic errors by sending a validate request to the server
                         checkForSemanticErrors();
                     }
                 }, SiddhiEditor.serverSideValidationDelay);
