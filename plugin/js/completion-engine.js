@@ -671,7 +671,7 @@ function CompletionEngine() {
                 };
             }));
         } else if (afterOnKeywordSuggestionsRegex.test(queryInput)) {
-            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 4, 3);
+            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 4, 3);
             addCompletions(suggestions.logicalOperatorList.map(function (operator) {
                 return Object.assign({}, operator, {
                     value: operator.value + " ", priority: 2
@@ -765,7 +765,7 @@ function CompletionEngine() {
                 return {value: completion + " "};
             }));
         } else if (attributeAndInBuiltFunctionSuggestionsRegex.test(querySelectionClause)) {
-            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addCompletions(Object.keys(self.evalScriptList).map(function (evalScript) {
@@ -808,7 +808,7 @@ function CompletionEngine() {
                 return {value: completion + " ", priority: 2};
             }));
         } else if (generalSuggestionsRegex.test(groupByClause)) {
-            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
         }
@@ -831,7 +831,7 @@ function CompletionEngine() {
                 return {value: completion + " ", priority: 2};
             }));
         }
-        addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+        addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
         addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
         addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, 3, 2);
         addCompletions(suggestions.logicalOperatorList.map(function (suggestion) {
@@ -989,7 +989,7 @@ function CompletionEngine() {
         } else if (eventsKeywordSuggestionsRegex.test(tableOutputClause)) {
             addCompletions({value: "events "});
         } else if (afterOnKeywordSuggestionsRegex.test(tableOutputClause)) {
-            addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, 3, 2);
+            addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, 3, 2);
             addCompletions(suggestions.logicalOperatorList.map(function (suggestion) {
                 return Object.assign({}, suggestion, {
                     priority: 2
@@ -1137,16 +1137,16 @@ function CompletionEngine() {
     function addAttributesOfStreamReferencesAsCompletionsFromQueryIn(regexResults, attributePriority,
                                                                      streamPriority) {
         var queryInput = regexResults[2];
-        var streamReferenceSearchRegex = new RegExp(regex.query.input.streamReference, "ig");
-        var referenceToStreamMap = [];
-        var streamReferenceMatch;
-        while (streamReferenceMatch = streamReferenceSearchRegex.exec(queryInput)) {
-            if (self.streamList[streamReferenceMatch[1]]) {
-                referenceToStreamMap[streamReferenceMatch[2]] = streamReferenceMatch[1];
+        var sourceReferenceSearchRegex = new RegExp(regex.query.input.streamReference, "ig");
+        var sourceToStreamMap = [];
+        var sourceReferenceMatch;
+        while (sourceReferenceMatch = sourceReferenceSearchRegex.exec(queryInput)) {
+            if (getStreamOrTable(sourceReferenceMatch[1])) {
+                sourceToStreamMap[sourceReferenceMatch[2]] = sourceReferenceMatch[1];
             }
         }
-        addAttributesOfStreamReferencesAsCompletions(
-            regexResults, referenceToStreamMap, attributePriority, streamPriority
+        addAttributesOfStreamOrTableReferencesAsCompletions(
+            regexResults, sourceToStreamMap, attributePriority, streamPriority
         );
     }
 
@@ -1169,7 +1169,7 @@ function CompletionEngine() {
                 eventToStreamMap[standardStatefulSourceMatch[1]] = standardStatefulSourceMatch[2];
             }
         }
-        addAttributesOfStreamReferencesAsCompletions(
+        addAttributesOfStreamOrTableReferencesAsCompletions(
             regexResults, eventToStreamMap, attributePriority, streamPriority
         );
     }
@@ -1181,19 +1181,19 @@ function CompletionEngine() {
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamsAsCompletionsFromQueryIn(regexResults, attributePriority,
+    function addAttributesOfStreamsOrTablesAsCompletionsFromQueryIn(regexResults, attributePriority,
                                                             streamPriority) {
         var queryInput = regexResults[2];
-        var queryInStreams = [];
+        var queryInSources = [];
         var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
         var streamMatch;
         while (streamMatch = streamFinderRegex.exec(queryInput)) {
-            if (["join", "every"].indexOf(streamMatch[1]) == -1 && self.streamList[streamMatch[1]]) {
-                queryInStreams.push(streamMatch[1]);
+            if (["join", "every"].indexOf(streamMatch[1]) == -1 && getStreamOrTable(streamMatch[1])) {
+                queryInSources.push(streamMatch[1]);
             }
         }
-        addAttributesOfStreamsAsCompletions(
-            regexResults, queryInStreams, attributePriority, streamPriority
+        addAttributesOfStreamsOrTablesAsCompletions(
+            regexResults, queryInSources, attributePriority, streamPriority
         );
     }
 
@@ -1201,19 +1201,19 @@ function CompletionEngine() {
      * add attributes in the streams or tables provided
      *
      * @param {string[]} regexResults Array of groups from the regex execution of the query
-     * @param {string[]} streams Array of streams of which attributes will be added
+     * @param {string[]} sources Array of streams of which attributes will be added
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamsAsCompletions(regexResults, streams, attributePriority, streamPriority) {
-        var afterStreamAndDotSuggestionsRegex =
+    function addAttributesOfStreamsOrTablesAsCompletions(regexResults, sources, attributePriority, streamPriority) {
+        var afterSourceAndDotSuggestionsRegex =
             new RegExp("(" + regex.identifier + ")\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
 
-        var streamBeforeDotMatch;
-        if (streamBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
-            if (streams.indexOf(streamBeforeDotMatch[1]) != -1) {
+        var sourceBeforeDotMatch;
+        if (sourceBeforeDotMatch = afterSourceAndDotSuggestionsRegex.exec(regexResults.input)) {
+            if (sources.indexOf(sourceBeforeDotMatch[1]) != -1) {
                 addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
-                    name: streamBeforeDotMatch[1]
+                    name: sourceBeforeDotMatch[1]
                 }).map(function (attribute) {
                     return Object.assign({}, attribute, {
                         priority: attributePriority
@@ -1221,20 +1221,25 @@ function CompletionEngine() {
                 }));
             }
         } else {
-            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(streams.map(function (stream) {
-                return {name: stream};
+            addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates(sources.map(function (source) {
+                return {name: source};
             })).map(function (attribute) {
                 return Object.assign({}, attribute, {
                     priority: attributePriority
                 });
             }));
-            addCompletions(streams.map(function (stream) {
-                return {
-                    value: stream + ".",
-                    type: "Stream",
-                    description: self.streamList[stream].description,
+            addCompletions(sources.map(function (sourceName) {
+                var source = {
+                    value: sourceName + ".",
+                    description: getStreamOrTable(sourceName).description,
                     priority: streamPriority
                 };
+                if (self.streamList[sourceName]) {
+                    source.type = "Stream";
+                } else if (self.tableList[sourceName]) {
+                    source.type = "Event Table";
+                }
+                return source;
             }));
         }
     }
@@ -1245,50 +1250,53 @@ function CompletionEngine() {
      * A reference can be an event in a pattern (event=pattern) or a stream reference in query in (stream as reference)
      *
      * @param {string[]} regexResults Array of groups from the regex execution of the query
-     * @param {string[]} referenceToStreamMap Array of streams of which attributes will be added
+     * @param {string[]} sourceToStreamMap Array of streams of which attributes will be added
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
      */
-    function addAttributesOfStreamReferencesAsCompletions(regexResults, referenceToStreamMap,
+    function addAttributesOfStreamOrTableReferencesAsCompletions(regexResults, sourceToStreamMap,
                                                           attributePriority, streamPriority) {
-        var afterStreamAndDotSuggestionsRegex =
+        var afterSourceAndDotSuggestionsRegex =
             new RegExp("(" + regex.identifier + ")\\s*(?:\\[\\s*[0-9]*\\s*\\])?\\s*\\.\\s*[a-zA-Z_0-9]*$", "i");
 
-        var referenceBeforeDotMatch;
-        if (referenceBeforeDotMatch = afterStreamAndDotSuggestionsRegex.exec(regexResults.input)) {
-            if (referenceToStreamMap[referenceBeforeDotMatch[1]]) {
+        var sourceBeforeDotMatch;
+        if (sourceBeforeDotMatch = afterSourceAndDotSuggestionsRegex.exec(regexResults.input)) {
+            if (sourceToStreamMap[sourceBeforeDotMatch[1]]) {
                 addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
-                    name: referenceToStreamMap[referenceBeforeDotMatch[1]],
-                    reference: referenceBeforeDotMatch[1]
+                    name: sourceToStreamMap[sourceBeforeDotMatch[1]],
+                    reference: sourceBeforeDotMatch[1]
                 }).map(function (attribute) {
-                        return Object.assign({}, attribute, {
-                            priority: attributePriority
-                        });
-                    }
-                ));
+                    return Object.assign({}, attribute, {
+                        priority: attributePriority
+                    });
+                }));
             }
         } else {
-            for (var reference in referenceToStreamMap) {
-                if (referenceToStreamMap.hasOwnProperty(reference)) {
+            for (var reference in sourceToStreamMap) {
+                if (sourceToStreamMap.hasOwnProperty(reference)) {
                     addCompletions(getAttributesFromStreamsOrTablesWithPrefixedDuplicates({
-                        name: referenceToStreamMap[reference],
+                        name: sourceToStreamMap[reference],
                         reference: reference
                     }).map(function (attribute) {
-                            return Object.assign({}, attribute, {
-                                value: reference + "." + attribute.value,
-                                priority: attributePriority
-                            });
-                        }
-                    ));
+                        return Object.assign({}, attribute, {
+                            value: reference + "." + attribute.value,
+                            priority: attributePriority
+                        });
+                    }));
                 }
             }
-            addCompletions(Object.keys(referenceToStreamMap).map(function (reference) {
-                return {
+            addCompletions(Object.keys(sourceToStreamMap).map(function (reference) {
+                var source =  {
                     value: reference + ".",
-                    type: "Stream",
-                    description: self.streamList[referenceToStreamMap[reference]].description,
+                    description: getStreamOrTable(sourceToStreamMap[reference]).description,
                     priority: streamPriority
                 };
+                if (self.streamList[sourceToStreamMap[reference]]) {
+                    source.type = "Stream";
+                } else if (self.tableList[sourceToStreamMap[reference]]) {
+                    source.type = "Event Table";
+                }
+                return source;
             }));
         }
     }
@@ -1434,15 +1442,13 @@ function CompletionEngine() {
                     for (var k = j + 1; k < newAttributes.length; k++) {
                         if (newAttributes[j].value == newAttributes[k].value) {
                             attributes.push({
-                                value: newAttributes[k].source + "." + newAttributes[k].value,
-                                type: "Attribute"
+                                value: newAttributes[k].source + "." + newAttributes[k].value
                             });
 
                             // If this is the first time this duplicate is detected prefix the first attribute as well
                             if (prefixedAttributes.indexOf(newAttributes[j].value) == -1) {
                                 attributes.push({
-                                    value: newAttributes[j].source + "." + newAttributes[j].value,
-                                    type: "Attribute"
+                                    value: newAttributes[j].source + "." + newAttributes[j].value
                                 });
                                 prefixedAttributes.push(newAttributes[j].value);
                             }
@@ -1452,8 +1458,7 @@ function CompletionEngine() {
                     // If no duplicates are found add without prefix
                     if (prefixedAttributes.indexOf(newAttributes[j].value) == -1) {
                         attributes.push({
-                            value: newAttributes[j].value,
-                            type: "Attribute"
+                            value: newAttributes[j].value
                         });
                     }
                 }
@@ -1471,17 +1476,36 @@ function CompletionEngine() {
          */
         function getAttributesOfStreamOrTable(sourceName, reference) {
             var attributes = [];
-            if (self.streamList[sourceName] && self.streamList[sourceName].attributes) {
-                attributes = Object.keys(self.streamList[sourceName].attributes);
-            } else if (self.tableList[sourceName] && self.tableList[sourceName].attributes) {
-                attributes = Object.keys(self.tableList[sourceName].attributes);
+            var source = getStreamOrTable(sourceName);
+            if (source && source.attributes) {
+                attributes = Object.keys(source.attributes);
             }
             return attributes.map(function (attribute) {
                 return {value: attribute, source: (reference ? reference : sourceName)};
             });
         }
 
-        return attributes;
+        return attributes.map(function (attribute) {
+            return Object.assign({}, attribute, {
+                type: "Attribute"
+            });
+        });
+    }
+
+    /**
+     * get a single stream or table
+     *
+     * @param {string} sourceName name of the stream or table to fetch
+     * @return {Object[]} arrays of attribute names of the stream or table
+     */
+    function getStreamOrTable(sourceName) {
+        var source;
+        if (self.streamList[sourceName] && self.streamList[sourceName].attributes) {
+            source = self.streamList[sourceName];
+        } else if (self.tableList[sourceName] && self.tableList[sourceName].attributes) {
+            source = self.tableList[sourceName];
+        }
+        return source;
     }
 
     /**
