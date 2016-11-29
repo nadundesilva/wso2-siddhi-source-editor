@@ -515,7 +515,7 @@ function CompletionEngine() {
         for (i = 0; i < mainRuleBase.length; i++) {
             var ruleRegex = new RegExp(mainRuleBase[i].regex, "i");
             if (ruleRegex.test(editorText)) {
-                if (Object.prototype.toString.call(mainRuleBase[i].handler) === '[object Array]') {
+                if (mainRuleBase[i].handler.__proto__.constructor === Array) {
                     addCompletions(mainRuleBase[i].handler.map(function (completion) {
                         if (typeof completion == "string") {
                             completion = {value: completion + " "};
@@ -612,6 +612,7 @@ function CompletionEngine() {
     /**
      * Handle the query input suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleQueryInputSuggestions(regexResults) {
@@ -725,9 +726,9 @@ function CompletionEngine() {
             ));
             addAttributesOfStandardStatefulSourcesAsCompletionsFromQueryIn(regexResults, 3, 2);
         } else if (nonPatternQueryFilterSuggestionsRegex.test(queryInput)) {
-            addCompletions(getAttributesFromSourcesWithPrefixedDuplicates({
-                name: nonPatternQueryFilterSuggestionsRegex.exec(queryInput)[1].trim()
-            }, [constants.STREAMS, constants.WINDOWS]).map(function (suggestion) {
+            addCompletions(getAttributesFromSourcesWithPrefixedDuplicates(
+                {name: nonPatternQueryFilterSuggestionsRegex.exec(queryInput)[1].trim()},
+                [constants.STREAMS, constants.WINDOWS]).map(function (suggestion) {
                     return Object.assign({}, suggestion, {
                         value: suggestion.value + " ", priority: 3
                     });
@@ -786,6 +787,7 @@ function CompletionEngine() {
     /**
      * Handle the query selection suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleQuerySelectionSuggestions(regexResults) {
@@ -836,6 +838,7 @@ function CompletionEngine() {
     /**
      * Handle the query section group by suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleGroupBySuggestions(regexResults) {
@@ -863,6 +866,7 @@ function CompletionEngine() {
     /**
      * Handle the having suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleHavingSuggestions(regexResults) {
@@ -892,6 +896,7 @@ function CompletionEngine() {
     /**
      * Handle the query output rate suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleQueryOutputRateSuggestions(regexResults) {
@@ -936,6 +941,7 @@ function CompletionEngine() {
     /**
      * Handle the query insert into suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleQueryInsertIntoSuggestions(regexResults) {
@@ -995,6 +1001,7 @@ function CompletionEngine() {
     /**
      * Handle the query output to table suggestions for the query
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleQueryInsertOverwriteDeleteUpdateSuggestions(regexResults) {
@@ -1055,6 +1062,7 @@ function CompletionEngine() {
     /**
      * Add "end" keyword after checking for end of partition
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      */
     function handleEndOfPartitionCheck(regexResults) {
@@ -1145,6 +1153,7 @@ function CompletionEngine() {
         /**
          * Get the streams of the attributes mentioned in the partition condition statement
          *
+         * @private
          * @return {string[]} streams of the attributes in the partition condition
          */
         function getStreamsForAttributesInPartitionCondition() {
@@ -1188,6 +1197,7 @@ function CompletionEngine() {
      * add attributes of stream references in query in section of the query
      * (stream as reference)
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
@@ -1212,6 +1222,7 @@ function CompletionEngine() {
      * add attributes of standard stateful sources in patterns in query
      * (event = stream)
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
@@ -1235,6 +1246,7 @@ function CompletionEngine() {
     /**
      * add attributes in the streams or tables in the query by searching the query input section
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {int} attributePriority priority to be set as attribute priority
      * @param {int} streamPriority priority to be set as stream priority
@@ -1259,6 +1271,7 @@ function CompletionEngine() {
     /**
      * add attributes in the streams or tables provided
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {string[]} sources Array of streams of which attributes will be added
      * @param {int} attributePriority priority to be set as attribute priority
@@ -1308,6 +1321,7 @@ function CompletionEngine() {
      * References will be used rather than stream names to refer to attributes (reference.attribute)
      * A reference can be an event in a pattern (event=pattern) or a stream reference in query in (stream as reference)
      *
+     * @private
      * @param {string[]} regexResults Array of groups from the regex execution of the query
      * @param {string[]} sourceToStreamMap Array of streams of which attributes will be added
      * @param {int} attributePriority priority to be set as attribute priority
@@ -1363,6 +1377,7 @@ function CompletionEngine() {
     /**
      * Get the list of namespaces which has artifacts in  objType1 or objType2 categories
      *
+     * @private
      * @param {string[]} types types of processors of which namespaces are returned. Should be one of ["windowProcessors", "functions", "streamProcessors"]
      * @returns {Array} list of namespaces.
      */
@@ -1388,6 +1403,7 @@ function CompletionEngine() {
     /**
      * Get the list of  extension function snippets of given namespace
      *
+     * @private
      * @param {string} namespace namespace of the functions
      * @returns {Array} : list of function snippets
      */
@@ -1406,6 +1422,7 @@ function CompletionEngine() {
     /**
      * Get the list of  extension window processor snippets of given namespace
      *
+     * @private
      * @param {string} namespace namespace of the window processors
      * @returns {Array} list of window processor snippets
      */
@@ -1424,6 +1441,7 @@ function CompletionEngine() {
     /**
      * Get the list of  extension stream processor snippets of given namespace
      *
+     * @private
      * @param {string} namespace namespace of the stream processors
      * @returns {Array} list of stream processor snippets
      */
@@ -1442,6 +1460,7 @@ function CompletionEngine() {
     /**
      * Get the list of inbuilt function snippets
      *
+     * @private
      * @returns {Array} list of function snippets
      */
     function getInBuiltFunctionNames() {
@@ -1455,6 +1474,7 @@ function CompletionEngine() {
     /**
      * Get the list of inbuilt window processor snippets
      *
+     * @private
      * @returns {Array} list of window processor snippets
      */
     function getInBuiltWindowProcessors() {
@@ -1468,6 +1488,7 @@ function CompletionEngine() {
     /**
      * Get the list of inbuilt stream processor snippets
      *
+     * @private
      * @returns {Array} list of stream processor snippets
      */
     function getInBuiltStreamProcessors() {
@@ -1482,6 +1503,7 @@ function CompletionEngine() {
      * get the attributes of the streams or tables specified
      * Duplicate attribute names will be prefixed with the stream or table names
      *
+     * @private
      * @param {Object|Object[]} sourceName name of the source of which attributes are returned
      * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      * @return {Object[]} arrays of attribute names of the stream or table
@@ -1541,6 +1563,7 @@ function CompletionEngine() {
     /**
      * get the attributes of a single stream or table
      *
+     * @private
      * @param {string} sourceName name of the source of which attributes are returned
      * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      * @param {string} [reference] reference name used to refer to the stream or table
@@ -1560,6 +1583,7 @@ function CompletionEngine() {
     /**
      * get a single stream or table
      *
+     * @private
      * @param {string} sourceName Name of the source to fetch
      * @param {string[]} sourceTypes Source types to search for. Should be a subset of [constants.STREAMS, constants.EVENT_TABLES, constants.WINDOWS, constants.EVAL_SCRIPTS, constants.TRIGGERS]
      * @return {Object[]} arrays of attribute names of the stream or table
@@ -1579,6 +1603,7 @@ function CompletionEngine() {
     /**
      * Add a new completions to the words list
      *
+     * @private
      * @param {Object[]|Object} suggestions list of  suggestions
      */
     function addCompletions(suggestions) {
@@ -1593,6 +1618,7 @@ function CompletionEngine() {
         /**
          * Add a single completion to the completions list
          *
+         * @private
          * @param {Object} completion Completion to add to the completions list
          */
         function addCompletion(completion) {
@@ -1609,6 +1635,7 @@ function CompletionEngine() {
     /**
      * Add a new completions to the words list
      *
+     * @private
      * @param {Object[]|Object} suggestions list of  suggestions
      */
     function addSnippets(suggestions) {
@@ -1722,12 +1749,15 @@ CompletionEngine.functionOperationSnippets = {
  */
 /**
  * Load meta data from a json file
+ *
+ * @param [onSuccessCallback] Callback function to be called on successful reception of meta data
+ * @param [onErrorCallback] Callback function to be called on error
  */
-CompletionEngine.loadMetaData = function () {
+CompletionEngine.loadMetaData = function (onSuccessCallback, onErrorCallback) {
     jQuery.ajax({
         type: "GET",
         url: SiddhiEditor.serverURL + "siddhi-editor/meta-data",
-        success: function (response) {
+        success: function (response, textStatus, jqXHR) {
             if (response.status == "SUCCESS") {
                 (function () {
                     var snippets = {};
@@ -1764,15 +1794,44 @@ CompletionEngine.loadMetaData = function () {
                     }
                     CompletionEngine.functionOperationSnippets.extensions = snippets;
                 })();
+                if (onSuccessCallback) {
+                    onSuccessCallback(response, textStatus, jqXHR);
+                }
+            } else if (onErrorCallback) {
+                onErrorCallback(response.message, (response.status ? response.status : textStatus), jqXHR);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            if (onErrorCallback) {
+                onErrorCallback(errorThrown, textStatus, jqXHR);
             }
         }
     });
-}
+};
+
+/**
+ * Callback function for load meta data success
+ *
+ * @callback LoadMetaDataOnSuccessCallback
+ * @param {string} response The response returned from the server
+ * @param {string} status The http status returned by the server
+ * @param {object} jqXHR jQuery XMLHTTPRequest object
+ */
+
+/**
+ * Callback function for load meta data error
+ *
+ * @callback LoadMetaDataOnErrorCallback
+ * @param {string} message The error thrown or the error message
+ * @param {string} status The http status or the status returned by the server
+ * @param {object} jqXHR jQuery XMLHTTPRequest object
+ */
 
 /**
  * Prepare a snippet from the processor
  * Snippets are objects that can be passed into the ace editor to add snippets to the completions provided
  *
+ * @private
  * @param {Object} processorMetaData The processor object with relevant parameters
  * @return {Object} snippet
  */

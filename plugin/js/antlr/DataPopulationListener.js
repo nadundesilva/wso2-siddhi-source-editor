@@ -16,6 +16,13 @@
 
 var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
 
+/**
+ * The Data Population Listener prototype constructor
+ * Inherits from SiddhiQLListener generated from SiddhiQL grammar using ANTLR4
+ *
+ * @constructor
+ * @param editor The editor for which this listener is populating data
+ */
 function DataPopulationListener(editor) {
     SiddhiQLListener.call(this);     // inherit default listener
     this.editor = editor;
@@ -137,6 +144,13 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
     }
 };
 
+/**
+ * Get the text in the parse tree relevant for the context provided
+ *
+ * @private
+ * @param ctx The context for which the text is returned
+ * @return {string} The text relevant to the context provided
+ */
 function getTextFromCtx(ctx) {
     return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
 }

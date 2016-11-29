@@ -69,7 +69,6 @@
     };
     var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "lib/antlr4-js-runtime/index";
 
-    // ANTLR4 JS runtime integration code segment goes here..
     var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                                          // ANTLR4 JS runtime
     var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
@@ -146,7 +145,6 @@
 
         // State variables for error checking and highlighting
         self.state = {};
-        self.state.previousParserTree = "";
         self.state.syntaxErrorList = [];      // To save the syntax Errors with line numbers
         self.state.semanticErrorList = [];    // To save semanticErrors with line numbers
         self.state.lastEdit = 0;              // Last edit time
@@ -207,11 +205,13 @@
          * @param content Content to set into the ace editor
          */
         self.setContent = function (content) {
-            aceEditor.setValue(content);
+            aceEditor.setValue(content, 1);
         };
 
         /**
          * Dynamically select the completers suitable for current context
+         *
+         * @private
          */
         function adjustAutoCompletionHandlers() {
             // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
@@ -234,6 +234,8 @@
 
         /**
          * Editor change handler
+         *
+         * @private
          */
         function editorChangeHandler() {
             self.completionEngine.clearData();                  // Clear the exiting completion engine data
@@ -294,6 +296,8 @@
         /**
          * This method send server calls to check the semantic errors
          * Also retrieves the missing completion engine data from the server if the execution plan is valid
+         *
+         * @private
          */
         function checkForSemanticErrors() {
             var foundSemanticErrors = false;
@@ -381,6 +385,8 @@
 
         /**
          * Update the token tool tips
+         *
+         * @private
          */
         function updateTokenToolTips(parseTree) {
             var parserListener = new TokenToolTipUpdateListener(self);
@@ -390,6 +396,7 @@
         /**
          * Generate list of statements from the editor text
          *
+         * @private
          * @param editorText Text in the editor
          * @return {string[]} The list of statements
          */
@@ -443,6 +450,7 @@
          * Submit the execution plan to server for semantic error checking
          * Also fetched the incomplete data from the server for the completion engine
          *
+         * @private
          * @param {Object} data The execution plan and the missing data in a java script object
          * @param {function} callback Missing streams whose definitions should be fetched after validation
          */
@@ -492,7 +500,7 @@
 
         /**
          * Generate description html string from meta data for processor
-         * Descriptions are intended to be shown in the tooltips for a completions
+         * Descriptions are intended to be shown in the tooltips for completions
          *
          * @param {Object} metaData Meta data object containing parameters, return and description
          * @return {string} html string of the description generated from the meta data provided
@@ -546,7 +554,7 @@
 
         /**
          * Generate description html string from meta data for eval script
-         * Descriptions are intended to be shown in the tooltips for a completions
+         * Descriptions are intended to be shown in the tooltips for completions
          *
          * @param {string} evalScriptName Name of the eval script for which the description is generated
          * @param {Object} metaData Meta data object containing parameters, return and description
@@ -562,7 +570,7 @@
 
         /**
          * Generate description html string from stream/table meta data
-         * Descriptions are intended to be shown in the tooltips for a completions
+         * Descriptions are intended to be shown in the tooltips for completions
          *
          * @param {string} type Type of the source. Should be one of ["Stream", "Event Table"]
          * @param {string} sourceName Name of the stream/table for which the description is generated
@@ -587,8 +595,8 @@
         };
 
         /**
-         * Generate description html string from stream/table meta data
-         * Descriptions are intended to be shown in the tooltips for a completions
+         * Generate description html string from trigger meta data
+         * Descriptions are intended to be shown in the tooltips for completions
          *
          * @param {string} triggerName Name of the trigger for which the description is generated
          * @param {string} metaData metaData of the trigger
@@ -599,6 +607,14 @@
                 metaData.type + " - " + metaData.time + "</div>";
         };
 
+        /**
+         * Generate description html string from window meta data
+         * Descriptions are intended to be shown in the tooltips for completions
+         *
+         * @param {string} windowName Name of the window for which the description is generated
+         * @param {string} metaData metaData of the window
+         * @return {string} html string of the description generated from the meta data provided
+         */
         this.generateDescriptionForWindow = function (windowName, metaData) {
             var description = "<div><strong>Window</strong> - " + windowName + "<br><br>";
             if (metaData.attributes && Object.keys(metaData.attributes).length > 0) {

@@ -16,6 +16,13 @@
 
 var ErrorListener = require("../../lib/antlr4-js-runtime/error/ErrorListener").ErrorListener;
 
+/**
+ * The Syntax Error Listener prototype constructor
+ * Inherits from ErrorListener in the antlr4 JS runtime
+ *
+ * @constructor
+ * @param editor The editor for which this listener is listening for errors
+ */
 function SyntaxErrorListener(editor) {
     ErrorListener.call(this);
     this.editor = editor;

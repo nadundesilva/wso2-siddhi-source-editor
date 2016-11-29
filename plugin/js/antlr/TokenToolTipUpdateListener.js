@@ -16,6 +16,13 @@
 
 var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
 
+/**
+ * The Token Tool Tip Update Listener prototype constructor
+ * Inherits from SiddhiQLListener generated from SiddhiQL grammar using ANTLR4
+ *
+ * @constructor
+ * @param editor The editor for which this listener is generating token tool tips
+ */
 function TokenToolTipUpdateListener(editor) {
     SiddhiQLListener.call(this);     // inherit default listener
     this.editor = editor;
@@ -96,6 +103,15 @@ TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
     }
 };
 
+/**
+ * Update the tooltip in the token in the row and column specified
+ *
+ * @private
+ * @param editor The editor of which the token should be update
+ * @param tokenRow The row in which the token is at
+ * @param tokenColumn The column at which the token is at
+ * @param tooltip The tooltip to show when the user hovers over the token
+ */
 function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
     var token = editor.getAceEditorObject().session.getTokenAt(tokenRow, tokenColumn);
     if (token) {
@@ -103,6 +119,13 @@ function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
     }
 }
 
+/**
+ * Get the text in the parse tree relevant for the context provided
+ *
+ * @private
+ * @param ctx The context for which the text is returned
+ * @return {string} The text relevant to the context provided
+ */
 function getTextFromCtx(ctx) {
     return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
 }
