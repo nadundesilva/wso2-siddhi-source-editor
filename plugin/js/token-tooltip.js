@@ -3,6 +3,8 @@
  * Generates the token tool tips on mouse over
  */
 
+"use strict";   // JS strict mode
+
 var dom = ace.require("ace/lib/dom");
 var oop = ace.require("ace/lib/oop");
 var event = ace.require("ace/lib/event");

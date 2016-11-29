@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+"use strict";   // JS strict mode
+
 var ErrorListener = require("../../lib/antlr4-js-runtime/error/ErrorListener").ErrorListener;
 
 /**

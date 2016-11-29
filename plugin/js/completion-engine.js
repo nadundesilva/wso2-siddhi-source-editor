@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+"use strict";   // JS strict mode
+
 // Constants used by the engine
 var constants = {
     FUNCTIONS: "functions",

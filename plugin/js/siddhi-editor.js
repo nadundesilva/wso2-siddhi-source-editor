@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+"use strict";   // JS strict mode
+
 /**
  *  This Script contains the integration code segment of Siddhi editor.
  *  This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
@@ -473,6 +475,8 @@
      * Utils used by the SiddhiEditor
      */
     SiddhiEditor.utils = (function () {
+        var self = {};
+
         /**
          * Word wrap the the string with a maxWidth for each line
          *
@@ -480,7 +484,7 @@
          * @param {int} maxWidth The maximum width for the lines
          * @return {string} The word wrapped string
          */
-        this.wordWrap = function (str, maxWidth) {
+        self.wordWrap = function (str, maxWidth) {
             for (var i = maxWidth; i < str.length;) {
                 if (/\s/.test(str.charAt(i))) {
                     str = str.substring(0, i) + "\n" + str.substring(i + 1);
@@ -505,7 +509,7 @@
          * @param {Object} metaData Meta data object containing parameters, return and description
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForProcessor = function (metaData) {
+        self.generateDescriptionForProcessor = function (metaData) {
             var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
             if (metaData.description) {
                 description += metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>";
@@ -560,7 +564,7 @@
          * @param {Object} metaData Meta data object containing parameters, return and description
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForEvalScript = function (evalScriptName, metaData) {
+        self.generateDescriptionForEvalScript = function (evalScriptName, metaData) {
             return "<div><strong>Eval Script</strong> - " + evalScriptName + "<br><ul>" +
                 "<li>Language - " + metaData.language + "</li>" +
                 "<li>Return Type - " + metaData.returnType.join(" | ").toUpperCase() + "</li>" +
@@ -577,7 +581,7 @@
          * @param {Object} attributes attributes of the stream/table
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForStreamOrTable = function (type, sourceName, attributes) {
+        self.generateDescriptionForStreamOrTable = function (type, sourceName, attributes) {
             var description = "<div><strong>" + type + "</strong> - " + sourceName + "<br>";
             if (attributes && Object.keys(attributes).length > 0) {
                 description += "<ul>";
@@ -602,7 +606,7 @@
          * @param {string} metaData metaData of the trigger
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForTrigger = function (triggerName, metaData) {
+        self.generateDescriptionForTrigger = function (triggerName, metaData) {
             return "<div><strong>Trigger</strong> - " + triggerName + "<br><br>" +
                 metaData.type + " - " + metaData.time + "</div>";
         };
@@ -615,7 +619,7 @@
          * @param {string} metaData metaData of the window
          * @return {string} html string of the description generated from the meta data provided
          */
-        this.generateDescriptionForWindow = function (windowName, metaData) {
+        self.generateDescriptionForWindow = function (windowName, metaData) {
             var description = "<div><strong>Window</strong> - " + windowName + "<br><br>";
             if (metaData.attributes && Object.keys(metaData.attributes).length > 0) {
                 description += "Attributes -<ul>";
@@ -647,6 +651,6 @@
             return description;
         };
 
-        return this;
+        return self;
     })();
 })();

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+"use strict";   // JS strict mode
+
 var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
 
 /**
