@@ -129,6 +129,8 @@
         aceEditor.setHighlightActiveLine(true);
         aceEditor.setDisplayIndentGuides(true);
         aceEditor.setShowPrintMargin(false);
+        aceEditor.setShowFoldWidgets(true);
+        aceEditor.session.setFoldStyle("markbegin");
         aceEditor.setOptions({
             enableBasicAutocompletion: !config.readOnly && config.autoCompletion,
             enableSnippets: !config.readOnly && config.autoCompletion,
