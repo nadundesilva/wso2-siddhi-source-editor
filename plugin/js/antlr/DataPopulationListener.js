@@ -38,11 +38,11 @@ DataPopulationListener.prototype.constructor = DataPopulationListener;
  */
 
 DataPopulationListener.prototype.exitDefinition_stream = function (ctx) {
-    var streamName = getTextFromCtx(ctx.source());
+    var streamName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.source());
     var attributes = {};
     var i = 0;
     while (ctx.attribute_name(i)) {
-        attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
+        attributes[SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_name(i))] = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_type(i));
         i++;
     }
     this.editor.completionEngine.streamsList[streamName] = {
@@ -52,11 +52,11 @@ DataPopulationListener.prototype.exitDefinition_stream = function (ctx) {
 };
 
 DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
-    var tableName = getTextFromCtx(ctx.source());
+    var tableName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.source());
     var attributes = {};
     var i = 0;
     while (ctx.attribute_name(i)) {
-        attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
+        attributes[SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_name(i))] = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_type(i));
         i++;
     }
     this.editor.completionEngine.eventTablesList[tableName] = {
@@ -66,12 +66,12 @@ DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
 };
 
 DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
-    var triggerName = getTextFromCtx(ctx.trigger_name());
+    var triggerName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.trigger_name());
     var metaData;
     if (ctx.time_value()) {
-        metaData = {type: "Time Value", time: getTextFromCtx(ctx.time_value())};
+        metaData = {type: "Time Value", time: SiddhiEditor.utils.getTextFromANTLRCtx(ctx.time_value())};
     } else if (ctx.string_value()) {
-        metaData = {type: "Cron Expression", time: getTextFromCtx(ctx.string_value())};
+        metaData = {type: "Cron Expression", time: SiddhiEditor.utils.getTextFromANTLRCtx(ctx.string_value())};
     }
     if (metaData) {
         metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
@@ -80,30 +80,30 @@ DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
 };
 
 DataPopulationListener.prototype.exitDefinition_function = function (ctx) {
-    var evalScriptName = getTextFromCtx(ctx.function_name());
+    var evalScriptName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.function_name());
     var metaData = {
-        language: getTextFromCtx(ctx.language_name()),
-        returnType: [getTextFromCtx(ctx.attribute_type())],
-        functionBody: getTextFromCtx(ctx.function_body())
+        language: SiddhiEditor.utils.getTextFromANTLRCtx(ctx.language_name()),
+        returnType: [SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_type())],
+        functionBody: SiddhiEditor.utils.getTextFromANTLRCtx(ctx.function_body())
     };
     metaData.description = SiddhiEditor.utils.generateDescriptionForEvalScript(evalScriptName, metaData);
     this.editor.completionEngine.evalScriptsList[evalScriptName] = metaData;
 };
 
 DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
-    var windowName = getTextFromCtx(ctx.source());
+    var windowName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.source());
     var attributes = {};
     var i = 0;
     while (ctx.attribute_name(i)) {
-        attributes[getTextFromCtx(ctx.attribute_name(i))] = getTextFromCtx(ctx.attribute_type(i));
+        attributes[SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_name(i))] = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_type(i));
         i++;
     }
     var metaData = {
         attributes: attributes,
-        functionOperation: getTextFromCtx(ctx.function_operation())
+        functionOperation: SiddhiEditor.utils.getTextFromANTLRCtx(ctx.function_operation())
     };
     if (ctx.output_event_type()) {
-        metaData.output = getTextFromCtx(ctx.output_event_type());
+        metaData.output = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.output_event_type());
     }
     metaData.description =
         SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
@@ -116,7 +116,7 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
 
 DataPopulationListener.prototype.exitQuery = function (ctx) {
     if (ctx.query_output() && ctx.query_output().children && ctx.query_output().target()) {
-        var outputTarget = getTextFromCtx(ctx.query_output().target());
+        var outputTarget = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.query_output().target());
         if (ctx.query_section()) {
             // Updating the data for streams inserted into without defining if select section is available
             if (!this.editor.completionEngine.eventTablesList[outputTarget] && !this.editor.completionEngine.streamsList[outputTarget] && !this.editor.completionEngine.eventWindowsList[outputTarget]) {
@@ -127,10 +127,10 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                 var outputAttributeCtx;
                 while (outputAttributeCtx = querySelectionCtx.output_attribute(i)) {
                     if (outputAttributeCtx.attribute_name()) {
-                        attributes[getTextFromCtx(outputAttributeCtx.attribute_name())] = undefined;
+                        attributes[SiddhiEditor.utils.getTextFromANTLRCtx(outputAttributeCtx.attribute_name())] = undefined;
                     } else if (outputAttributeCtx.attribute_reference() &&
                         outputAttributeCtx.attribute_reference().attribute_name()) {
-                        attributes[getTextFromCtx(outputAttributeCtx.attribute_reference().attribute_name())] = undefined;
+                        attributes[SiddhiEditor.utils.getTextFromANTLRCtx(outputAttributeCtx.attribute_reference().attribute_name())] = undefined;
                     }
                     i++;
                 }
@@ -145,17 +145,6 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
         this.editor.completionEngine.incompleteData.streams.push(outputTarget);
     }
 };
-
-/**
- * Get the text in the parse tree relevant for the context provided
- *
- * @private
- * @param ctx The context for which the text is returned
- * @return {string} The text relevant to the context provided
- */
-function getTextFromCtx(ctx) {
-    return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
-}
 
 /*
  * Token Tooltip update listeners ends here

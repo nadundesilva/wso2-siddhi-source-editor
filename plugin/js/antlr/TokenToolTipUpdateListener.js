@@ -40,9 +40,9 @@ TokenToolTipUpdateListener.prototype.exitFunction_operation = function (ctx) {
     var functionCtx = ctx.function_id(0);
 
     if (functionCtx) {
-        var processorName = getTextFromCtx(functionCtx);
+        var processorName = SiddhiEditor.utils.getTextFromANTLRCtx(functionCtx);
         if (namespaceCtx) {
-            var namespace = getTextFromCtx(namespaceCtx);
+            var namespace = SiddhiEditor.utils.getTextFromANTLRCtx(namespaceCtx);
             snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
 
             // Adding namespace tool tip
@@ -75,7 +75,7 @@ TokenToolTipUpdateListener.prototype.exitFunction_operation = function (ctx) {
 };
 
 TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
-    var sourceName = getTextFromCtx(ctx);
+    var sourceName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx);
     var source;
 
     if (ctx.parentCtx.inner && this.editor.completionEngine.streamsList["#" + sourceName]) {
@@ -98,7 +98,7 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
 };
 
 TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
-    var triggerName = getTextFromCtx(ctx);
+    var triggerName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx);
     var trigger = this.editor.completionEngine.eventTriggersList[triggerName];
     if (trigger && trigger.description) {
         updateTokenDescription(this.editor, ctx.stop.line - 1, ctx.stop.column + 1, trigger.description);
@@ -120,20 +120,5 @@ function updateTokenDescription(editor, tokenRow, tokenColumn, tooltip) {
         token.tooltip = tooltip;
     }
 }
-
-/**
- * Get the text in the parse tree relevant for the context provided
- *
- * @private
- * @param ctx The context for which the text is returned
- * @return {string} The text relevant to the context provided
- */
-function getTextFromCtx(ctx) {
-    return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
-}
-
-/*
- * Token Tooltip update listeners ends here
- */
 
 exports.TokenToolTipUpdateListener = TokenToolTipUpdateListener;

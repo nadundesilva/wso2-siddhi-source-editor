@@ -633,7 +633,7 @@
          * Descriptions are intended to be shown in the tooltips for completions
          *
          * @param {string} windowName Name of the window for which the description is generated
-         * @param {string} metaData metaData of the window
+         * @param {object} metaData metaData of the window
          * @return {string} html string of the description generated from the meta data provided
          */
         self.generateDescriptionForWindow = function (windowName, metaData) {
@@ -666,6 +666,16 @@
             }
             description += "</div>";
             return description;
+        };
+
+        /**
+         * Get the text in the parse tree relevant for the ANTLR context provided
+         *
+         * @param ctx The context for which the text is returned
+         * @return {string} The text relevant to the context provided
+         */
+        self.getTextFromANTLRCtx = function (ctx) {
+            return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
         };
 
         return self;
