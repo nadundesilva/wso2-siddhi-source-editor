@@ -166,9 +166,9 @@
 
         // State variables for error checking and highlighting
         self.state = {};
-        self.state.syntaxErrorList = [];      // To save the syntax Errors with line numbers
-        self.state.semanticErrorList = [];    // To save semanticErrors with line numbers
-        self.state.lastEdit = 0;              // Last edit time
+        self.state.syntaxErrorList = [];        // To save the syntax Errors with line numbers
+        self.state.semanticErrorList = [];      // To save semanticErrors with line numbers
+        self.state.lastEdit = 0;                // Last edit time
 
         self.completionEngine = new SiddhiEditor.CompletionEngine();
 
@@ -353,18 +353,16 @@
                         /*
                          * Error found in execution plan
                          */
-                        // Generate the statements list from the editor text
-                        var statementsList = generateStatementsListFromText(editorText);
 
                         /*
                          * Send the query appending one statement after each request to identify the statement in which the error is at
                          * This is required since the siddhi engine desnt return the line number
                          */
                         var query = "";
-                        for (var i = 0; i < statementsList.length; i++) {
-                            if (statementsList[i].statement.substring(0, 2) != "\\*" &&
-                                statementsList[i].statement.substring(0, 2) != "--") {  // Appending statements excepts comments
-                                query += statementsList[i].statement + "  \n";
+                        for (var i = 0; i < self.completionEngine.statementsList.length; i++) {
+                            if (self.completionEngine.statementsList[i].statement.substring(0, 2) != "\\*" &&
+                                self.completionEngine.statementsList[i].statement.substring(0, 2) != "--") {  // Appending statements excepts comments
+                                query += self.completionEngine.statementsList[i].statement + "  \n";
                                 (function (line, query) {
                                     submitToServerForSemanticErrorCheck({
                                         executionPlan: query,
@@ -374,7 +372,7 @@
                                             Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
                                             // Update the semanticErrorList
                                             self.state.semanticErrorList.push({
-                                                row: line - 1,
+                                                row: line,
                                                 // Change attribute "text" to "html" if html is sent from server
                                                 text: SiddhiEditor.utils.wordWrap(response.message, 100),
                                                 type: "error"
@@ -389,7 +387,7 @@
                                             );
                                         }
                                     });
-                                })(statementsList[i].line, query);
+                                })(self.completionEngine.statementsList[i].line, query);
 
                                 if (foundSemanticErrors ||
                                     Date.now() - self.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
@@ -410,59 +408,6 @@
         function updateTokenToolTips(parseTree) {
             var parserListener = new TokenToolTipUpdateListener(self);
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, parseTree);
-        }
-
-        /**
-         * Generate list of statements from the editor text
-         *
-         * @private
-         * @param editorText Text in the editor
-         * @return {string[]} The list of statements
-         */
-        function generateStatementsListFromText(editorText) {
-            // Separating execution plan into statements and adding them to an array
-            var statementsList = [];
-            var lineNumber = 1;
-            editorTextLoop: for (var i = 0; i < editorText.length; i++) {
-                for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
-                    if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
-                        new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
-                        var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
-                        var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
-
-                        // For storing the number of lines the statement spans across
-                        // lineNumber variable is not incremented since statement start line number is required
-                        var statementSpanningLines = 0;
-
-                        for (var j = i + keywordMatch.length; j < editorText.length; j++) {
-                            if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
-                                var endKeywordMatch =
-                                    new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
-                                statementsList.push({
-                                    statement: editorText.substring(i, j + endKeywordMatch.length),
-                                    line: lineNumber
-                                });
-                                lineNumber += statementSpanningLines;
-
-                                // -1 to adjust for the increment in i after iteration
-                                // -1 to adjust for statements with end keyword as new line
-                                i = j + endKeywordMatch.length - 2;
-
-                                continue editorTextLoop;
-                            }
-                            if (editorText.charAt(j) == "\n") {
-                                statementSpanningLines++;
-                            }
-                        }
-                        break editorTextLoop;
-                    }
-                }
-                if (editorText.charAt(i) == "\n") {
-                    lineNumber++;
-                }
-            }
-
-            return statementsList;
         }
 
         /**

@@ -49,6 +49,8 @@ DataPopulationListener.prototype.exitDefinition_stream = function (ctx) {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", streamName, attributes)
     };
+
+    addStatement(this.editor, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
@@ -63,6 +65,8 @@ DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Event Table", tableName, attributes)
     };
+
+    addStatement(this.editor, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
@@ -77,6 +81,8 @@ DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
         metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
         this.editor.completionEngine.eventTriggersList[triggerName] = metaData;
     }
+
+    addStatement(this.editor, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_function = function (ctx) {
@@ -88,6 +94,8 @@ DataPopulationListener.prototype.exitDefinition_function = function (ctx) {
     };
     metaData.description = SiddhiEditor.utils.generateDescriptionForEvalScript(evalScriptName, metaData);
     this.editor.completionEngine.evalScriptsList[evalScriptName] = metaData;
+
+    addStatement(this.editor, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
@@ -108,6 +116,8 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
     metaData.description =
         SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
     this.editor.completionEngine.eventWindowsList[windowName] = metaData;
+
+    addStatement(this.editor, ctx, ";");
 };
 
 /*
@@ -145,6 +155,29 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
         this.editor.completionEngine.incompleteData.streams.push(outputTarget);
     }
 };
+
+DataPopulationListener.prototype.exitPlan_annotation = function (ctx) {
+    addStatement(this.editor, ctx);
+};
+
+DataPopulationListener.prototype.exitExecution_element = function (ctx) {
+    addStatement(this.editor, ctx, ";");
+};
+
+/**
+ * Add a statement to the editor.completionEngine.statementsList array
+ * endOfStatementToken is added at the end of the statement if provided
+ *
+ * @param editor The editor which holds the statements list to which the statement is added
+ * @param ctx The ANTLR context which will be used in getting the statement
+ * @param [endOfStatementToken] The token to be appended at the end of the statement
+ */
+function addStatement(editor, ctx, endOfStatementToken) {
+    editor.completionEngine.statementsList.push({
+        statement: SiddhiEditor.utils.getTextFromANTLRCtx(ctx)  + (endOfStatementToken ? endOfStatementToken : ""),
+        line:ctx.start.line - 1
+    });
+}
 
 /*
  * Token Tooltip update listeners ends here

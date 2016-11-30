@@ -422,6 +422,12 @@ function CompletionEngine() {
     self.suggestedSnippets = [];
 
     /*
+     * List of statements in the execution plan
+     * Created by the data population listener while walking the parse tree
+     */
+    self.statementsList = [];
+
+    /*
      * SiddhiCompleter provides language specific suggestions
      */
     self.SiddhiCompleter = {
@@ -478,38 +484,25 @@ function CompletionEngine() {
      * @param {Object} editor ace editor instance
      */
     self.calculateCompletions = function (editor) {
-        var pos = editor.getCursorPosition();   // Cursor position
+        var cursorPosition = editor.getCursorPosition();
+        var lastStatement = self.statementsList[0];
+        for (var i = 0; i < self.statementsList.length; i++) {
+            if (self.statementsList[i].line > cursorPosition.row) {
+                break;
+            } else {
+                lastStatement = self.statementsList[i];
+            }
+        }
+
+        // Getting the editor text from the start of the last statement before the cursor to the cursor position
         var editorText = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
-            row: 0,
+            row: lastStatement.line,
             column: 0
-        }, pos));                               // All the text before the cursor
+        }, cursorPosition));
 
         // Removing content not relevant to the completion engine
         editorText = editorText.replace(new RegExp(regex.comment, "ig"), "");       // Removing comments
         editorText = editorText.replace(/\s+/g, " ");           // Replacing all spaces with single white spaces
-
-        // Replacing editorText with the last statement of the execution plan
-        var currentStatementStartIndex = 0;
-        editorTextLoop: for (var i = 0; i < editorText.length; i++) {
-            keywordMapLoop: for (var keyword in SiddhiEditor.statementStartToEndKeywordMap) {
-                if (SiddhiEditor.statementStartToEndKeywordMap.hasOwnProperty(keyword) &&
-                    new RegExp("^" + keyword, "i").test(editorText.substring(i))) {
-                    var endKeyword = SiddhiEditor.statementStartToEndKeywordMap[keyword];
-                    var keywordMatch = new RegExp("^(" + keyword + ")", "i").exec(editorText.substring(i))[1];
-                    for (var j = i + keywordMatch.length; j < editorText.length; j++) {
-                        if (new RegExp("^" + endKeyword, "i").test(editorText.substring(j))) {
-                            var endKeywordMatch =
-                                new RegExp("^(" + endKeyword + ")", "i").exec(editorText.substring(j))[1];
-                            currentStatementStartIndex = j + endKeywordMatch.length;
-                            i = currentStatementStartIndex;
-                            break keywordMapLoop;
-                        }
-                    }
-                    break editorTextLoop;
-                }
-            }
-        }
-        editorText = editorText.substring(currentStatementStartIndex).replace(/^\s+/, "");
 
         // Clear the suggestion lists
         SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, constants.SNIPPET_SIDDHI_CONTEXT);   // Clear the previous snippet suggestions
