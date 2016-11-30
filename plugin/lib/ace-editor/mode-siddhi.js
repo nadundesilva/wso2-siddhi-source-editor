@@ -110,30 +110,67 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
     oop.inherits(SiddhiFoldMode, BaseFoldMode);
 
     (function() {
-        // regular expressions that identify starting and stopping points
-        this.foldingStartMarker = /(?:(\{)(?:.(?!}))*$|(\/\*)(?:.(?!\*\/))*|(begin)(?:.(?!}|end\s*;))*)/mi;
-        this.foldingStopMarker = /(?:end\s*;|\*\/|})/mi;
+        /*
+         * The fold range start token to end token map
+         * Can update this map to define the fold ranges
+         */
+        var startToEndTokenRegexMap = {
+            "(\\{)(?:.(?!}))*" : "(})",
+            "(\\/\\*)(?:.(?!\\*\\/))*" : "(\\*\\/)",
+            "(begin)(?:.(?!}|end\\s*;))*": "(end\\s*;)"
+        };
+
+        // Regular expressions that identify starting and stopping points
+        this.foldingStartMarker = new RegExp("(?:" + Object.keys(startToEndTokenRegexMap).join("|") + ")", "mi");
+        this.foldingStopMarker = new RegExp("(?:" + Object.values(startToEndTokenRegexMap).join("|") + ")", "mi");
+
+        // The order of tokens should be in the order in which the token groups are matched in foldingStopMarker
+        var startTokenRegexps = Object.keys(startToEndTokenRegexMap).map(function (regexString) {
+            return new RegExp("^" + regexString, "i");
+        });
+
+        // The order of tokens should be in the order in which the token groups are matched in foldingStartMarker
+        var endTokenRegexps = Object.values(startToEndTokenRegexMap).map(function (regexString) {
+            return new RegExp("^" + regexString, "i");
+        });
 
         this.getFoldWidgetRange = function(session, foldStyle, row) {
             var line = session.getLine(row);
 
-            var startMatch = line.match(this.foldingStartMarker);
-            if (startMatch) {
-                var i = startMatch.index;
+            var match = line.match(this.foldingStartMarker);
+            if (match) {
+                var i = match.index;
                 var matchFound;
 
-                for (var j = 1; j < startMatch.length; j++) {
-                    if (startMatch[j]) {
+                for (var j = 1; j < match.length; j++) {
+                    if (match[j]) {
                         matchFound = true;
                         break;
                     }
                 }
 
-                // The order of tokens should be in the order in which the token groups are matched in foldingStartMarker
-                var endTokens = [/^(})/i, /^(\*\/)/i, /^(end\s*;)/i];
+                if (matchFound) {
+                    return getRangeFromStartPositionToEndToken(session, row, i + match[j].length, endTokenRegexps[j - 1]);
+                }
+            }
+
+            if (foldStyle != "markbeginend") {
+                return;
+            }
+
+            match = line.match(this.foldingStopMarker);
+            if (match) {
+                i = match.index;
+
+                for (j = 1; j < match.length; j++) {
+                    if (match[j]) {
+                        matchFound = true;
+                        break;
+                    }
+                }
 
                 if (matchFound) {
-                    return getRangeFromStartPositionToEndToken(session, row, i + startMatch[j].length, endTokens[j - 1]);
+                    return getRangeFromEndPositionToStartToken(session, row, i, startTokenRegexps[j - 1]);
                 }
             }
         };
@@ -141,6 +178,7 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
 
     /**
      * Return the range from the start position to the position at which the first string matching the endTokenRegex is found
+     * Search is started at start position and traveled forward
      *
      * @param session Ace editor session
      * @param startRow Start row of the range
@@ -161,8 +199,8 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
         var endTokenColumn = startColumn;
         for (var i = 0; i < editorText.length; i++) {
             if (editorText.charAt(i) == "\n") {
-                endTokenColumn = 0;
                 endTokenRow++;
+                endTokenColumn = 0;
             } else {
                 endTokenColumn++;
             }
@@ -172,7 +210,45 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
                     {row: endTokenRow, column: endTokenColumn - 1}
                 );
                 if (endTokenRegexMatch[1]) {
-                    range.end.column = range.end.column + endTokenRegexMatch[0].length - endTokenRegexMatch[1].length;
+                    range.end.column += endTokenRegexMatch[0].length - endTokenRegexMatch[1].length;
+                }
+                return range;
+            }
+        }
+    }
+
+    /**
+     * Return the range from the end position to the position at which the last string matching the startTokenRegex is found
+     * Search is started at end position and traveled backward
+     *
+     * @param session Ace editor session
+     * @param endRow End row of the range
+     * @param endColumn End column of the range
+     * @param startTokenRegex Regex of the end token
+     */
+    function getRangeFromEndPositionToStartToken(session, endRow, endColumn, startTokenRegex) {
+        var editorText = session.doc.getTextRange(SiddhiEditor.Range.fromPoints(
+            {row: 0, column: 0},
+            {row: endRow, column: endColumn}
+        ));
+
+        var startTokenRegexMatch;
+        var startTokenRow = endRow;
+        var startTokenColumn = endColumn;
+        for (var i = editorText.length; i > 0 ; i--) {
+            if (editorText.charAt(i - 1) == "\n") {
+                startTokenRow--;
+                startTokenColumn = session.getLine(startTokenRow).length;
+            } else {
+                startTokenColumn--;
+            }
+            if (startTokenRegexMatch = startTokenRegex.exec(editorText.substring(i - 1))) {
+                var range = SiddhiEditor.Range.fromPoints(
+                    {row: startTokenRow, column: startTokenColumn},
+                    {row: endRow, column: endColumn}
+                );
+                if (startTokenRegexMatch[1]) {
+                    range.start.column += startTokenRegexMatch[1].length;
                 }
                 return range;
             }

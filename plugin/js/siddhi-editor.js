@@ -35,7 +35,10 @@
     SiddhiEditor.serverURL = "http://localhost:8080/";
     SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
 
-    // Used in separating statements
+    /*
+     * Used in separating statements
+     * Update this map to define how the statements are separated
+     */
     SiddhiEditor.statementStartToEndKeywordMap = {
         "@": "\\)",
         "define": ";",
@@ -71,6 +74,9 @@
     };
     var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "lib/antlr4-js-runtime/index";
 
+    /*
+     * Loading modules to be used inside the main siddhi editor js file
+     */
     var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                                          // ANTLR4 JS runtime
     var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
     var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
@@ -80,18 +86,26 @@
     var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
     var langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                                       // Required for auto completion
 
+    /*
+     * Loading modules to be used by all the components
+     */
     SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
     SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
     SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
     SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT +
         SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
 
-    // Map for completion list styles
+    /*
+     * Map for completion list styles
+     * Update this map to update the styles applied to the completion list popup items
+     */
     var completionTypeToStyleMap = {};
     completionTypeToStyleMap[SiddhiEditor.CompletionEngine.constants.SNIPPETS] = "font-style: italic;";
 
-    // Generating the displayNameToStyleMap from completionTypeToStyleMap
-    // This is done to support defining completion popup styles using the completion type name rather than the display name
+    /*
+     * Generating the displayNameToStyleMap from completionTypeToStyleMap
+     * This is done to support defining completion popup styles using the completion type name rather than the display name
+     */
     var displayNameToStyleMap = {};
     for (var completionType in completionTypeToStyleMap) {
         if (completionTypeToStyleMap.hasOwnProperty(completionType)) {
@@ -100,7 +114,9 @@
         }
     }
 
-    // Loading meta data for the completion engine from the server
+    /*
+     * Loading meta data for the completion engine from the server
+     */
     SiddhiEditor.CompletionEngine.loadMetaData();
 
     /**
@@ -130,7 +146,8 @@
         aceEditor.setDisplayIndentGuides(true);
         aceEditor.setShowPrintMargin(false);
         aceEditor.setShowFoldWidgets(true);
-        aceEditor.session.setFoldStyle("markbegin");
+        aceEditor.session.setFoldStyle("markbeginend");
+        aceEditor.setFontSize(14);
         aceEditor.setOptions({
             enableBasicAutocompletion: !config.readOnly && config.autoCompletion,
             enableSnippets: !config.readOnly && config.autoCompletion,
@@ -261,20 +278,13 @@
             parser._listeners.push(errorListener);
             parser.buildParseTrees = true;
 
-            // parser() is the root level grammar rule. This line generates a parser tree.
-            // when generating the new parserTree, the ErrorListener
-            // (client-side-siddhi-parser/antlr4/error/ErrorListener.js -> ConsoleErrorListener.syntaxError())
-            // will be invoked automatically.
-            // within that method , the syntax errors are stored in  editor.state.syntaxErrorList
+            // Syntax errors in parsing are stored in  editor.state.syntaxErrorList
             var tree = parser.parse();
 
-            // By now the current syntax errors are identified . following line shows the all the errors again.
-            aceEditor.session.setAnnotations(self.state.syntaxErrorList.concat(self.state.semanticErrorList));
+            // Adding the syntax errors identified into the editor gutter
+            aceEditor.session.setAnnotations(self.state.syntaxErrorList);
 
             var dataPopulationListener = new DataPopulationListener(self);
-
-            // Default walker will traverse through the parserTree and generate events.
-            // Those events are listen by the parserListener and update the statementsList with line numbers.
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(dataPopulationListener, tree);
 
             if (parser._syntaxErrors == 0 && config.realTimeValidation && self.state.previousParserTree &&
@@ -293,6 +303,7 @@
                     }
                 }, SiddhiEditor.serverSideValidationDelay);
             }
+
             self.state.previousParserTree = tree;     // Save the current parser tree
             self.state.lastEdit = Date.now();         // Save user's last edit time
         }
@@ -316,7 +327,9 @@
                 },
                 function (response) {
                     if (response.status == "SUCCESS") {
-                        // Execution plan is valid
+                        /*
+                         * Execution plan is valid
+                         */
                         // Populating the fetched data for incomplete data items into the completion engine's data
                         for (var stream in response.streams) {
                             if (response.streams.hasOwnProperty(stream)) {
@@ -337,14 +350,16 @@
                         self.completionEngine.clearIncompleteDataLists();
                         updateTokenToolTips(self.state.previousParserTree);
                     } else {
-                        // Error found in execution plan
-
+                        /*
+                         * Error found in execution plan
+                         */
                         // Generate the statements list from the editor text
                         var statementsList = generateStatementsListFromText(editorText);
 
-                        // If the query contains semantic errors
-                        // send the query in a constructive manner to sever to get the line number with error
-                        // This check is needed because the ServerSide compiler doesn't return line numbers of the semantic errors.
+                        /*
+                         * Send the query appending one statement after each request to identify the statement in which the error is at
+                         * This is required since the siddhi engine desnt return the line number
+                         */
                         var query = "";
                         for (var i = 0; i < statementsList.length; i++) {
                             if (statementsList[i].statement.substring(0, 2) != "\\*" &&

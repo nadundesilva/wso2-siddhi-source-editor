@@ -16,7 +16,9 @@
 
 "use strict";   // JS strict mode
 
-// Constants used by the engine
+/*
+ * Constants used by the engine
+ */
 var constants = {
     FUNCTIONS: "functions",
     STREAM_PROCESSORS: "streamProcessors",
@@ -34,7 +36,9 @@ var constants = {
 };
 CompletionEngine.constants = constants;
 
-// Names displayed in the editor
+/*
+ * Names displayed in the editor
+ */
 constants.typeToDisplayNameMap = {};
 constants.typeToDisplayNameMap[constants.FUNCTIONS] = "Function";
 constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS] = "Stream Processor";
@@ -49,7 +53,9 @@ constants.typeToDisplayNameMap[constants.LOGICAL_OPERATORS] = "Logical Operator"
 constants.typeToDisplayNameMap[constants.DATA_TYPES] = "Data Type";
 constants.typeToDisplayNameMap[constants.SNIPPETS] = "Snippet";
 
-// Suggestion lists used by the engine
+/*
+ * Suggestion lists used by the engine
+ */
 var suggestions = {
     logicalOperatorList: ["and", "or", "not", "in", "is null"]
         .map(function (operator) {
@@ -415,7 +421,9 @@ function CompletionEngine() {
      */
     self.suggestedSnippets = [];
 
-    // SiddhiCompleter provides language specific suggestions
+    /*
+     * SiddhiCompleter provides language specific suggestions
+     */
     self.SiddhiCompleter = {
         getCompletions: function (editor, session, pos, prefix, callback) {
             // Calculate the suggestions list for current context
@@ -427,7 +435,9 @@ function CompletionEngine() {
         }
     };
 
-    // SnippetCompleter provides language specific snippets
+    /*
+     * SnippetCompleter provides language specific snippets
+     */
     self.SnippetCompleter = {
         getCompletions: function (editor, session, pos, prefix, callback) {
             var snippetMap = SiddhiEditor.SnippetManager.snippetMap;
@@ -1194,6 +1204,10 @@ function CompletionEngine() {
             return streamList;
         }
     };
+
+    /*
+     * Suggestion Handler functions ends here
+     */
 
     /**
      * add attributes of stream references in query in section of the query
