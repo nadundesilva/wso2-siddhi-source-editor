@@ -21,49 +21,14 @@
  *  This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
  **/
 (function () {
-    // Adding SiddhiEditor to global scope
+    var SiddhiEditor = window.SiddhiEditor || {};
     window.SiddhiEditor = SiddhiEditor;
-
-    // Finding the base url of the plugin
-    var scripts = document.getElementsByTagName("script");
-    // Get "src" attribute of the <script> tag for the current file
-    // Last tag in the array since tags after that are not yet added to it
-    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
-    SiddhiEditor.baseURL =
-        relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/siddhi-editor.js".length);
-
-    SiddhiEditor.serverURL = "http://localhost:8080/";
-    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
-
-    /*
-     * Used in separating statements
-     * Update this map to define how the statements are separated
-     */
-    SiddhiEditor.statementStartToEndKeywordMap = {
-        "@": "\\)",
-        "define": ";",
-        "from": ";",
-        "partition": "end\\s*;",
-        "/\\*": "\\*/",
-        "--": "[\r\n]"
-    };
+    var constants = SiddhiEditor.constants || {};
+    SiddhiEditor.constants = constants;
 
     /*
      * Annotations, Annotation Names and relevant tokens
      */
-    var ACE_CONSTANT = {
-        SNIPPET_MANAGER: "ace/snippets",
-        LANG_TOOLS: "ace/ext/language_tools",
-        SIDDHI_MODE: "ace/mode/siddhi",
-        DEFAULT_THEME: "ace/theme/crimson_editor",
-        ACE_RANGE: "ace/range",
-        LANG_LIB: "ace/lib/lang"
-    };
-    var SIDDHI_EDITOR_CONSTANT = {
-        ROOT: SiddhiEditor.baseURL + "js/",
-        TOKEN_TOOLTIP: "token-tooltip",
-        COMPLETION_ENGINE: "completion-engine"
-    };
     var ANTLR_CONSTANT = {
         ROOT: SiddhiEditor.baseURL + "js/antlr/",
         SYNTAX_ERROR_LISTENER: "SyntaxErrorListener",
@@ -83,24 +48,15 @@
     var DataPopulationListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_DATA_POPULATION_LISTENER).DataPopulationListener;
     var TokenToolTipUpdateListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER).TokenToolTipUpdateListener;
     var SyntaxErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SYNTAX_ERROR_LISTENER).SyntaxErrorListener;
-    var TokenTooltip = require(SIDDHI_EDITOR_CONSTANT.ROOT + SIDDHI_EDITOR_CONSTANT.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
-    var langTools = ace.require(ACE_CONSTANT.LANG_TOOLS);                                       // Required for auto completion
-
-    /*
-     * Loading modules to be used by all the components
-     */
-    SiddhiEditor.SnippetManager = ace.require(ACE_CONSTANT.SNIPPET_MANAGER).snippetManager;     // Required for changing the snippets used
-    SiddhiEditor.Range = ace.require(ACE_CONSTANT.ACE_RANGE).Range;                             // Required for extracting part of the query
-    SiddhiEditor.lang = ace.require(ACE_CONSTANT.LANG_LIB);
-    SiddhiEditor.CompletionEngine = require(SIDDHI_EDITOR_CONSTANT.ROOT +
-        SIDDHI_EDITOR_CONSTANT.COMPLETION_ENGINE).CompletionEngine;
+    var TokenTooltip = ace.require(constants.ace.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
+    var langTools = ace.require(constants.ace.LANG_TOOLS);                                       // Required for auto completion
 
     /*
      * Map for completion list styles
      * Update this map to update the styles applied to the completion list popup items
      */
     var completionTypeToStyleMap = {};
-    completionTypeToStyleMap[SiddhiEditor.CompletionEngine.constants.SNIPPETS] = "font-style: italic;";
+    completionTypeToStyleMap[constants.SNIPPETS] = "font-style: italic;";
 
     /*
      * Generating the displayNameToStyleMap from completionTypeToStyleMap
@@ -109,7 +65,7 @@
     var displayNameToStyleMap = {};
     for (var completionType in completionTypeToStyleMap) {
         if (completionTypeToStyleMap.hasOwnProperty(completionType)) {
-            displayNameToStyleMap[SiddhiEditor.CompletionEngine.constants.typeToDisplayNameMap[completionType]] =
+            displayNameToStyleMap[constants.typeToDisplayNameMap[completionType]] =
                 completionTypeToStyleMap[completionType];
         }
     }
@@ -125,7 +81,7 @@
      * @constructor
      * @param {Object} config The configuration object to be used in the initialization
      */
-    function SiddhiEditor(config) {
+    SiddhiEditor.init = function(config) {
         var self = this;
         var aceEditor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
@@ -134,8 +90,8 @@
         aceEditor.setReadOnly(config.readOnly);
 
         // Setting the editor options
-        aceEditor.session.setMode(ACE_CONSTANT.SIDDHI_MODE);   // Language mode located at ace-editor/mode-siddhi.js
-        aceEditor.setTheme(config.theme ? "ace/theme/" + config.theme : ACE_CONSTANT.DEFAULT_THEME);
+        aceEditor.session.setMode(constants.ace.SIDDHI_MODE);   // Language mode located at ace-editor/mode-siddhi.js
+        aceEditor.setTheme(config.theme ? "ace/theme/" + config.theme : constants.ace.DEFAULT_THEME);
         aceEditor.getSession().setUseWrapMode(true);
         aceEditor.getSession().setTabSize(4);
         aceEditor.getSession().setUseSoftTabs(true);

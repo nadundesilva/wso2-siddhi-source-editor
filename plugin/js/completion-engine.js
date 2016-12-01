@@ -14,44 +14,14 @@
  * limitations under the License.
  */
 
+(function () {
+
 "use strict";   // JS strict mode
 
-/*
- * Constants used by the engine
- */
-var constants = {
-    FUNCTIONS: "functions",
-    STREAM_PROCESSORS: "streamProcessors",
-    WINDOW_PROCESSORS: "windowProcessors",
-    STREAMS: "streams",
-    EVENT_TABLES: "eventTables",
-    TRIGGERS: "eventTriggers",
-    WINDOWS: "eventWindows",
-    EVAL_SCRIPTS: "evalScripts",
-    ATTRIBUTES: "attributes",
-    LOGICAL_OPERATORS: "logicalOperators",
-    DATA_TYPES: "dataTypes",
-    SNIPPETS: "snippet",
-    SNIPPET_SIDDHI_CONTEXT: "siddhi"        // Context provided to the snippet manager to register the snippets
-};
-CompletionEngine.constants = constants;
-
-/*
- * Names displayed in the editor
- */
-constants.typeToDisplayNameMap = {};
-constants.typeToDisplayNameMap[constants.FUNCTIONS] = "Function";
-constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS] = "Stream Processor";
-constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS] = "Window Processor";
-constants.typeToDisplayNameMap[constants.STREAMS] = "Stream";
-constants.typeToDisplayNameMap[constants.EVENT_TABLES] = "Event Table";
-constants.typeToDisplayNameMap[constants.TRIGGERS] = "Event Trigger";
-constants.typeToDisplayNameMap[constants.WINDOWS] = "Event Window";
-constants.typeToDisplayNameMap[constants.EVAL_SCRIPTS] = "Eval Script";
-constants.typeToDisplayNameMap[constants.ATTRIBUTES] = "Attribute";
-constants.typeToDisplayNameMap[constants.LOGICAL_OPERATORS] = "Logical Operator";
-constants.typeToDisplayNameMap[constants.DATA_TYPES] = "Data Type";
-constants.typeToDisplayNameMap[constants.SNIPPETS] = "Snippet";
+var SiddhiEditor = window.SiddhiEditor || {};
+window.SiddhiEditor = SiddhiEditor;
+var constants = SiddhiEditor.constants || {};
+SiddhiEditor.constants = constants;
 
 /*
  * Suggestion lists used by the engine
@@ -1883,4 +1853,6 @@ function generateSnippetFromProcessorMetaData(processorMetaData) {
     return snippet;
 }
 
-exports.CompletionEngine = CompletionEngine;
+SiddhiEditor.CompletionEngine = CompletionEngine;
+
+})();

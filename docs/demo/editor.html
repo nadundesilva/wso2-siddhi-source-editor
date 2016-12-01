@@ -38,14 +38,17 @@
 
 <script src="../../plugin/lib/ace-editor/ace.js"></script>
 <script src="../../plugin/lib/ace-editor/ext-language_tools.js"></script>
+<script src="../../plugin/js/token-tooltip.js"></script>
 
+<script src="../../plugin/js/siddhi-editor-helper.js"></script>
+<script src="../../plugin/js/completion-engine.js"></script>
 <script src="../../plugin/js/siddhi-editor.js"></script>
 
 <pre id="editor"></pre>
 
 <script type="text/javascript">
     jQuery(document).ready(function () {
-        new SiddhiEditor({
+        SiddhiEditor.init({
             divID: "editor",
             realTimeValidation: true,
             autoCompletion: true
