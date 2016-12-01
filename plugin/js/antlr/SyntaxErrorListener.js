@@ -16,7 +16,7 @@
 
 "use strict";   // JS strict mode
 
-var ErrorListener = require("../../lib/antlr4-js-runtime/error/ErrorListener").ErrorListener;
+var ErrorListener = require("../antlr4-js-runtime/error/ErrorListener").ErrorListener;
 
 /**
  * The Syntax Error Listener prototype constructor

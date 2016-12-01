@@ -72,7 +72,7 @@
         SIDDHI_PARSER: "gen/SiddhiQLParser",
         SIDDHI_LEXER: "gen/SiddhiQLLexer"
     };
-    var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "lib/antlr4-js-runtime/index";
+    var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "js/antlr4-js-runtime/index";
 
     /*
      * Loading modules to be used inside the main siddhi editor js file
