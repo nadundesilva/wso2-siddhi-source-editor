@@ -466,7 +466,7 @@ function CompletionEngine() {
 
         // Getting the editor text from the start of the last statement before the cursor to the cursor position
         var editorText = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
-            row: lastStatement.line,
+            row: 0,
             column: 0
         }, cursorPosition));
 

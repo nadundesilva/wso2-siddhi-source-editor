@@ -26,28 +26,6 @@
     var constants = SiddhiEditor.constants || {};
     SiddhiEditor.constants = constants;
 
-    /*
-     * Annotations, Annotation Names and relevant tokens
-     */
-    var ANTLR_CONSTANT = {
-        ROOT: SiddhiEditor.baseURL + "js/antlr/",
-        SYNTAX_ERROR_LISTENER: "SyntaxErrorListener",
-        SIDDHI_DATA_POPULATION_LISTENER: "DataPopulationListener",
-        SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER: "TokenToolTipUpdateListener",
-        SIDDHI_PARSER: "gen/SiddhiQLParser",
-        SIDDHI_LEXER: "gen/SiddhiQLLexer"
-    };
-    var ANTLR_RUNTIME_INDEX = SiddhiEditor.baseURL + "js/antlr4-js-runtime/index";
-
-    /*
-     * Loading modules to be used inside the main siddhi editor js file
-     */
-    var antlr4 = require(ANTLR_RUNTIME_INDEX);                                                                          // ANTLR4 JS runtime
-    var SiddhiQLLexer = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_LEXER).SiddhiQLLexer;
-    var SiddhiQLParser = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_PARSER).SiddhiQLParser;
-    var DataPopulationListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_DATA_POPULATION_LISTENER).DataPopulationListener;
-    var TokenToolTipUpdateListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER).TokenToolTipUpdateListener;
-    var SyntaxErrorListener = require(ANTLR_CONSTANT.ROOT + ANTLR_CONSTANT.SYNTAX_ERROR_LISTENER).SyntaxErrorListener;
     var TokenTooltip = ace.require(constants.ace.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
     var langTools = ace.require(constants.ace.LANG_TOOLS);                                       // Required for auto completion
 
@@ -159,6 +137,8 @@
             }
         });
 
+        var siddhiWorker = new SiddhiWorker(new MessageHandler(self));
+
         /**
          * Returns the ace editor object
          * Can be used for getting the ace editor object and making custom changes
@@ -221,47 +201,29 @@
             self.state.semanticErrorList = [];
             self.state.syntaxErrorList = [];
 
-            // Following code segment parse the input query using antlr4's parser and lexer
-            var errorListener = new SyntaxErrorListener(self);
             var editorText = aceEditor.getValue().trim();          // Input text
-            var txt = new antlr4.InputStream(editorText);       // Input stream
-            var lexer = new SiddhiQLLexer(txt);                 // Generating lexer
-            lexer._listeners = [];
-            lexer._listeners.push(errorListener);
-            var tokens = new antlr4.CommonTokenStream(lexer);   // Generated a token stream
-            var parser = new SiddhiQLParser(tokens);            // Using the token stream , generate the parser
-            parser._listeners = [];
-            parser._listeners.push(errorListener);
-            parser.buildParseTrees = true;
 
-            // Syntax errors in parsing are stored in  editor.state.syntaxErrorList
-            var tree = parser.parse();
+            siddhiWorker.onEditorChange(editorText);
 
-            // Adding the syntax errors identified into the editor gutter
-            aceEditor.session.setAnnotations(self.state.syntaxErrorList);
-
-            var dataPopulationListener = new DataPopulationListener(self);
-            antlr4.tree.ParseTreeWalker.DEFAULT.walk(dataPopulationListener, tree);
-
-            if (parser._syntaxErrors == 0 && config.realTimeValidation && self.state.previousParserTree &&
-                self.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
-                // If there are no syntax errors and there is a change in parserTree
-                // check for semantic errors if there is no change in the query within 3sec period
-                // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
-                setTimeout(function () {
-                    if (Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
-                        // Updating the token tooltips using the data available
-                        // Some data that was intended to be fetched from the server might be missing
-                        updateTokenToolTips(tree);
-
-                        // Check for semantic errors by sending a validate request to the server
-                        checkForSemanticErrors();
-                    }
-                }, SiddhiEditor.serverSideValidationDelay);
-            }
-
-            self.state.previousParserTree = tree;     // Save the current parser tree
-            self.state.lastEdit = Date.now();         // Save user's last edit time
+            // if (parser._syntaxErrors == 0 && config.realTimeValidation && self.state.previousParserTree &&
+            //     self.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
+            //     // If there are no syntax errors and there is a change in parserTree
+            //     // check for semantic errors if there is no change in the query within 3sec period
+            //     // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
+            //     setTimeout(function () {
+            //         if (Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+            //             // Updating the token tooltips using the data available
+            //             // Some data that was intended to be fetched from the server might be missing
+            //             updateTokenToolTips(tree);
+            //
+            //             // Check for semantic errors by sending a validate request to the server
+            //             checkForSemanticErrors();
+            //         }
+            //     }, SiddhiEditor.serverSideValidationDelay);
+            // }
+            //
+            // self.state.previousParserTree = tree;     // Save the current parser tree
+            // self.state.lastEdit = Date.now();         // Save user's last edit time
         }
 
         /**
@@ -387,198 +349,76 @@
         }
 
         return self;
+    };
+
+    function SiddhiWorker(messageHandler) {
+        var self = this;
+        var worker;
+
+        self.restart = function () {
+            if (worker) {
+                worker.terminate();
+            }
+            worker = new Worker(SiddhiEditor.baseURL + "js/antlr-worker.js");
+            self.init();
+        };
+
+        self.init = function() {
+            worker.postMessage(JSON.stringify({
+                type: constants.worker.INIT,
+                data: {
+                    antlr: constants.antlr,
+                    worker: constants.worker
+                }
+            }));
+
+            worker.addEventListener('message', function (event) {
+                messageHandler.handle(JSON.parse(event.data));
+            });
+        };
+
+        self.onEditorChange = function (editorText) {
+            worker.postMessage(JSON.stringify({
+                type: constants.worker.EDITOR_CHANGE_EVENT,
+                data: editorText
+            }));
+        };
+
+        self.generateTokenTooltips = function () {
+            worker.postMessage(JSON.stringify({
+                type: constants.worker.GENERATE_TOKEN_TOOLTIP
+            }));
+        };
+
+        self.restart();
+        return self;
     }
 
-    /**
-     * Utils used by the SiddhiEditor
-     */
-    SiddhiEditor.utils = (function () {
-        var self = {};
+    function MessageHandler(editor) {
+        var handler = {};
+        var messageHandlerMap = {};
 
-        /**
-         * Word wrap the the string with a maxWidth for each line
-         *
-         * @param {string} str The string to be word wrapped
-         * @param {int} maxWidth The maximum width for the lines
-         * @return {string} The word wrapped string
-         */
-        self.wordWrap = function (str, maxWidth) {
-            for (var i = maxWidth; i < str.length;) {
-                if (/\s/.test(str.charAt(i))) {
-                    str = str.substring(0, i) + "\n" + str.substring(i + 1);
-                    i += maxWidth + 1;
-                } else {
-                    for (var j = i - 1; j > i - maxWidth; j--) {
-                        if (/\s/.test(str.charAt(j))) {
-                            str = str.substring(0, j) + "\n" + str.substring(j + 1);
-                            i = j + maxWidth + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-            return str;
+        messageHandlerMap[constants.worker.PARSE_TREE_WALKING_COMPLETION] = updateSyntaxErrorList;
+        messageHandlerMap[constants.worker.DATA_POPULATION_COMPLETION] = updateCompletionEngineData;
+
+        handler.handle = function (message) {
+            messageHandlerMap[message.type](message.data);
         };
 
-        /**
-         * Generate description html string from meta data for processor
-         * Descriptions are intended to be shown in the tooltips for completions
-         *
-         * @param {Object} metaData Meta data object containing parameters, return and description
-         * @return {string} html string of the description generated from the meta data provided
-         */
-        self.generateDescriptionForProcessor = function (metaData) {
-            var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
-            if (metaData.description) {
-                description += metaData.description ? "<p>" + SiddhiEditor.utils.wordWrap(metaData.description, 100) + "</p>" : "<br>";
-            }
-            if (metaData.parameters) {
-                description += "Parameters - ";
-                if (metaData.parameters.length > 0) {
-                    description += "<ul>";
-                    for (var j = 0; j < metaData.parameters.length; j++) {
-                        if (metaData.parameters[j].multiple) {
-                            for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
-                                description += "<li>" +
-                                    metaData.parameters[j].multiple[k].name +
-                                    (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
-                                    (metaData.parameters[j].multiple[k].type.length > 0 ?
-                                        metaData.parameters[j].multiple[k].type.join(" | ").toUpperCase() :
-                                        "")
-                                    + "</li>";
-                            }
-                        } else {
-                            description += "<li>" +
-                                metaData.parameters[j].name +
-                                (metaData.parameters[j].optional ? " (optional)" : "") +
-                                (metaData.parameters[j].type.length > 0 ?
-                                " - " + metaData.parameters[j].type.join(" | ").toUpperCase() :
-                                    "") +
-                                "</li>";
-                        }
-                    }
-                    description += "</ul>";
-                } else {
-                    description += "none<br><br>";
-                }
-            }
-            if (metaData.returnType) {
-                description += "Return Type - ";
-                if (metaData.returnType.length > 0) {
-                    description += metaData.returnType.join(" | ").toUpperCase();
-                } else {
-                    description += "none";
-                }
-            }
-            description += "</div>";
-            return description;
-        };
+        function updateSyntaxErrorList (data) {
+            editor.state.syntaxErrorList = data;
+        }
 
-        /**
-         * Generate description html string from meta data for eval script
-         * Descriptions are intended to be shown in the tooltips for completions
-         *
-         * @param {string} evalScriptName Name of the eval script for which the description is generated
-         * @param {Object} metaData Meta data object containing parameters, return and description
-         * @return {string} html string of the description generated from the meta data provided
-         */
-        self.generateDescriptionForEvalScript = function (evalScriptName, metaData) {
-            return "<div><strong>Eval Script</strong> - " + evalScriptName + "<br><ul>" +
-                "<li>Language - " + metaData.language + "</li>" +
-                "<li>Return Type - " + metaData.returnType.join(" | ").toUpperCase() + "</li>" +
-                "<li>Function Body -" + "<br><br>" + metaData.functionBody + "</li>" +
-                "</ul></div>";
-        };
+        function updateCompletionEngineData (data) {
+            editor.completionEngine.streamsList = data.completionData.streamsList;
+            editor.completionEngine.eventTablesList = data.completionData.eventTablesList;
+            editor.completionEngine.eventTriggersList = data.completionData.eventTriggersList;
+            editor.completionEngine.evalScriptsList = data.completionData.evalScriptsList;
+            editor.completionEngine.eventWindowsList = data.completionData.eventWindowsList;
+            editor.completionEngine.incompleteData = data.incompleteData;
+            editor.completionEngine.statementsList = data.statementsList;
+        }
 
-        /**
-         * Generate description html string from stream/table meta data
-         * Descriptions are intended to be shown in the tooltips for completions
-         *
-         * @param {string} type Type of the source. Should be one of ["Stream", "Event Table"]
-         * @param {string} sourceName Name of the stream/table for which the description is generated
-         * @param {Object} attributes attributes of the stream/table
-         * @return {string} html string of the description generated from the meta data provided
-         */
-        self.generateDescriptionForStreamOrTable = function (type, sourceName, attributes) {
-            var description = "<div><strong>" + type + "</strong> - " + sourceName + "<br>";
-            if (attributes && Object.keys(attributes).length > 0) {
-                description += "<ul>";
-                for (var attribute in attributes) {
-                    if (attributes.hasOwnProperty(attribute)) {
-                        description += "<li>" +
-                            attribute + (attributes[attribute] ? " - " + attributes[attribute].toUpperCase() : "") +
-                            "</li>";
-                    }
-                }
-                description += "</ul>";
-            }
-            description += "</div>";
-            return description;
-        };
-
-        /**
-         * Generate description html string from trigger meta data
-         * Descriptions are intended to be shown in the tooltips for completions
-         *
-         * @param {string} triggerName Name of the trigger for which the description is generated
-         * @param {string} metaData metaData of the trigger
-         * @return {string} html string of the description generated from the meta data provided
-         */
-        self.generateDescriptionForTrigger = function (triggerName, metaData) {
-            return "<div><strong>Trigger</strong> - " + triggerName + "<br><br>" +
-                metaData.type + " - " + metaData.time + "</div>";
-        };
-
-        /**
-         * Generate description html string from window meta data
-         * Descriptions are intended to be shown in the tooltips for completions
-         *
-         * @param {string} windowName Name of the window for which the description is generated
-         * @param {object} metaData metaData of the window
-         * @return {string} html string of the description generated from the meta data provided
-         */
-        self.generateDescriptionForWindow = function (windowName, metaData) {
-            var description = "<div><strong>Window</strong> - " + windowName + "<br><br>";
-            if (metaData.attributes && Object.keys(metaData.attributes).length > 0) {
-                description += "Attributes -<ul>";
-                for (var attribute in metaData.attributes) {
-                    if (metaData.attributes.hasOwnProperty(attribute)) {
-                        description += "<li>" +
-                            attribute + (metaData.attributes[attribute] ? " - " + metaData.attributes[attribute].toUpperCase() : "") +
-                            "</li>";
-                    }
-                }
-                description += "</ul>";
-            }
-            if (metaData.functionOperation) {
-                description += "Window - " + metaData.functionOperation + "<br><br>";
-            }
-            if (metaData.output) {
-                description += "Output - " + metaData.output + "<br><br>";
-            }
-            if (metaData.functionOperation &&
-                SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
-                var window =
-                    SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors[windowName];
-                if (window) {
-                    description += "Description of the window used - <br><br>" +
-                        "<div style='margin-left: 25px;'>" + window.description + "</div>";
-                }
-            }
-            description += "</div>";
-            return description;
-        };
-
-        /**
-         * Get the text in the parse tree relevant for the ANTLR context provided
-         *
-         * @param ctx The context for which the text is returned
-         * @return {string} The text relevant to the context provided
-         */
-        self.getTextFromANTLRCtx = function (ctx) {
-            return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
-        };
-
-        return self;
-    })();
+        return handler;
+    }
 })();

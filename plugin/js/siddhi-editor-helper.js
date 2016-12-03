@@ -57,6 +57,18 @@
     constants.typeToDisplayNameMap[constants.SNIPPETS] = "Snippet";
 
     /*
+     * Finding the base url of the plugin
+     * Get "src" attribute of the <script> tag for the current file
+     * Last tag in the array since tags after that are not yet added to it
+     */
+    var scripts = document.getElementsByTagName("script");
+    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
+    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/siddhi-editor-helper.js".length);
+
+    SiddhiEditor.serverURL = "http://localhost:8080/";
+    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
+
+    /*
      * Annotations, Annotation Names and relevant tokens
      */
     constants.ace = {
@@ -70,23 +82,32 @@
     };
 
     /*
+     * Annotations, Annotation Names and relevant tokens
+     */
+    constants.antlr = {
+        INDEX: "antlr4-js-runtime/index",
+        ROOT: "antlr/",
+        SYNTAX_ERROR_LISTENER: "SyntaxErrorListener",
+        SIDDHI_DATA_POPULATION_LISTENER: "DataPopulationListener",
+        SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER: "TokenToolTipUpdateListener",
+        SIDDHI_PARSER: "gen/SiddhiQLParser",
+        SIDDHI_LEXER: "gen/SiddhiQLLexer"
+    };
+
+    constants.worker = {
+        INIT: "INIT",
+        EDITOR_CHANGE_EVENT: "EDITOR_CHANGE_EVENT",
+        GENERATE_TOKEN_TOOLTIP: "GENERATE_TOKEN_TOOLTIP",
+        PARSE_TREE_WALKING_COMPLETION: "PARSE_TREE_WALKING_COMPLETION",
+        DATA_POPULATION_COMPLETION: "DATA_POPULATION_COMPLETION"
+    };
+
+    /*
      * Loading modules to be used by all the components
      */
     SiddhiEditor.SnippetManager = ace.require(constants.ace.SNIPPET_MANAGER).snippetManager;    // Required for changing the snippets used
     SiddhiEditor.Range = ace.require(constants.ace.ACE_RANGE).Range;                            // Required for extracting part of the query
     SiddhiEditor.lang = ace.require(constants.ace.LANG_LIB);
-
-    /*
-     * Finding the base url of the plugin
-     * Get "src" attribute of the <script> tag for the current file
-     * Last tag in the array since tags after that are not yet added to it
-     */
-    var scripts = document.getElementsByTagName("script");
-    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
-    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/siddhi-editor-helper.js".length);
-
-    SiddhiEditor.serverURL = "http://localhost:8080/";
-    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
 
     SiddhiEditor.constants = constants;
 })();

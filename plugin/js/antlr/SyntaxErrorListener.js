@@ -23,24 +23,23 @@ var ErrorListener = require("../antlr4-js-runtime/error/ErrorListener").ErrorLis
  * Inherits from ErrorListener in the antlr4 JS runtime
  *
  * @constructor
- * @param editor The editor for which this listener is listening for errors
+ * @param walker The walker for which this listener is listening for errors
  */
-function SyntaxErrorListener(editor) {
+function SyntaxErrorListener(walker) {
     ErrorListener.call(this);
-    this.editor = editor;
+    this.walker = walker;
     return this;
 }
 SyntaxErrorListener.prototype = Object.create(ErrorListener.prototype);
 SyntaxErrorListener.prototype.constructor = SyntaxErrorListener;
 
 SyntaxErrorListener.prototype.syntaxError = function (recognizer, offendingSymbol, line, column, msg, e) {
-    if (this.editor.realTimeValidation)
-        this.editor.state.syntaxErrorList.push({
-            row: line - 1,
-            column: column,
-            text: msg,
-            type: "error"
-        });
+    this.walker.syntaxErrorList.push({
+        row: line - 1,
+        column: column,
+        text: msg,
+        type: "error"
+    });
 };
 
 exports.SyntaxErrorListener = SyntaxErrorListener;

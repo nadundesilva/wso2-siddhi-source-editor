@@ -23,11 +23,11 @@ var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
  * Inherits from SiddhiQLListener generated from SiddhiQL grammar using ANTLR4
  *
  * @constructor
- * @param editor The editor for which this listener is populating data
+ * @param walker The editor for which this listener is populating data
  */
-function DataPopulationListener(editor) {
+function DataPopulationListener(walker) {
     SiddhiQLListener.call(this);     // inherit default listener
-    this.editor = editor;
+    this.walker = walker;
     return this;
 }
 DataPopulationListener.prototype = Object.create(SiddhiQLListener.prototype);
@@ -45,12 +45,12 @@ DataPopulationListener.prototype.exitDefinition_stream = function (ctx) {
         attributes[SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_name(i))] = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_type(i));
         i++;
     }
-    this.editor.completionEngine.streamsList[streamName] = {
+    this.walker.completionData.streamsList[streamName] = {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", streamName, attributes)
     };
 
-    addStatement(this.editor, ctx, ";");
+    addStatement(this.walker, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
@@ -61,12 +61,12 @@ DataPopulationListener.prototype.exitDefinition_table = function (ctx) {
         attributes[SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_name(i))] = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.attribute_type(i));
         i++;
     }
-    this.editor.completionEngine.eventTablesList[tableName] = {
+    this.walker.completionData.eventTablesList[tableName] = {
         attributes: attributes,
         description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Event Table", tableName, attributes)
     };
 
-    addStatement(this.editor, ctx, ";");
+    addStatement(this.walker, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
@@ -79,10 +79,10 @@ DataPopulationListener.prototype.exitDefinition_trigger = function (ctx) {
     }
     if (metaData) {
         metaData.description = SiddhiEditor.utils.generateDescriptionForTrigger(triggerName, metaData);
-        this.editor.completionEngine.eventTriggersList[triggerName] = metaData;
+        this.walker.completionData.eventTriggersList[triggerName] = metaData;
     }
 
-    addStatement(this.editor, ctx, ";");
+    addStatement(this.walker, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_function = function (ctx) {
@@ -93,9 +93,9 @@ DataPopulationListener.prototype.exitDefinition_function = function (ctx) {
         functionBody: SiddhiEditor.utils.getTextFromANTLRCtx(ctx.function_body())
     };
     metaData.description = SiddhiEditor.utils.generateDescriptionForEvalScript(evalScriptName, metaData);
-    this.editor.completionEngine.evalScriptsList[evalScriptName] = metaData;
+    this.walker.completionData.evalScriptsList[evalScriptName] = metaData;
 
-    addStatement(this.editor, ctx, ";");
+    addStatement(this.walker, ctx, ";");
 };
 
 DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
@@ -115,9 +115,9 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
     }
     metaData.description =
         SiddhiEditor.utils.generateDescriptionForWindow(windowName, metaData);
-    this.editor.completionEngine.eventWindowsList[windowName] = metaData;
+    this.walker.completionData.eventWindowsList[windowName] = metaData;
 
-    addStatement(this.editor, ctx, ";");
+    addStatement(this.walker, ctx, ";");
 };
 
 /*
@@ -129,7 +129,7 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
         var outputTarget = SiddhiEditor.utils.getTextFromANTLRCtx(ctx.query_output().target());
         if (ctx.query_section()) {
             // Updating the data for streams inserted into without defining if select section is available
-            if (!this.editor.completionEngine.eventTablesList[outputTarget] && !this.editor.completionEngine.streamsList[outputTarget] && !this.editor.completionEngine.eventWindowsList[outputTarget]) {
+            if (!this.walker.completionData.eventTablesList[outputTarget] && !this.walker.completionData.streamsList[outputTarget] && !this.walker.completionData.eventWindowsList[outputTarget]) {
                 // Creating the attributes to reference map
                 var querySelectionCtx = ctx.query_section();
                 var attributes = {};
@@ -144,7 +144,7 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                     }
                     i++;
                 }
-                this.editor.completionEngine.streamsList[outputTarget] = {
+                this.walker.completionData.streamsList[outputTarget] = {
                     attributes: attributes,
                     description: SiddhiEditor.utils.generateDescriptionForStreamOrTable(
                         (ctx.query_output().target().source().inner ? "Inner " : "") + "Stream", outputTarget, attributes
@@ -152,28 +152,28 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                 };
             }
         }
-        this.editor.completionEngine.incompleteData.streams.push(outputTarget);
+        this.walker.incompleteData.streams.push(outputTarget);
     }
 };
 
 DataPopulationListener.prototype.exitPlan_annotation = function (ctx) {
-    addStatement(this.editor, ctx);
+    addStatement(this.walker, ctx);
 };
 
 DataPopulationListener.prototype.exitExecution_element = function (ctx) {
-    addStatement(this.editor, ctx, ";");
+    addStatement(this.walker, ctx, ";");
 };
 
 /**
  * Add a statement to the editor.completionEngine.statementsList array
  * endOfStatementToken is added at the end of the statement if provided
  *
- * @param editor The editor which holds the statements list to which the statement is added
+ * @param walker The editor which holds the statements list to which the statement is added
  * @param ctx The ANTLR context which will be used in getting the statement
  * @param [endOfStatementToken] The token to be appended at the end of the statement
  */
-function addStatement(editor, ctx, endOfStatementToken) {
-    editor.completionEngine.statementsList.push({
+function addStatement(walker, ctx, endOfStatementToken) {
+    walker.statementsList.push({
         statement: SiddhiEditor.utils.getTextFromANTLRCtx(ctx)  + (endOfStatementToken ? endOfStatementToken : ""),
         line:ctx.start.line - 1
     });
