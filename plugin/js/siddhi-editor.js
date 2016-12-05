@@ -59,7 +59,7 @@
      * @constructor
      * @param {Object} config The configuration object to be used in the initialization
      */
-    SiddhiEditor.init = function(config) {
+    SiddhiEditor.init = function (config) {
         var self = this;
         var aceEditor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
@@ -204,27 +204,27 @@
             var editorText = aceEditor.getValue().trim();          // Input text
 
             siddhiWorker.onEditorChange(editorText);
-
-            // if (parser._syntaxErrors == 0 && config.realTimeValidation && self.state.previousParserTree &&
-            //     self.state.previousParserTree.toStringTree(tree, parser) != tree.toStringTree(tree, parser)) {
-            //     // If there are no syntax errors and there is a change in parserTree
-            //     // check for semantic errors if there is no change in the query within 3sec period
-            //     // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
-            //     setTimeout(function () {
-            //         if (Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
-            //             // Updating the token tooltips using the data available
-            //             // Some data that was intended to be fetched from the server might be missing
-            //             updateTokenToolTips(tree);
-            //
-            //             // Check for semantic errors by sending a validate request to the server
-            //             checkForSemanticErrors();
-            //         }
-            //     }, SiddhiEditor.serverSideValidationDelay);
-            // }
-            //
-            // self.state.previousParserTree = tree;     // Save the current parser tree
-            // self.state.lastEdit = Date.now();         // Save user's last edit time
         }
+
+        self.startCheckForSemanticErrorsTimer = function () {
+            if (config.realTimeValidation) {
+                // If there are no syntax errors and there is a change in parserTree
+                // check for semantic errors if there is no change in the query within 3sec period
+                // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
+                setTimeout(function () {
+                    if (Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                        // Updating the token tooltips using the data available
+                        // Some data that was intended to be fetched from the server might be missing
+                        siddhiWorker.generateTokenTooltips();
+
+                        // Check for semantic errors by sending a validate request to the server
+                        checkForSemanticErrors();
+                    }
+                }, SiddhiEditor.serverSideValidationDelay);
+            }
+
+            self.state.lastEdit = Date.now();         // Save user's last edit time
+        };
 
         /**
          * This method send server calls to check the semantic errors
@@ -266,7 +266,8 @@
 
                         // Updating token tooltips
                         self.completionEngine.clearIncompleteDataLists();
-                        updateTokenToolTips(self.state.previousParserTree);
+
+                        siddhiWorker.generateTokenTooltips();
                     } else {
                         /*
                          * Error found in execution plan
@@ -319,16 +320,6 @@
         }
 
         /**
-         * Update the token tool tips
-         *
-         * @private
-         */
-        function updateTokenToolTips(parseTree) {
-            var parserListener = new TokenToolTipUpdateListener(self);
-            antlr4.tree.ParseTreeWalker.DEFAULT.walk(parserListener, parseTree);
-        }
-
-        /**
          * Submit the execution plan to server for semantic error checking
          * Also fetched the incomplete data from the server for the completion engine
          *
@@ -363,13 +354,10 @@
             self.init();
         };
 
-        self.init = function() {
+        self.init = function () {
             worker.postMessage(JSON.stringify({
                 type: constants.worker.INIT,
-                data: {
-                    antlr: constants.antlr,
-                    worker: constants.worker
-                }
+                data: constants
             }));
 
             worker.addEventListener('message', function (event) {
@@ -395,21 +383,23 @@
     }
 
     function MessageHandler(editor) {
-        var handler = {};
+        var handler = this;
         var messageHandlerMap = {};
+        var tokenTooltipUpdater = new TokenTooltipUpdater(editor);
 
         messageHandlerMap[constants.worker.PARSE_TREE_WALKING_COMPLETION] = updateSyntaxErrorList;
         messageHandlerMap[constants.worker.DATA_POPULATION_COMPLETION] = updateCompletionEngineData;
+        messageHandlerMap[constants.worker.TOKEN_TOOLTIP_POINT_RECOGNITION_COMPLETION] = updateTokenTooltips;
 
         handler.handle = function (message) {
             messageHandlerMap[message.type](message.data);
         };
 
-        function updateSyntaxErrorList (data) {
+        function updateSyntaxErrorList(data) {
             editor.state.syntaxErrorList = data;
         }
 
-        function updateCompletionEngineData (data) {
+        function updateCompletionEngineData(data) {
             editor.completionEngine.streamsList = data.completionData.streamsList;
             editor.completionEngine.eventTablesList = data.completionData.eventTablesList;
             editor.completionEngine.eventTriggersList = data.completionData.eventTriggersList;
@@ -417,8 +407,106 @@
             editor.completionEngine.eventWindowsList = data.completionData.eventWindowsList;
             editor.completionEngine.incompleteData = data.incompleteData;
             editor.completionEngine.statementsList = data.statementsList;
+            editor.startCheckForSemanticErrorsTimer();
+        }
+
+        function updateTokenTooltips(data) {
+            for (var i = 0; i < data.length; i++) {
+                var tooltipType = data[i].type;
+                var tooltipData = data[i].tooltipData;
+                var row = data[i].row;
+                var column = data[i].column;
+                switch (tooltipType) {
+                    case constants.FUNCTION_OPERATION:
+                        tokenTooltipUpdater.updateFunctionOperationTooltip(tooltipData, row, column);
+                        break;
+                    case constants.SOURCE:
+                        tokenTooltipUpdater.updateSourceTooltip(tooltipData, row, column);
+                        break;
+                    case constants.TRIGGERS:
+                        tokenTooltipUpdater.updateSourceTooltip(tooltipData, row, column);
+                }
+            }
         }
 
         return handler;
+    }
+
+    function TokenTooltipUpdater(editor) {
+        var updater = this;
+
+        updater.updateFunctionOperationTooltip = function (tooltipData, row, column) {
+            var processorName = tooltipData.processorName;
+            var namespace = tooltipData.namespace;
+
+            var snippets;
+            if (namespace) {
+                snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
+
+                // Adding namespace tool tip
+                updateTokenTooltip(editor, row, column, "Extension namespace - " + namespace);
+            } else {
+                snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
+            }
+
+            // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
+            var description;
+            if (snippets) {
+                if (snippets.windowProcessors && snippets.windowProcessors[processorName]) {
+                    description = snippets.windowProcessors[processorName].description;
+                } else if (snippets.streamProcessors && snippets.streamProcessors[processorName]) {
+                    description = snippets.streamProcessors[processorName].description;
+                } else if (snippets.functions && snippets.functions[processorName]) {
+                    description = snippets.functions[processorName].description;
+                } else if (this.editor.completionEngine.evalScriptsList[processorName]) {
+                    description = this.editor.completionEngine.evalScriptsList[processorName].description;
+                }
+            }
+            if (description) {
+                updateTokenTooltip(row, column, description);
+            }
+        };
+
+        updater.updateSourceTooltip = function (tooltipData, row, column) {
+            var sourceName = tooltipData.sourceName;
+            var isInnerStream = tooltipData.isInnerStream;
+            var source;
+
+            if (isInnerStream && editor.completionEngine.streamsList["#" + sourceName]) {
+                source = editor.completionEngine.streamsList["#" + sourceName];
+            } else {
+                if (editor.completionEngine.streamsList[sourceName]) {
+                    source = editor.completionEngine.streamsList[sourceName];
+                } else if (editor.completionEngine.eventTablesList[sourceName]) {
+                    source = editor.completionEngine.eventTablesList[sourceName];
+                } else if (editor.completionEngine.eventWindowsList[sourceName]) {
+                    source = editor.completionEngine.eventWindowsList[sourceName];
+                } else if (editor.completionEngine.eventTriggersList[sourceName]) {
+                    source = editor.completionEngine.eventTriggersList[sourceName];
+                }
+            }
+
+            if (source && source.description) {
+                updateTokenTooltip(row, column, source.description);
+            }
+        };
+
+        updater.updateTriggerTooltip = function (tooltipData, row, column) {
+            var triggerName = tooltipData.triggerName;
+
+            var trigger = editor.completionEngine.eventTriggersList[triggerName];
+            if (trigger && trigger.description) {
+                updateTokenTooltip(row, column, trigger.description);
+            }
+        };
+
+        function updateTokenTooltip(tokenRow, tokenColumn, tooltip) {
+            var token = editor.getAceEditorObject().session.getTokenAt(tokenRow, tokenColumn);
+            if (token) {
+                token.tooltip = tooltip;
+            }
+        }
+
+        return updater;
     }
 })();

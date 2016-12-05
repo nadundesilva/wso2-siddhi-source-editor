@@ -23,7 +23,7 @@ var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
  * Inherits from SiddhiQLListener generated from SiddhiQL grammar using ANTLR4
  *
  * @constructor
- * @param walker The editor for which this listener is populating data
+ * @param walker The walker for which this listener is populating data
  */
 function DataPopulationListener(walker) {
     SiddhiQLListener.call(this);     // inherit default listener
@@ -165,10 +165,10 @@ DataPopulationListener.prototype.exitExecution_element = function (ctx) {
 };
 
 /**
- * Add a statement to the editor.completionEngine.statementsList array
+ * Add a statement to the walker.statementsList array
  * endOfStatementToken is added at the end of the statement if provided
  *
- * @param walker The editor which holds the statements list to which the statement is added
+ * @param walker The walker which holds the statements list to which the statement is added
  * @param ctx The ANTLR context which will be used in getting the statement
  * @param [endOfStatementToken] The token to be appended at the end of the statement
  */
