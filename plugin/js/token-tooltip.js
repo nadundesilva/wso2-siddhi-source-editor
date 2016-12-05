@@ -3,7 +3,7 @@
  * Generates the token tool tips on mouse over
  */
 
-ace.define("ace/token/tooltips", function(require, exports, module) {
+ace.define("ace/token/tooltips", function (require, exports, module) {
 
     "use strict";   // JS strict mode
 

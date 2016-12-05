@@ -26,8 +26,9 @@
     var constants = SiddhiEditor.constants || {};
     SiddhiEditor.constants = constants;
 
-    var TokenTooltip = ace.require(constants.ace.TOKEN_TOOLTIP).TokenTooltip;        // Required for token tooltips
-    var langTools = ace.require(constants.ace.LANG_TOOLS);                                       // Required for auto completion
+    // Loading ace modules required
+    var TokenTooltip = ace.require(constants.ace.TOKEN_TOOLTIP).TokenTooltip;       // Required for token tooltips
+    var langTools = ace.require(constants.ace.LANG_TOOLS);                          // Required for auto completion
 
     /*
      * Map for completion list styles
@@ -137,6 +138,7 @@
             }
         });
 
+        // Starting a new siddhi worker for running antlr tasks
         var siddhiWorker = new SiddhiWorker(new MessageHandler(self));
 
         /**
@@ -159,7 +161,7 @@
         /**
          * Sets the content in the ace editor
          *
-         * @param content Content to set into the ace editor
+         * @param {string} content Content to set into the ace editor
          */
         self.setContent = function (content) {
             aceEditor.setValue(content, 1);
@@ -195,19 +197,18 @@
          * @private
          */
         function editorChangeHandler() {
-            self.completionEngine.clearData();                  // Clear the exiting completion engine data
-
             // Clearing all errors before finding the errors again
             self.state.semanticErrorList = [];
             self.state.syntaxErrorList = [];
-
-            var editorText = aceEditor.getValue().trim();          // Input text
-
-            siddhiWorker.onEditorChange(editorText);
+            siddhiWorker.onEditorChange(aceEditor.getValue().trim());
         }
 
+        /**
+         * Start the timer for checking the semantic errors
+         * After the timer elapses if the user had not typed anything semantic errors will be checked using the server
+         */
         self.startCheckForSemanticErrorsTimer = function () {
-            if (config.realTimeValidation) {
+            if (config.realTimeValidation && self.state.syntaxErrorList.length == 0) {
                 // If there are no syntax errors and there is a change in parserTree
                 // check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
@@ -342,10 +343,22 @@
         return self;
     };
 
+    /**
+     * Siddhi Web Worker wrapper prototype
+     * Handles all ANTLR related processing
+     * Automatically starts up the web worker as well
+     *
+     * @param {MessageHandler} messageHandler Message handler object which will handle all incoming messages from the worker
+     * @return {SiddhiWorker} Siddhi worker instance
+     * @constructor
+     */
     function SiddhiWorker(messageHandler) {
         var self = this;
         var worker;
 
+        /**
+         * Restart the web worker
+         */
         self.restart = function () {
             if (worker) {
                 worker.terminate();
@@ -354,17 +367,29 @@
             self.init();
         };
 
+        /**
+         * Initialize the web worker
+         * Constants are passed into the web worker
+         * Constants are passed in this way because some of the constants are generated values and the generation of which requires the window object
+         */
         self.init = function () {
             worker.postMessage(JSON.stringify({
                 type: constants.worker.INIT,
                 data: constants
             }));
 
+            // Add event receiver to listen to incoming messages from the web worker
             worker.addEventListener('message', function (event) {
                 messageHandler.handle(JSON.parse(event.data));
             });
         };
 
+        /**
+         * Run on editor's change
+         * Send message to the worker to create the parse tree and generate completion engine data
+         *
+         * @param {string} editorText Text in the editor after the change
+         */
         self.onEditorChange = function (editorText) {
             worker.postMessage(JSON.stringify({
                 type: constants.worker.EDITOR_CHANGE_EVENT,
@@ -372,34 +397,63 @@
             }));
         };
 
+        /**
+         * Send message to the worker to start generating token tool tips
+         * The worker will recognize the token tooltip generation points and pass the the relevant data back so that they can be added
+         */
         self.generateTokenTooltips = function () {
             worker.postMessage(JSON.stringify({
                 type: constants.worker.GENERATE_TOKEN_TOOLTIP
             }));
         };
 
-        self.restart();
+        self.restart();     // Starts up the web worker
         return self;
     }
 
+    /**
+     * Message handler prototype
+     * Message handler is used by the siddhi worker
+     *
+     * @param {object} editor The editor object
+     * @return {MessageHandler} Message handler instance
+     * @constructor
+     */
     function MessageHandler(editor) {
         var handler = this;
         var messageHandlerMap = {};
         var tokenTooltipUpdater = new TokenTooltipUpdater(editor);
 
+        // Generating the map from message types to handler functions
         messageHandlerMap[constants.worker.PARSE_TREE_WALKING_COMPLETION] = updateSyntaxErrorList;
         messageHandlerMap[constants.worker.DATA_POPULATION_COMPLETION] = updateCompletionEngineData;
         messageHandlerMap[constants.worker.TOKEN_TOOLTIP_POINT_RECOGNITION_COMPLETION] = updateTokenTooltips;
 
+        /**
+         * Handle an incoming message from the web worker
+         * @param {object} message
+         */
         handler.handle = function (message) {
             messageHandlerMap[message.type](message.data);
         };
 
+        /**
+         * Update the list of syntax errors and add annotations
+         *
+         * @param {object} data Syntax errors data list
+         */
         function updateSyntaxErrorList(data) {
             editor.state.syntaxErrorList = data;
+            editor.getAceEditorObject().session.setAnnotations(data);
         }
 
+        /**
+         * Update the completion engine's data using the data generated by the worker
+         *
+         * @param {object} data Completion engine data generated by the worker
+         */
         function updateCompletionEngineData(data) {
+            editor.completionEngine.clearData();            // Clear the exiting completion engine data
             editor.completionEngine.streamsList = data.completionData.streamsList;
             editor.completionEngine.eventTablesList = data.completionData.eventTablesList;
             editor.completionEngine.eventTriggersList = data.completionData.eventTriggersList;
@@ -410,41 +464,70 @@
             editor.startCheckForSemanticErrorsTimer();
         }
 
+        /**
+         * Update the token tool tips using the data generated by the worker
+         *
+         * @param {object} data Token tool tip points and information for generating token tool tips
+         */
         function updateTokenTooltips(data) {
             for (var i = 0; i < data.length; i++) {
                 var tooltipType = data[i].type;
                 var tooltipData = data[i].tooltipData;
                 var row = data[i].row;
                 var column = data[i].column;
-                switch (tooltipType) {
-                    case constants.FUNCTION_OPERATION:
-                        tokenTooltipUpdater.updateFunctionOperationTooltip(tooltipData, row, column);
-                        break;
-                    case constants.SOURCE:
-                        tokenTooltipUpdater.updateSourceTooltip(tooltipData, row, column);
-                        break;
-                    case constants.TRIGGERS:
-                        tokenTooltipUpdater.updateSourceTooltip(tooltipData, row, column);
-                }
+
+                tokenTooltipUpdater.update(tooltipType, tooltipData, row, column);
             }
         }
 
         return handler;
     }
 
+    /**
+     * Token tooltips generator prototype
+     *
+     * @param {object} editor The editor object
+     * @return {TokenTooltipUpdater} Token tooltip generator instance
+     * @constructor
+     */
     function TokenTooltipUpdater(editor) {
         var updater = this;
 
-        updater.updateFunctionOperationTooltip = function (tooltipData, row, column) {
+        /**
+         * Update the tooltip for the given type using the tool tip data
+         *
+         * @param {string} tooltipType Type of the tool tip to be updated
+         * @param {object} tooltipData Tool tip data from which the tool tip will be generated
+         * @param {int} row The row at which the target token is at
+         * @param {int} column The column at which the target token is at
+         */
+        updater.update = function(tooltipType, tooltipData, row, column) {
+            switch (tooltipType) {
+                case constants.FUNCTION_OPERATION:
+                    updateFunctionOperationTooltip(tooltipData, row, column);
+                    break;
+                case constants.SOURCE:
+                    updateSourceTooltip(tooltipData, row, column);
+                    break;
+                case constants.TRIGGERS:
+                    updateTriggerTooltip(tooltipData, row, column);
+            }
+        };
+
+        /**
+         * Update the tooltip for a function operation
+         *
+         * @param {object} tooltipData Tool tip data to be added. Should contain the function operation name and the namespace
+         * @param {int} row The row at which the target token is at
+         * @param {int} column The column at which the target token is at
+         */
+        function updateFunctionOperationTooltip (tooltipData, row, column) {
             var processorName = tooltipData.processorName;
             var namespace = tooltipData.namespace;
 
             var snippets;
             if (namespace) {
                 snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
-
-                // Adding namespace tool tip
-                updateTokenTooltip(editor, row, column, "Extension namespace - " + namespace);
             } else {
                 snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
             }
@@ -465,9 +548,16 @@
             if (description) {
                 updateTokenTooltip(row, column, description);
             }
-        };
+        }
 
-        updater.updateSourceTooltip = function (tooltipData, row, column) {
+        /**
+         * Update the tooltip for a stream/table/window
+         *
+         * @param {object} tooltipData Tool tip data to be added. Should contain the source name and whether it is an inner stream
+         * @param {int} row The row at which the target token is at
+         * @param {int} column The column at which the target token is at
+         */
+        function updateSourceTooltip(tooltipData, row, column) {
             var sourceName = tooltipData.sourceName;
             var isInnerStream = tooltipData.isInnerStream;
             var source;
@@ -481,25 +571,37 @@
                     source = editor.completionEngine.eventTablesList[sourceName];
                 } else if (editor.completionEngine.eventWindowsList[sourceName]) {
                     source = editor.completionEngine.eventWindowsList[sourceName];
-                } else if (editor.completionEngine.eventTriggersList[sourceName]) {
-                    source = editor.completionEngine.eventTriggersList[sourceName];
                 }
             }
 
             if (source && source.description) {
                 updateTokenTooltip(row, column, source.description);
             }
-        };
+        }
 
-        updater.updateTriggerTooltip = function (tooltipData, row, column) {
+        /**
+         * Update the tooltip for a trigger
+         *
+         * @param {object} tooltipData Tool tip data to be added. Should contain the trigger name
+         * @param {int} row The row at which the target token is at
+         * @param {int} column The column at which the target token is at
+         */
+        function updateTriggerTooltip(tooltipData, row, column) {
             var triggerName = tooltipData.triggerName;
 
             var trigger = editor.completionEngine.eventTriggersList[triggerName];
             if (trigger && trigger.description) {
                 updateTokenTooltip(row, column, trigger.description);
             }
-        };
+        }
 
+        /**
+         * Add a tooltip at the position specified
+         *
+         * @param {int} tokenRow The row at which the target token is at
+         * @param {int} tokenColumn The column at which the target token is at
+         * @param {string} tooltip Tooltip to be added
+         */
         function updateTokenTooltip(tokenRow, tokenColumn, tooltip) {
             var token = editor.getAceEditorObject().session.getTokenAt(tokenRow, tokenColumn);
             if (token) {

@@ -16,12 +16,30 @@
 
 "use strict";   // JS strict mode
 
+/*
+ * Constants to be used by the siddhi editor and the siddhi web worker
+ * This is not directly imported by the web worker since some of the constants are initiated using the window object
+ * The SiddhiEditor.constants in passed into the web worker when the siddhi worker is initialized
+ */
 (function () {
     var SiddhiEditor = window.SiddhiEditor || {};
     window.SiddhiEditor = SiddhiEditor;
 
     /*
-     * Constants used by the engine
+     * Finding the base url of the plugin
+     * Get "src" attribute of the <script> tag for the current file
+     * Last tag in the array since tags after that are not yet added to it
+     */
+    var scripts = document.getElementsByTagName("script");
+    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
+    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/constants.js".length);
+
+    // Server side validation related constants
+    SiddhiEditor.serverURL = "http://localhost:8080/";
+    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
+
+    /*
+     * Constants used by the editor
      */
     var constants = {
         SOURCE: "source",
@@ -59,19 +77,7 @@
     constants.typeToDisplayNameMap[constants.SNIPPETS] = "Snippet";
 
     /*
-     * Finding the base url of the plugin
-     * Get "src" attribute of the <script> tag for the current file
-     * Last tag in the array since tags after that are not yet added to it
-     */
-    var scripts = document.getElementsByTagName("script");
-    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
-    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/siddhi-editor-helper.js".length);
-
-    SiddhiEditor.serverURL = "http://localhost:8080/";
-    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
-
-    /*
-     * Annotations, Annotation Names and relevant tokens
+     * Ace editor library related constants
      */
     constants.ace = {
         SNIPPET_MANAGER: "ace/snippets",
@@ -84,18 +90,22 @@
     };
 
     /*
-     * Annotations, Annotation Names and relevant tokens
+     * ANTLR related constants
      */
     constants.antlr = {
         INDEX: "antlr4-js-runtime/index",
         ROOT: "antlr/",
         SYNTAX_ERROR_LISTENER: "SyntaxErrorListener",
         SIDDHI_DATA_POPULATION_LISTENER: "DataPopulationListener",
-        SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER: "TokenToolTipUpdateListener",
+        SIDDHI_TOKEN_TOOL_TIP_UPDATE_LISTENER: "TokenTooltipPointRecognitionListener",
         SIDDHI_PARSER: "gen/SiddhiQLParser",
         SIDDHI_LEXER: "gen/SiddhiQLLexer"
     };
 
+    /*
+     * Web worker related constants
+     * Used in declaring the message type
+     */
     constants.worker = {
         INIT: "INIT",
         EDITOR_CHANGE_EVENT: "EDITOR_CHANGE_EVENT",

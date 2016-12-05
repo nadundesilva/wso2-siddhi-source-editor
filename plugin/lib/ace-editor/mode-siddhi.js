@@ -110,19 +110,28 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
     oop.inherits(SiddhiFoldMode, BaseFoldMode);
 
     (function() {
+        var startToEndBracketRegexMap = {
+            "(\\{)(?:.(?!}))*" : "(})"
+        };
+
         /*
          * The fold range start token to end token map
          * Can update this map to define the fold ranges
          */
         var startToEndTokenRegexMap = {
-            "(\\{)(?:.(?!}))*" : "(})",
             "(\\/\\*)(?:.(?!\\*\\/))*" : "(\\*\\/)",
             "(begin)(?:.(?!}|end\\s*;))*": "(end\\s*;)"
         };
 
         // Regular expressions that identify starting and stopping points
-        this.foldingStartMarker = new RegExp("(?:" + Object.keys(startToEndTokenRegexMap).join("|") + ")", "mi");
-        this.foldingStopMarker = new RegExp("(?:" + Object.values(startToEndTokenRegexMap).join("|") + ")", "mi");
+        this.foldingStartMarker = new RegExp("(?:" +
+                (Object.keys(startToEndBracketRegexMap).length == 0 ? "" : Object.keys(startToEndBracketRegexMap).join("|") + "|") +
+                Object.keys(startToEndTokenRegexMap).join("|") +
+            ")", "mi");
+        this.foldingStopMarker = new RegExp("(?:" +
+                (Object.values(startToEndBracketRegexMap).length == 0 ? "" : Object.values(startToEndBracketRegexMap).join("|") + "|") +
+                Object.values(startToEndTokenRegexMap).join("|") +
+            ")", "mi");
 
         // The order of tokens should be in the order in which the token groups are matched in foldingStopMarker
         var startTokenRegexps = Object.keys(startToEndTokenRegexMap).map(function (regexString) {
@@ -142,6 +151,9 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
                 var i = match.index;
                 var matchFound;
 
+                if (match[1]) {     // Brackets are matched using a special function which supports nested brackets
+                    return this.openingBracketBlock(session, match[1], row, i);
+                }
                 for (var j = 1; j < match.length; j++) {
                     if (match[j]) {
                         matchFound = true;
@@ -162,6 +174,9 @@ ace.define("ace/mode/folding/siddhi",["require","exports","module","ace/lib/oop"
             if (match) {
                 i = match.index;
 
+                if (match[1]) {     // Brackets are matched using a special function which supports nested brackets
+                    return this.closingBracketBlock(session, match[1], row, i);
+                }
                 for (j = 1; j < match.length; j++) {
                     if (match[j]) {
                         matchFound = true;

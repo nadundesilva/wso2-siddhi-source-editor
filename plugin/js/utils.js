@@ -16,9 +16,13 @@
 
 "use strict";   // JS strict mode
 
-var SiddhiEditor;
-
+/*
+ * Utility functions to be used by the siddhi editor and the siddhi web worker
+ */
 (function () {
+    var SiddhiEditor;
+
+    // Adding Siddhi editor to the global scope after checking if this script was loaded into the web worker or the main js files
     if (self == undefined) {
         SiddhiEditor = window.SiddhiEditor || {};
         window.SiddhiEditor = SiddhiEditor;
@@ -219,5 +223,4 @@ var SiddhiEditor;
 
         return self;
     })();
-
 })();

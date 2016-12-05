@@ -25,15 +25,15 @@ var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
  * @constructor
  * @param walker The walker for which this listener is generating token tool tips
  */
-function TokenToolTipUpdateListener(walker) {
+function TokenTooltipPointRecognitionListener(walker) {
     SiddhiQLListener.call(this);     // inherit default listener
     this.walker = walker;
     return this;
 }
-TokenToolTipUpdateListener.prototype = Object.create(SiddhiQLListener.prototype);
-TokenToolTipUpdateListener.prototype.constructor = TokenToolTipUpdateListener;
+TokenTooltipPointRecognitionListener.prototype = Object.create(SiddhiQLListener.prototype);
+TokenTooltipPointRecognitionListener.prototype.constructor = TokenTooltipPointRecognitionListener;
 
-TokenToolTipUpdateListener.prototype.exitFunction_operation = function (ctx) {
+TokenTooltipPointRecognitionListener.prototype.exitFunction_operation = function (ctx) {
     var namespaceCtx = ctx.function_namespace(0);
     var functionCtx = ctx.function_id(0);
 
@@ -52,7 +52,7 @@ TokenToolTipUpdateListener.prototype.exitFunction_operation = function (ctx) {
     }
 };
 
-TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
+TokenTooltipPointRecognitionListener.prototype.exitStream_id = function (ctx) {
     var sourceName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx);
     var isInnerStream;
 
@@ -67,7 +67,7 @@ TokenToolTipUpdateListener.prototype.exitStream_id = function (ctx) {
     }
 };
 
-TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
+TokenTooltipPointRecognitionListener.prototype.exitTrigger_name = function (ctx) {
     var triggerName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx);
 
     if (triggerName) {
@@ -78,7 +78,7 @@ TokenToolTipUpdateListener.prototype.exitTrigger_name = function (ctx) {
 };
 
 /**
- * Update the tooltip in the token in the row and column specified
+ * Update the token tool tip point data in the ANTLR walker
  *
  * @private
  * @param walker The walker of which the token should be update
@@ -96,4 +96,4 @@ function updateTokenDescription(walker, type, tooltipData, row, column) {
     });
 }
 
-exports.TokenToolTipUpdateListener = TokenToolTipUpdateListener;
+exports.TokenTooltipPointRecognitionListener = TokenTooltipPointRecognitionListener;
