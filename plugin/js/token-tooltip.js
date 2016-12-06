@@ -3,20 +3,19 @@
  * Generates the token tool tips on mouse over
  */
 
-ace.define("ace/token/tooltips", function (require, exports, module) {
+/*
+ * Generating tooltips when user hovers over a token
+  * The tooltip content is set in siddhi-editor.js
+ */
+define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip", "exports"],
+    function (dom, oop, event, range, tooltip, exports) {
 
     "use strict";   // JS strict mode
-
-    var dom = ace.require("ace/lib/dom");
-    var oop = ace.require("ace/lib/oop");
-    var event = ace.require("ace/lib/event");
-    var Range = ace.require("ace/range").Range;
-    var Tooltip = ace.require("ace/tooltip").Tooltip;
 
     function TokenTooltip(editor) {
         if (editor.tokenTooltip)
             return;
-        Tooltip.call(this, editor.container);
+        tooltip.Tooltip.call(this, editor.container);
         editor.tokenTooltip = this;
         this.editor = editor;
 
@@ -27,11 +26,11 @@ ace.define("ace/token/tooltips", function (require, exports, module) {
         event.addListener(editor.renderer.content, "mouseout", this.onMouseOut);
     }
 
-    oop.inherits(TokenTooltip, Tooltip);
+    oop.inherits(TokenTooltip, tooltip.Tooltip);
 
     (function () {
         this.token = {};
-        this.range = new Range();
+        this.range = new range.Range();
 
         this.update = function () {
             this.$timer = null;
@@ -87,7 +86,7 @@ ace.define("ace/token/tooltips", function (require, exports, module) {
 
             this.token = token;
             session.removeMarker(this.marker);
-            this.range = new Range(docPos.row, token.start, docPos.row, token.start + token.value.length);
+            this.range = new range.Range(docPos.row, token.start, docPos.row, token.start + token.value.length);
             this.marker = session.addMarker(this.range, "ace_bracket", "text");
         };
 
@@ -116,7 +115,7 @@ ace.define("ace/token/tooltips", function (require, exports, module) {
             if (y > window.innerHeight * 0.75 || y + 20 + this.height > this.maxHeight)
                 y = y - this.height - 30;
 
-            Tooltip.prototype.setPosition.call(this, x + 10, y + 20);
+            tooltip.Tooltip.prototype.setPosition.call(this, x + 10, y + 20);
         };
 
         this.destroy = function () {
@@ -129,5 +128,4 @@ ace.define("ace/token/tooltips", function (require, exports, module) {
     }).call(TokenTooltip.prototype);
 
     exports.TokenTooltip = TokenTooltip;
-
 });

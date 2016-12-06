@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-"use strict";   // JS strict mode
+/*
+ * This module contains the integration code segment of Siddhi editor.
+ * This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
+ */
+define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine", "js/token-tooltip", "ace/ext/language_tools"],
+    function (ace, $, constants, utils, CompletionEngine, aceTokenTooltip, aceExtLangTools) {
 
-/**
- *  This Script contains the integration code segment of Siddhi editor.
- *  This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
- **/
-(function () {
-    var SiddhiEditor = window.SiddhiEditor || {};
-    window.SiddhiEditor = SiddhiEditor;
-    var constants = SiddhiEditor.constants || {};
-    SiddhiEditor.constants = constants;
-
-    // Loading ace modules required
-    var TokenTooltip = ace.require(constants.ace.TOKEN_TOOLTIP).TokenTooltip;       // Required for token tooltips
-    var langTools = ace.require(constants.ace.LANG_TOOLS);                          // Required for auto completion
+    "use strict";   // JS strict mode
 
     /*
      * Map for completion list styles
@@ -52,7 +45,7 @@
     /*
      * Loading meta data for the completion engine from the server
      */
-    SiddhiEditor.CompletionEngine.loadMetaData();
+    CompletionEngine.loadMetaData();
 
     /**
      * Siddhi Editor prototype constructor
@@ -60,12 +53,12 @@
      * @constructor
      * @param {Object} config The configuration object to be used in the initialization
      */
-    SiddhiEditor.init = function (config) {
+    function SiddhiEditor(config) {
         var self = this;
         var aceEditor = ace.edit(config.divID);                // Setting the DivID of the Editor .. Could be <pre> or <div> tags
 
         self.realTimeValidation = config.realTimeValidation;
-        new TokenTooltip(aceEditor);
+        new aceTokenTooltip.TokenTooltip(aceEditor);
         aceEditor.setReadOnly(config.readOnly);
 
         // Setting the editor options
@@ -105,7 +98,7 @@
         self.state.semanticErrorList = [];      // To save semanticErrors with line numbers
         self.state.lastEdit = 0;                // Last edit time
 
-        self.completionEngine = new SiddhiEditor.CompletionEngine();
+        self.completionEngine = new CompletionEngine();
 
         // Attaching editor's onChange event handler
         aceEditor.getSession().on('change', editorChangeHandler);
@@ -185,7 +178,7 @@
             var editorText = aceEditor.getValue();
             if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText) ||
                 singleLineCommentRegex.test(editorText) || blockCommentRegex.test(editorText))) {
-                completerList.push(langTools.keyWordCompleter);
+                completerList.push(aceExtLangTools.keyWordCompleter);
             }
 
             aceEditor.completers = completerList;
@@ -213,7 +206,7 @@
                 // check for semantic errors if there is no change in the query within 3sec period
                 // 3 seconds delay is added to avoid repeated server calls while user is typing the query.
                 setTimeout(function () {
-                    if (Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                    if (Date.now() - self.state.lastEdit >= constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
                         // Updating the token tooltips using the data available
                         // Some data that was intended to be fetched from the server might be missing
                         siddhiWorker.generateTokenTooltips();
@@ -221,7 +214,7 @@
                         // Check for semantic errors by sending a validate request to the server
                         checkForSemanticErrors();
                     }
-                }, SiddhiEditor.serverSideValidationDelay);
+                }, constants.SERVER_SIDE_VALIDATION_DELAY);
             }
 
             self.state.lastEdit = Date.now();         // Save user's last edit time
@@ -249,6 +242,7 @@
                         /*
                          * Execution plan is valid
                          */
+
                         // Populating the fetched data for incomplete data items into the completion engine's data
                         for (var stream in response.streams) {
                             if (response.streams.hasOwnProperty(stream)) {
@@ -260,7 +254,7 @@
                                 }
                                 self.completionEngine.streamsList[stream] = {
                                     attributes: attributes,
-                                    description: SiddhiEditor.utils.generateDescriptionForStreamOrTable("Stream", stream, attributes)
+                                    description: utils.generateDescriptionForStreamOrTable("Stream", stream, attributes)
                                 };
                             }
                         }
@@ -289,12 +283,12 @@
                                         missingStreams: []
                                     }, function (response) {
                                         if (!foundSemanticErrors && response.status != "SUCCESS" &&
-                                            Date.now() - self.state.lastEdit >= SiddhiEditor.serverSideValidationDelay - 100) {
+                                            Date.now() - self.state.lastEdit >= constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
                                             // Update the semanticErrorList
                                             self.state.semanticErrorList.push({
                                                 row: line,
                                                 // Change attribute "text" to "html" if html is sent from server
-                                                text: SiddhiEditor.utils.wordWrap(response.message, 100),
+                                                text: utils.wordWrap(response.message, 100),
                                                 type: "error"
                                             });
 
@@ -310,7 +304,7 @@
                                 })(self.completionEngine.statementsList[i].line, query);
 
                                 if (foundSemanticErrors ||
-                                    Date.now() - self.state.lastEdit < SiddhiEditor.serverSideValidationDelay - 100) {
+                                    Date.now() - self.state.lastEdit < constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
                                     break;
                                 }
                             }
@@ -332,9 +326,9 @@
             if (data.executionPlan == "") {
                 return;
             }
-            jQuery.ajax({
+            $.ajax({
                 type: "POST",
-                url: SiddhiEditor.serverURL + "siddhi-editor/validate",
+                url: constants.SERVER_URL + "siddhi-editor/validate",
                 data: JSON.stringify(data),
                 success: callback
             });
@@ -363,7 +357,7 @@
             if (worker) {
                 worker.terminate();
             }
-            worker = new Worker(SiddhiEditor.baseURL + "js/antlr-worker.js");
+            worker = new Worker(constants.BASE_URL + "js/antlr-worker.js");
             self.init();
         };
 
@@ -528,9 +522,9 @@
 
             var snippets;
             if (namespace) {
-                snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.extensions[namespace];
+                snippets = CompletionEngine.functionOperationSnippets.extensions[namespace];
             } else {
-                snippets = SiddhiEditor.CompletionEngine.functionOperationSnippets.inBuilt;
+                snippets = CompletionEngine.functionOperationSnippets.inBuilt;
             }
 
             // Adding WindowProcessor/StreamProcessor/Function/additional tool tip
@@ -612,4 +606,6 @@
 
         return updater;
     }
-})();
+
+    return SiddhiEditor;
+});

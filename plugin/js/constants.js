@@ -14,29 +14,14 @@
  * limitations under the License.
  */
 
-"use strict";   // JS strict mode
-
 /*
  * Constants to be used by the siddhi editor and the siddhi web worker
  * This is not directly imported by the web worker since some of the constants are initiated using the window object
  * The SiddhiEditor.constants in passed into the web worker when the siddhi worker is initialized
  */
-(function () {
-    var SiddhiEditor = window.SiddhiEditor || {};
-    window.SiddhiEditor = SiddhiEditor;
+define(function() {
 
-    /*
-     * Finding the base url of the plugin
-     * Get "src" attribute of the <script> tag for the current file
-     * Last tag in the array since tags after that are not yet added to it
-     */
-    var scripts = document.getElementsByTagName("script");
-    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
-    SiddhiEditor.baseURL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "js/constants.js".length);
-
-    // Server side validation related constants
-    SiddhiEditor.serverURL = "http://localhost:8080/";
-    SiddhiEditor.serverSideValidationDelay = 2000;      // Token tooltips are also updated after this delay
+    "use strict";   // JS strict mode
 
     /*
      * Constants used by the editor
@@ -58,6 +43,19 @@
         SNIPPETS: "snippet",
         SNIPPET_SIDDHI_CONTEXT: "siddhi"        // Context provided to the snippet manager to register the snippets
     };
+
+    /*
+     * Finding the base url of the plugin
+     * Get "src" attribute of the <script> tag for the current file
+     * Last tag in the array since tags after that are not yet added to it
+     */
+    var scripts = document.getElementsByTagName("script");
+    var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
+    constants.BASE_URL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "lib/requirejs-2.3.2/require.js".length);
+
+    // Server side validation related constants
+    constants.SERVER_URL = "http://localhost:8080/";
+    constants.SERVER_SIDE_VALIDATION_DELAY = 2000;      // Token tooltips are also updated after this delay
 
     /*
      * Names displayed in the editor
@@ -115,12 +113,5 @@
         TOKEN_TOOLTIP_POINT_RECOGNITION_COMPLETION: "TOKEN_TOOLTIP_POINT_RECOGNITION_COMPLETION"
     };
 
-    /*
-     * Loading modules to be used by all the components
-     */
-    SiddhiEditor.SnippetManager = ace.require(constants.ace.SNIPPET_MANAGER).snippetManager;    // Required for changing the snippets used
-    SiddhiEditor.Range = ace.require(constants.ace.ACE_RANGE).Range;                            // Required for extracting part of the query
-    SiddhiEditor.lang = ace.require(constants.ace.LANG_LIB);
-
-    SiddhiEditor.constants = constants;
-})();
+    return constants;
+});

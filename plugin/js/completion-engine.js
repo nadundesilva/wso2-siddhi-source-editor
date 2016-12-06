@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-"use strict";   // JS strict mode
+define(["ace/ace", "jquery", "js/constants", "js/utils", "ace/snippets", "ace/range", "ace/lib/lang"],
+    function (ace, $, constants, utils, aceSnippetManager, aceRange, aceLang) {
 
-(function () {
-    var SiddhiEditor = window.SiddhiEditor || {};
-    window.SiddhiEditor = SiddhiEditor;
-    var constants = SiddhiEditor.constants || {};
-    SiddhiEditor.constants = constants;
+    "use strict";   // JS strict mode
+
+    /*
+     * Loading ave modules
+     */
+    var aceModules = {
+        snippetManager: aceSnippetManager.snippetManager,    // Required for changing the snippets used
+        range: aceRange.Range,                            // Required for extracting part of the query
+        lang: aceLang
+    };
 
     /*
      * Suggestion lists used by the engine
@@ -68,7 +74,7 @@
 
     regex.query.input = {};
     regex.query.input.windowKeywordAndDot = "window\\s*\\.\\s*";
-    regex.query.input.sourceRegex = "(?:" + regex.hash + ")?(" + regex.identifier + ")\\s*";
+    regex.query.input.sourceRegex = "((?:" + regex.hash + ")?" + regex.identifier + ")\\s*";
     regex.query.input.filterRegex = "\\[(?:(?:.(?!\\]))*.\\]|\\])\\s*";
     regex.query.input.streamProcessorRegex = regex.hash + "(?:" + regex.namespace + ")?" + regex.functionOperation + "\\s*";
     regex.query.input.windowRegex = regex.hash + regex.query.input.windowKeywordAndDot + "(?:" + regex.namespace + ")?" +
@@ -97,7 +103,7 @@
     /*
      * Snippets to be used in the ace editor at the start of a statement
      */
-    var generalInitialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile("#Define Statements\n" +
+    var generalInitialSnippets = aceModules.snippetManager.parseSnippetFile("#Define Statements\n" +
         "snippet define-Stream\n" +
         "\tdefine stream ${1:stream_name} (${2:attr1} ${3:Type1}, ${4:attN} ${5:TypeN});\n" +
         "snippet define-Table\n" +
@@ -138,7 +144,7 @@
     /*
      * Snippets to be used in the ace editor at the start of a statement and at the start of a query inside partitions
      */
-    var queryInitialSnippets = SiddhiEditor.SnippetManager.parseSnippetFile(
+    var queryInitialSnippets = aceModules.snippetManager.parseSnippetFile(
         "snippet query-Filter\n" +
         "\tfrom ${1:stream_name}[${2:filter_condition}]\n" +
         "\tselect ${3:attribute1}, ${4:attribute2}\n" +
@@ -380,7 +386,7 @@
             // Updating stream descriptions
             for (var stream in self.streamsList) {
                 if (self.streamsList.hasOwnProperty(stream)) {
-                    self.streamsList[stream].description = SiddhiEditor.utils.generateDescriptionForStreamOrTable(
+                    self.streamsList[stream].description = utils.generateDescriptionForStreamOrTable(
                         "Stream", stream, self.streamsList[stream].attributes, self.streamsList[stream].isInner
                     );
                 }
@@ -389,7 +395,7 @@
             // Updating event table descriptions
             for (var eventTable in self.eventTablesList) {
                 if (self.eventTablesList.hasOwnProperty(eventTable)) {
-                    self.eventTablesList[eventTable].description = SiddhiEditor.utils.generateDescriptionForStreamOrTable(
+                    self.eventTablesList[eventTable].description = utils.generateDescriptionForStreamOrTable(
                         "Event Table", eventTable, self.eventTablesList[eventTable].attributes
                     );
                 }
@@ -398,7 +404,7 @@
             // Updating event trigger descriptions
             for (var eventTrigger in self.eventTriggersList) {
                 if (self.eventTriggersList.hasOwnProperty(eventTrigger)) {
-                    self.eventTriggersList[eventTrigger].description = SiddhiEditor.utils.generateDescriptionForTrigger(
+                    self.eventTriggersList[eventTrigger].description = utils.generateDescriptionForTrigger(
                         eventTrigger, self.eventTriggersList[eventTrigger]
                     );
                 }
@@ -407,7 +413,7 @@
             // Updating event eval script descriptions
             for (var evalScript in self.evalScriptsList) {
                 if (self.evalScriptsList.hasOwnProperty(evalScript)) {
-                    self.evalScriptsList[evalScript].description = SiddhiEditor.utils.generateDescriptionForEvalScript(
+                    self.evalScriptsList[evalScript].description = utils.generateDescriptionForEvalScript(
                         evalScript, self.evalScriptsList[evalScript]
                     );
                 }
@@ -416,7 +422,7 @@
             // Updating event eval script descriptions
             for (var eventWindow in self.eventWindowsList) {
                 if (self.eventWindowsList.hasOwnProperty(eventWindow)) {
-                    self.eventWindowsList[eventWindow].description = SiddhiEditor.utils.generateDescriptionForEvalScript(
+                    self.eventWindowsList[eventWindow].description = utils.generateDescriptionForWindow(
                         eventWindow, self.eventWindowsList[eventWindow]
                     );
                 }
@@ -465,9 +471,9 @@
          */
         self.SnippetCompleter = {
             getCompletions: function (editor, session, pos, prefix, callback) {
-                var snippetMap = SiddhiEditor.SnippetManager.snippetMap;
+                var snippetMap = aceModules.snippetManager.snippetMap;
                 var completions = [];
-                SiddhiEditor.SnippetManager.getActiveScopes(editor).forEach(function (scope) {
+                aceModules.snippetManager.getActiveScopes(editor).forEach(function (scope) {
                     var snippets = snippetMap[scope] || [];
                     for (var i = snippets.length; i--;) {
                         var s = snippets[i];
@@ -490,8 +496,8 @@
             getDocTooltip: function (item) {
                 if (item.type == constants.typeToDisplayNameMap[constants.SNIPPETS] && !item.docHTML) {
                     item.docHTML = [
-                        "<div>", "<strong>", SiddhiEditor.lang.escapeHTML(item.caption), "</strong>", "<p>",
-                        SiddhiEditor.lang.escapeHTML(item.snippet), "</p>", "</div>"
+                        "<div>", "<strong>", aceModules.lang.escapeHTML(item.caption), "</strong>", "<p>",
+                        aceModules.lang.escapeHTML(item.snippet), "</p>", "</div>"
                     ].join("");
                 }
             }
@@ -514,7 +520,7 @@
             }
 
             // Getting the editor text from the start of the last statement before the cursor to the cursor position
-            var editorText = editor.session.doc.getTextRange(SiddhiEditor.Range.fromPoints({
+            var editorText = editor.session.doc.getTextRange(aceModules.range.fromPoints({
                 row: (lastStatement ? lastStatement.line : 0),
                 column: 0
             }, cursorPosition));
@@ -524,15 +530,15 @@
             editorText = editorText.replace(/\s+/g, " ");           // Replacing all spaces with single white spaces
 
             // Clear the suggestion lists
-            SiddhiEditor.SnippetManager.unregister(self.suggestedSnippets, constants.SNIPPET_SIDDHI_CONTEXT);   // Clear the previous snippet suggestions
+            aceModules.snippetManager.unregister(self.suggestedSnippets, constants.SNIPPET_SIDDHI_CONTEXT);   // Clear the previous snippet suggestions
             self.suggestedSnippets = [];
             self.wordList = [];                                                         // Clear the previous suggestion list
 
-            if (/^[a-zA-Z_0-9]*$/i.test(editorText)) {
+            if (/^(?:@(?:.(?!\)))*.\)\s*)?[a-zA-Z_0-9]*$/i.test(editorText)) {
                 self.$startOfStatement();
-                SiddhiEditor.SnippetManager.register(generalInitialSnippets.concat(queryInitialSnippets), constants.SNIPPET_SIDDHI_CONTEXT);
+                aceModules.snippetManager.register(generalInitialSnippets.concat(queryInitialSnippets), constants.SNIPPET_SIDDHI_CONTEXT);
             } else {
-                SiddhiEditor.SnippetManager.unregister(generalInitialSnippets.concat(queryInitialSnippets), constants.SNIPPET_SIDDHI_CONTEXT);
+                aceModules.snippetManager.unregister(generalInitialSnippets.concat(queryInitialSnippets), constants.SNIPPET_SIDDHI_CONTEXT);
             }
 
             // Finding the relevant rule from the main rule base
@@ -1121,7 +1127,7 @@
                 }
                 if (isCursorAfterSemicolon || /^[a-zA-Z_0-9]*$/i.test(partitionBody)) {
                     addCompletions({value: "from "});
-                    SiddhiEditor.SnippetManager.register(queryInitialSnippets, constants.SNIPPET_SIDDHI_CONTEXT);
+                    aceModules.snippetManager.register(queryInitialSnippets, constants.SNIPPET_SIDDHI_CONTEXT);
                 }
             } else if (unclosedBracketsCount == 0 && /\)\s*[a-zA-Z_0-9]*/.test(partitionConditionStatement)) {
                 var completionPrefix = "";
@@ -1672,11 +1678,11 @@
         function addSnippets(suggestions) {
             if (suggestions.constructor === Array) {
                 for (var i = 0; i < suggestions.length; i++) {
-                    SiddhiEditor.SnippetManager.register(suggestions[i], constants.SNIPPET_SIDDHI_CONTEXT);
+                    aceModules.snippetManager.register(suggestions[i], constants.SNIPPET_SIDDHI_CONTEXT);
                     self.suggestedSnippets.push(suggestions[i]);
                 }
             } else {
-                SiddhiEditor.SnippetManager.register(suggestions, constants.SNIPPET_SIDDHI_CONTEXT);
+                aceModules.snippetManager.register(suggestions, constants.SNIPPET_SIDDHI_CONTEXT);
                 self.suggestedSnippets.push(suggestions);
             }
         }
@@ -1785,9 +1791,9 @@
      * @param [onErrorCallback] Callback function to be called on error
      */
     CompletionEngine.loadMetaData = function (onSuccessCallback, onErrorCallback) {
-        jQuery.ajax({
+        $.ajax({
             type: "GET",
-            url: SiddhiEditor.serverURL + "siddhi-editor/meta-data",
+            url: constants.SERVER_URL + "siddhi-editor/meta-data",
             success: function (response, textStatus, jqXHR) {
                 if (response.status == "SUCCESS") {
                     (function () {
@@ -1897,14 +1903,13 @@
             }
             snippetText += ")\n";
         }
-        var snippet = SiddhiEditor.SnippetManager.parseSnippetFile(snippetText)[0];
+        var snippet = aceModules.snippetManager.parseSnippetFile(snippetText)[0];
 
         if (processorMetaData.description || processorMetaData.returnType || processorMetaData.parameters) {
-            snippet.description = SiddhiEditor.utils.generateDescriptionForProcessor(processorMetaData);
+            snippet.description = utils.generateDescriptionForProcessor(processorMetaData);
         }
         return snippet;
     }
 
-    SiddhiEditor.CompletionEngine = CompletionEngine;
-
-})();
+    return CompletionEngine;
+});

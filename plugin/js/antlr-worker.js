@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-"use strict";   // JS strict mode
-
 /*
  * This is intended to be used as a web worker for running ANTLR related tasks
  * This is the starting point of the web worker and this loads all the relevant modules and runs the tasks
  */
+
+"use strict";   // JS strict mode
 
 /*
  * Importing the scripts required by the web worker
  * This is required since web worker runs isolated from everything else
  * constants.js is imported by the main html file
  */
-importScripts("../lib/require.js");
+importScripts("../lib/smoothie-require/require.js");
 
-var SiddhiEditor = {};      // This holds all related SiddhiEditor related data
+/*
+ * This holds all SiddhiEditor related data that is shared among antlr web worker related js scripts
+ * This is only added to the web worker's global space and not the main js global space
+ */
+var SiddhiEditor = {};
 
 (function () {
     var antlrWalker;
