@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-ace.define("ace/snippets/siddhi",["require","exports","module"], function(require, exports, module) {
+define("ace/snippets/siddhi",["require","exports","module"], function(require, exports, module) {
 	"use strict";
 
 exports.snippetText = undefined;	// Snippets are defined in the completion engine
