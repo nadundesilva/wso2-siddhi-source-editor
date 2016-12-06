@@ -331,6 +331,12 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "ace/snippets", "ace/ra
         self.streamsList = {};
 
         /*
+         * Partition list with each partition containing the inner streams
+         * This is updated after the stream definitions are received from the server since inner streams are not defined
+         */
+        self.partitionsList = [];
+
+        /*
          * List of tables defined
          */
         self.eventTablesList = {};
@@ -355,7 +361,8 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "ace/snippets", "ace/ra
          * Information about these data items will be fetched from the server upon validation
          */
         self.incompleteData = {
-            streams: []
+            streams: [],
+            partitions: []
         };
 
         /**
@@ -364,6 +371,7 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "ace/snippets", "ace/ra
          */
         self.clearData = function () {
             self.streamsList = {};
+            self.partitionsList = [];
             self.eventTablesList = {};
             self.eventTriggersList = {};
             self.evalScriptsList = {};

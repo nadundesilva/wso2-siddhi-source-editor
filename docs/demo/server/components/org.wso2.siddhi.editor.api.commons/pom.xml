@@ -13,4 +13,10 @@
 
     <artifactId>org.wso2.siddhi.editor.api.commons</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.wso2.siddhi</groupId>
+            <artifactId>siddhi-core</artifactId>
+        </dependency>
+    </dependencies>
 </project>

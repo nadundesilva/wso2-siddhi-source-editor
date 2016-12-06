@@ -235,7 +235,8 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
             submitToServerForSemanticErrorCheck(
                 {
                     executionPlan: editorText,
-                    missingStreams: self.completionEngine.incompleteData.streams
+                    missingStreams: self.completionEngine.incompleteData.streams,
+                    missingInnerStreams: self.completionEngine.incompleteData.partitions
                 },
                 function (response) {
                     if (response.status == "SUCCESS") {
@@ -244,20 +245,19 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
                          */
 
                         // Populating the fetched data for incomplete data items into the completion engine's data
-                        for (var stream in response.streams) {
-                            if (response.streams.hasOwnProperty(stream)) {
-                                var streamDefinition = response.streams[stream];
-                                var attributes = {};
-                                for (var k = 0; k < streamDefinition.attributeList.length; k++) {
-                                    attributes[streamDefinition.attributeList[k].name] =
-                                        streamDefinition.attributeList[k].type;
-                                }
-                                self.completionEngine.streamsList[stream] = {
-                                    attributes: attributes,
-                                    description: utils.generateDescriptionForStreamOrTable("Stream", stream, attributes)
-                                };
+                        var streams = getStreamsFromStreamDefinitions(response.streams);
+                        for (var streamName in streams) {
+                            if (streams.hasOwnProperty(streamName)) {
+                                self.completionEngine.streamsList[streamName] = streams[streamName];
                             }
                         }
+
+                        for (var i = 0; i < response.innerStreams.length; i++) {
+                            var innerStreams = getStreamsFromStreamDefinitions(response.innerStreams[i]);
+                            self.completionEngine.partitionsList.push(innerStreams);
+                        }
+
+                        // for (var i = 0; i < response.innerStreams.length; )
 
                         // Updating token tooltips
                         self.completionEngine.clearIncompleteDataLists();
@@ -312,6 +312,32 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
                     }
                 }
             );
+
+            /**
+             * Get the streams list from the stream definitions list returned from the server
+             * This is used for transforming server's stream definitions to completion engine's stream data
+             *
+             * @param {object[]} streamDefinitionsList Stream definitions list returned from the server
+             * @return {object} Stream data extracted from the stream definitions
+             */
+            function getStreamsFromStreamDefinitions(streamDefinitionsList) {
+                var streams = {};
+                for (var i = 0; i < streamDefinitionsList.length; i++) {
+                    var streamDefinition = streamDefinitionsList[i];
+                    var attributes = {};
+                    for (var k = 0; k < streamDefinition.attributeList.length; k++) {
+                        attributes[streamDefinition.attributeList[k].name] =
+                            streamDefinition.attributeList[k].type;
+                    }
+                    streams[streamDefinitionsList[i].id] = {
+                        attributes: attributes,
+                        description: utils.generateDescriptionForStreamOrTable(
+                            "Stream", streamDefinitionsList[i].id, attributes
+                        )
+                    };
+                }
+                return streams;
+            }
         }
 
         /**
@@ -536,7 +562,7 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
                     description = snippets.streamProcessors[processorName].description;
                 } else if (snippets.functions && snippets.functions[processorName]) {
                     description = snippets.functions[processorName].description;
-                } else if (this.editor.completionEngine.evalScriptsList[processorName]) {
+                } else if (editor.completionEngine.evalScriptsList[processorName]) {
                     description = this.editor.completionEngine.evalScriptsList[processorName].description;
                 }
             }

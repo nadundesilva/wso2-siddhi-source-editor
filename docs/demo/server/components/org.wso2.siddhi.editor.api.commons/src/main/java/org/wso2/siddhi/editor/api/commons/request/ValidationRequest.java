@@ -2,9 +2,10 @@ package org.wso2.siddhi.editor.api.commons.request;
 
 import java.util.List;
 
-public class ValidateRequest {
+public class ValidationRequest {
     private String executionPlan;
     private List<String> missingStreams;
+    private List<List<String>> missingInnerStreams;
 
     public String getExecutionPlan() {
         return executionPlan;
@@ -20,5 +21,13 @@ public class ValidateRequest {
 
     public void setMissingStreams(List<String> missingStreams) {
         this.missingStreams = missingStreams;
+    }
+
+    public List<List<String>> getMissingInnerStreams() {
+        return missingInnerStreams;
+    }
+
+    public void setMissingInnerStreams(List<List<String>> missingInnerStreams) {
+        this.missingInnerStreams = missingInnerStreams;
     }
 }
