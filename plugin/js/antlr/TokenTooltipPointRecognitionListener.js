@@ -38,10 +38,10 @@ TokenTooltipPointRecognitionListener.prototype.exitFunction_operation = function
     var functionCtx = ctx.function_id(0);
 
     if (functionCtx) {
-        var processorName = SiddhiEditor.utils.getTextFromANTLRCtx(functionCtx);
+        var processorName = this.walker.utils.getTextFromANTLRCtx(functionCtx);
         var namespace;
         if (namespaceCtx) {
-            namespace = SiddhiEditor.utils.getTextFromANTLRCtx(namespaceCtx);
+            namespace = this.walker.utils.getTextFromANTLRCtx(namespaceCtx);
         }
 
         if (processorName) {
@@ -53,7 +53,7 @@ TokenTooltipPointRecognitionListener.prototype.exitFunction_operation = function
 };
 
 TokenTooltipPointRecognitionListener.prototype.exitStream_id = function (ctx) {
-    var sourceName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx);
+    var sourceName = this.walker.utils.getTextFromANTLRCtx(ctx);
     var isInnerStream;
 
     if (ctx.parentCtx.inner) {
@@ -68,7 +68,7 @@ TokenTooltipPointRecognitionListener.prototype.exitStream_id = function (ctx) {
 };
 
 TokenTooltipPointRecognitionListener.prototype.exitTrigger_name = function (ctx) {
-    var triggerName = SiddhiEditor.utils.getTextFromANTLRCtx(ctx);
+    var triggerName = this.walker.utils.getTextFromANTLRCtx(ctx);
 
     if (triggerName) {
         updateTokenDescription(this.walker, SiddhiEditor.constants.TRIGGERS, {

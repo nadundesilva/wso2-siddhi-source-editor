@@ -376,6 +376,53 @@
             }
         };
 
+        self.updateDescriptions = function () {
+            // Updating stream descriptions
+            for (var stream in self.streamsList) {
+                if (self.streamsList.hasOwnProperty(stream)) {
+                    self.streamsList[stream].description = SiddhiEditor.utils.generateDescriptionForStreamOrTable(
+                        "Stream", stream, self.streamsList[stream].attributes, self.streamsList[stream].isInner
+                    );
+                }
+            }
+
+            // Updating event table descriptions
+            for (var eventTable in self.eventTablesList) {
+                if (self.eventTablesList.hasOwnProperty(eventTable)) {
+                    self.eventTablesList[eventTable].description = SiddhiEditor.utils.generateDescriptionForStreamOrTable(
+                        "Event Table", eventTable, self.eventTablesList[eventTable].attributes
+                    );
+                }
+            }
+
+            // Updating event trigger descriptions
+            for (var eventTrigger in self.eventTriggersList) {
+                if (self.eventTriggersList.hasOwnProperty(eventTrigger)) {
+                    self.eventTriggersList[eventTrigger].description = SiddhiEditor.utils.generateDescriptionForTrigger(
+                        eventTrigger, self.eventTriggersList[eventTrigger]
+                    );
+                }
+            }
+
+            // Updating event eval script descriptions
+            for (var evalScript in self.evalScriptsList) {
+                if (self.evalScriptsList.hasOwnProperty(evalScript)) {
+                    self.evalScriptsList[evalScript].description = SiddhiEditor.utils.generateDescriptionForEvalScript(
+                        evalScript, self.evalScriptsList[evalScript]
+                    );
+                }
+            }
+
+            // Updating event eval script descriptions
+            for (var eventWindow in self.eventWindowsList) {
+                if (self.eventWindowsList.hasOwnProperty(eventWindow)) {
+                    self.eventWindowsList[eventWindow].description = SiddhiEditor.utils.generateDescriptionForEvalScript(
+                        eventWindow, self.eventWindowsList[eventWindow]
+                    );
+                }
+            }
+        };
+
         /*
          * CompletionEngine.wordList is the current suggestions list . This is an array of objects with following format
          * wordList = {

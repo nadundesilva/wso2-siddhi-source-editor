@@ -17,15 +17,21 @@
 "use strict";   // JS strict mode
 
 /*
+ * This is intended to be used as a web worker for running ANTLR related tasks
+ * This is the starting point of the web worker and this loads all the relevant modules and runs the tasks
+ */
+
+/*
  * Importing the scripts required by the web worker
  * This is required since web worker runs isolated from everything else
  * constants.js is imported by the main html file
  */
-importScripts("../lib/require.js", "utils.js");
+importScripts("../lib/require.js");
+
+var SiddhiEditor = {};      // This holds all related SiddhiEditor related data
 
 (function () {
     var antlrWalker;
-    var SiddhiEditor = self.SiddhiEditor || {};
 
     /**
      * Message handler object for handling the messages from the main js
@@ -51,7 +57,7 @@ importScripts("../lib/require.js", "utils.js");
          * @param {object} data Initialize data received. Should contain the constants
          */
         function initializeWorker(data) {
-            SiddhiEditor.constants = data;
+            SiddhiEditor.constants = data;      // This loads the constants defined in the constants.js
             antlrWalker = new ANTLRWalker();
 
             messageHandlerMap[SiddhiEditor.constants.worker.EDITOR_CHANGE_EVENT] = onEditorChange;
@@ -246,5 +252,21 @@ importScripts("../lib/require.js", "utils.js");
             renderer.notifyTokenTooltipPointRecognitionCompletion(walker.tokenToolTipData);
             clearTokenTooltipData();
         };
+
+        walker.utils = (function () {
+            var utils = {};
+
+            /**
+             * Get the text in the parse tree relevant for the ANTLR context provided
+             *
+             * @param ctx The context for which the text is returned
+             * @return {string} The text relevant to the context provided
+             */
+            utils.getTextFromANTLRCtx = function (ctx) {
+                return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
+            };
+
+            return utils;
+        })();
     }
 })();

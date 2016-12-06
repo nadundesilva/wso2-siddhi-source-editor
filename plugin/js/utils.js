@@ -20,16 +20,8 @@
  * Utility functions to be used by the siddhi editor and the siddhi web worker
  */
 (function () {
-    var SiddhiEditor;
-
-    // Adding Siddhi editor to the global scope after checking if this script was loaded into the web worker or the main js files
-    if (self == undefined) {
-        SiddhiEditor = window.SiddhiEditor || {};
-        window.SiddhiEditor = SiddhiEditor;
-    } else {
-        SiddhiEditor = self.SiddhiEditor || {};
-        self.SiddhiEditor = SiddhiEditor;
-    }
+    var SiddhiEditor = window.SiddhiEditor || {};
+    window.SiddhiEditor = SiddhiEditor;
 
     /**
      * Utils used by the SiddhiEditor
@@ -139,10 +131,11 @@
          * @param {string} type Type of the source. Should be one of ["Stream", "Event Table"]
          * @param {string} sourceName Name of the stream/table for which the description is generated
          * @param {Object} attributes attributes of the stream/table
+         * @param {boolean} [isInner] Indicate whether it is a inner stream for streams only
          * @return {string} html string of the description generated from the meta data provided
          */
-        self.generateDescriptionForStreamOrTable = function (type, sourceName, attributes) {
-            var description = "<div><strong>" + type + "</strong> - " + sourceName + "<br>";
+        self.generateDescriptionForStreamOrTable = function (type, sourceName, attributes, isInner) {
+            var description = "<div><strong>" + type + "</strong> - " + (isInner ? "Inner " : "") +sourceName + "<br>";
             if (attributes && Object.keys(attributes).length > 0) {
                 description += "<ul>";
                 for (var attribute in attributes) {
@@ -209,16 +202,6 @@
             }
             description += "</div>";
             return description;
-        };
-
-        /**
-         * Get the text in the parse tree relevant for the ANTLR context provided
-         *
-         * @param ctx The context for which the text is returned
-         * @return {string} The text relevant to the context provided
-         */
-        self.getTextFromANTLRCtx = function (ctx) {
-            return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
         };
 
         return self;

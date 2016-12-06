@@ -459,6 +459,7 @@
             editor.completionEngine.eventTriggersList = data.completionData.eventTriggersList;
             editor.completionEngine.evalScriptsList = data.completionData.evalScriptsList;
             editor.completionEngine.eventWindowsList = data.completionData.eventWindowsList;
+            editor.completionEngine.updateDescriptions();
             editor.completionEngine.incompleteData = data.incompleteData;
             editor.completionEngine.statementsList = data.statementsList;
             editor.startCheckForSemanticErrorsTimer();
