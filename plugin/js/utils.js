@@ -125,11 +125,10 @@ define(function () {
      * @param {string} type Type of the source. Should be one of ["Stream", "Event Table"]
      * @param {string} sourceName Name of the stream/table for which the description is generated
      * @param {Object} attributes attributes of the stream/table
-     * @param {boolean} [isInner] Indicate whether it is a inner stream for streams only
      * @return {string} html string of the description generated from the meta data provided
      */
-    self.generateDescriptionForStreamOrTable = function (type, sourceName, attributes, isInner) {
-        var description = "<div><strong>" + type + "</strong> - " + (isInner ? "Inner " : "") +sourceName + "<br>";
+    self.generateDescriptionForStreamOrTable = function (type, sourceName, attributes) {
+        var description = "<div><strong>" + type + "</strong> - " + sourceName + "<br>";
         if (attributes && Object.keys(attributes).length > 0) {
             description += "<ul>";
             for (var attribute in attributes) {

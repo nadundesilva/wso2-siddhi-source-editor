@@ -252,8 +252,9 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
                             }
                         }
 
+                        self.completionEngine.partitionsList = [];
                         for (var i = 0; i < response.innerStreams.length; i++) {
-                            var innerStreams = getStreamsFromStreamDefinitions(response.innerStreams[i]);
+                            var innerStreams = getStreamsFromStreamDefinitions(response.innerStreams[i], true);
                             self.completionEngine.partitionsList.push(innerStreams);
                         }
 
@@ -318,9 +319,10 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
              * This is used for transforming server's stream definitions to completion engine's stream data
              *
              * @param {object[]} streamDefinitionsList Stream definitions list returned from the server
+             * @param {boolean} [isInner] Boolean indicating whether the set of stream definitions are inner streams or not
              * @return {object} Stream data extracted from the stream definitions
              */
-            function getStreamsFromStreamDefinitions(streamDefinitionsList) {
+            function getStreamsFromStreamDefinitions(streamDefinitionsList, isInner) {
                 var streams = {};
                 for (var i = 0; i < streamDefinitionsList.length; i++) {
                     var streamDefinition = streamDefinitionsList[i];
@@ -332,7 +334,7 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
                     streams[streamDefinitionsList[i].id] = {
                         attributes: attributes,
                         description: utils.generateDescriptionForStreamOrTable(
-                            "Stream", streamDefinitionsList[i].id, attributes
+                            (isInner ? "Inner " : "") +"Stream", streamDefinitionsList[i].id, attributes
                         )
                     };
                 }
@@ -530,6 +532,9 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
                 case constants.SOURCE:
                     updateSourceTooltip(tooltipData, row, column);
                     break;
+                case constants.INNER_STREAMS:
+                    updateInnerStreamTooltip(tooltipData, row, column);
+                    break;
                 case constants.TRIGGERS:
                     updateTriggerTooltip(tooltipData, row, column);
             }
@@ -574,29 +579,43 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine",
         /**
          * Update the tooltip for a stream/table/window
          *
-         * @param {object} tooltipData Tool tip data to be added. Should contain the source name and whether it is an inner stream
+         * @param {object} tooltipData Tool tip data to be added. Should contain the source name
          * @param {int} row The row at which the target token is at
          * @param {int} column The column at which the target token is at
          */
         function updateSourceTooltip(tooltipData, row, column) {
             var sourceName = tooltipData.sourceName;
-            var isInnerStream = tooltipData.isInnerStream;
             var source;
 
-            if (isInnerStream && editor.completionEngine.streamsList["#" + sourceName]) {
-                source = editor.completionEngine.streamsList["#" + sourceName];
-            } else {
-                if (editor.completionEngine.streamsList[sourceName]) {
-                    source = editor.completionEngine.streamsList[sourceName];
-                } else if (editor.completionEngine.eventTablesList[sourceName]) {
-                    source = editor.completionEngine.eventTablesList[sourceName];
-                } else if (editor.completionEngine.eventWindowsList[sourceName]) {
-                    source = editor.completionEngine.eventWindowsList[sourceName];
-                }
+            if (editor.completionEngine.streamsList[sourceName]) {
+                source = editor.completionEngine.streamsList[sourceName];
+            } else if (editor.completionEngine.eventTablesList[sourceName]) {
+                source = editor.completionEngine.eventTablesList[sourceName];
+            } else if (editor.completionEngine.eventWindowsList[sourceName]) {
+                source = editor.completionEngine.eventWindowsList[sourceName];
             }
 
             if (source && source.description) {
                 updateTokenTooltip(row, column, source.description);
+            }
+        }
+
+        /**
+         * Update the tooltip for a inner stream
+         *
+         * @param {object} tooltipData Tool tip data to be added. Should contain the inner stream name and the partition number
+         * @param {int} row The row at which the target token is at
+         * @param {int} column The column at which the target token is at
+         */
+        function updateInnerStreamTooltip(tooltipData, row, column) {
+            var innerStreamName = tooltipData.sourceName;
+            var partitionNumber = tooltipData.partitionNumber;
+
+            if (editor.completionEngine.partitionsList[partitionNumber]) {
+                var innerStream = editor.completionEngine.partitionsList[partitionNumber][innerStreamName];
+                if (innerStream && innerStream.description) {
+                    updateTokenTooltip(row, column, innerStream.description);
+                }
             }
         }
 

@@ -33,6 +33,7 @@ define(function() {
         STREAM_PROCESSORS: "streamProcessors",
         WINDOW_PROCESSORS: "windowProcessors",
         STREAMS: "streams",
+        INNER_STREAMS: "innerStreams",
         EVENT_TABLES: "eventTables",
         TRIGGERS: "eventTriggers",
         WINDOWS: "eventWindows",
@@ -65,6 +66,7 @@ define(function() {
     constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS] = "Stream Processor";
     constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS] = "Window Processor";
     constants.typeToDisplayNameMap[constants.STREAMS] = "Stream";
+    constants.typeToDisplayNameMap[constants.INNER_STREAMS] = "Inner Stream";
     constants.typeToDisplayNameMap[constants.EVENT_TABLES] = "Event Table";
     constants.typeToDisplayNameMap[constants.TRIGGERS] = "Event Trigger";
     constants.typeToDisplayNameMap[constants.WINDOWS] = "Event Window";

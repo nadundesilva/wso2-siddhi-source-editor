@@ -28,6 +28,7 @@ var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
 function TokenTooltipPointRecognitionListener(walker) {
     SiddhiQLListener.call(this);     // inherit default listener
     this.walker = walker;
+    this.partitionCount = 0;
     return this;
 }
 TokenTooltipPointRecognitionListener.prototype = Object.create(SiddhiQLListener.prototype);
@@ -61,8 +62,9 @@ TokenTooltipPointRecognitionListener.prototype.exitStream_id = function (ctx) {
     }
 
     if (sourceName) {
-        updateTokenDescription(this.walker, SiddhiEditor.constants.SOURCE, {
-            sourceName: sourceName, isInnerStream: isInnerStream
+        updateTokenDescription(this.walker, (isInnerStream ? SiddhiEditor.constants.INNER_STREAMS : SiddhiEditor.constants.SOURCE), {
+            sourceName: (isInnerStream ? "#" : "") + sourceName,
+            partitionNumber: (isInnerStream ? this.partitionCount : undefined)
         }, ctx.stop.line - 1, ctx.stop.column + 1);
     }
 };
@@ -75,6 +77,10 @@ TokenTooltipPointRecognitionListener.prototype.exitTrigger_name = function (ctx)
             triggerName: triggerName
         }, ctx.stop.line - 1, ctx.stop.column + 1);
     }
+};
+
+TokenTooltipPointRecognitionListener.prototype.exitPartition = function () {
+    this.partitionCount++;
 };
 
 /**

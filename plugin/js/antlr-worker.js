@@ -272,20 +272,6 @@ var SiddhiEditor = {};
                 return ctx.start.getInputStream().getText(ctx.start.start, ctx.stop.stop);
             };
 
-            /**
-             * Get the immediate parent partition context in the partition tree
-             *
-             * @param ctx Context of which the parent partition context is found
-             */
-            utils.getParentPartitionContext = function (ctx) {
-                for (var currentContext = ctx.parentCtx; currentContext.parentCtx; currentContext = currentContext.parentCtx) {
-                    if (currentContext.partition && currentContext.partition()) {
-                        return currentContext.partition();
-                    }
-                }
-                console.log("test");
-            };
-
             return utils;
         })();
     }
