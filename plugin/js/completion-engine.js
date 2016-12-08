@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-define(["ace/ace", "jquery", "js/constants", "js/utils", "ace/snippets", "ace/range", "ace/lib/lang"],
+define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/range", "ace/lib/lang"],
     function (ace, $, constants, utils, aceSnippetManager, aceRange, aceLang) {
 
     "use strict";   // JS strict mode
@@ -1711,7 +1711,7 @@ define(["ace/ace", "jquery", "js/constants", "js/utils", "ace/snippets", "ace/ra
                     constants.STREAMS == sourceTypes[i] &&
                     isInsidePartition(regexResults)) {
                     var partitionCount = getTheCurrentPartitionIndex(fullEditorText);
-                    if (self.partitionsList[partitionCount][sourceName]) {
+                    if (self.partitionsList[partitionCount] && self.partitionsList[partitionCount][sourceName]) {
                         source = self.partitionsList[partitionCount][sourceName];
                         source.type = constants.typeToDisplayNameMap[constants.INNER_STREAMS];
                     }

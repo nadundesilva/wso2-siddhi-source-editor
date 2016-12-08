@@ -18,7 +18,7 @@
  * This module contains the integration code segment of Siddhi editor.
  * This will set the options of ACE editor, attach client side parser and attach SiddhiCompletion Engine with the editor
  */
-define(["ace/ace", "jquery", "js/constants", "js/utils", "js/completion-engine", "js/token-tooltip", "ace/ext/language_tools"],
+define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", "./token-tooltip", "ace/ext/language_tools"],
     function (ace, $, constants, utils, CompletionEngine, aceTokenTooltip, aceExtLangTools) {
 
     "use strict";   // JS strict mode
