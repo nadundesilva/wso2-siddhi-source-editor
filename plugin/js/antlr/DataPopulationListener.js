@@ -121,11 +121,12 @@ DataPopulationListener.prototype.exitDefinition_window = function (ctx) {
 DataPopulationListener.prototype.exitQuery = function (ctx) {
     if (ctx.query_output() && ctx.query_output().children && ctx.query_output().target()) {
         var outputTarget = this.walker.utils.getTextFromANTLRCtx(ctx.query_output().target());
-        if (ctx.query_section()) {
-            // Updating the data for streams inserted into without defining if select section is available
-            if (!this.walker.completionData.eventTablesList[outputTarget] &&
-                !this.walker.completionData.streamsList[outputTarget] &&
-                !this.walker.completionData.eventWindowsList[outputTarget]) {
+        // Updating the data for streams inserted into without defining if select section is available
+        if (!this.walker.completionData.eventTablesList[outputTarget] &&
+            !this.walker.completionData.streamsList[outputTarget] &&
+            !this.walker.completionData.eventWindowsList[outputTarget]) {
+            var isInner = !!ctx.query_output().target().source().inner;
+            if (ctx.query_section()) {
                 // Creating the attributes to reference map
                 var querySelectionCtx = ctx.query_section();
                 var attributes = {};
@@ -141,17 +142,17 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                     i++;
                 }
 
-                var isInner = !!ctx.query_output().target().source().inner;
-                if (isInner) {
-                    this.walker.incompleteData.partitions[this.partitionCount].push(outputTarget);
-                } else {
+                if (!isInner) {
                     this.walker.completionData.streamsList[outputTarget] = {
                         attributes: attributes,
                         isInner: isInner
                     };
-
-                    this.walker.incompleteData.streams.push(outputTarget);
                 }
+            }
+            if (isInner) {
+                this.walker.incompleteData.partitions[this.partitionCount].push(outputTarget);
+            } else {
+                this.walker.incompleteData.streams.push(outputTarget);
             }
         }
     }
