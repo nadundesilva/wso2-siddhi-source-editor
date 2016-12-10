@@ -7,8 +7,8 @@
  * Generating tooltips when user hovers over a token
   * The tooltip content is set in siddhi-editor.js
  */
-define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip", "exports"],
-    function (dom, oop, event, range, tooltip, exports) {
+define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip", "./constants", "exports"],
+    function (dom, oop, event, range, tooltip, constants, exports) {
 
     "use strict";   // JS strict mode
 
@@ -33,7 +33,8 @@ define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip
         this.range = new range.Range();
 
         this.update = function () {
-            this.$timer = null;
+            this.$updateTooltipTimer = null;
+            this.$showTooltipTimer = null;
 
             var r = this.editor.renderer;
             if (this.lastT - (r.timeStamp || 0) > 1000) {
@@ -66,28 +67,36 @@ define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip
                 return;
             }
 
-            // This had been changed to suit the siddhi editor implementation of token tool tips
+            // This had been added to suit the siddhi editor implementation of token tool tips
             var tokenText = token.tooltip;
-            if (!tokenText) {
-                tokenText = token.type;
-            }
-            if (!tokenText) {
-                return;
-            }
+            if (tokenText) {
+                if (this.tokenText != tokenText) {
+                    this.setHtml(tokenText);
+                    this.width = this.getWidth();
+                    this.height = this.getHeight();
+                    this.tokenText = tokenText;
+                }
 
-            if (this.tokenText != tokenText) {
-                this.setHtml(tokenText);
-                this.width = this.getWidth();
-                this.height = this.getHeight();
-                this.tokenText = tokenText;
+                if (!this.$showTooltipTimer) {
+                    if (!this.isOpen) {
+                        var self = this;
+                        this.$showTooltipTimer = setTimeout(function() {
+                            self.show(null, self.x, self.y);
+                        }, constants.TOOLTIP_SHOW_DELAY - 100);
+                    } else {
+                        this.show(null, this.x, this.y);
+                    }
+                }
+
+                this.token = token;
+                session.removeMarker(this.marker);
+                this.range = new range.Range(docPos.row, token.start, docPos.row, token.start + token.value.length);
+                this.marker = session.addMarker(this.range, "ace_bracket", "text", false);
+            } else {
+                clearTimeout(this.$showTooltipTimer);
+                this.$showTooltipTimer = undefined;
+                this.hide();
             }
-
-            this.show(null, this.x, this.y);
-
-            this.token = token;
-            session.removeMarker(this.marker);
-            this.range = new range.Range(docPos.row, token.start, docPos.row, token.start + token.value.length);
-            this.marker = session.addMarker(this.range, "ace_bracket", "text");
         };
 
         this.onMouseMove = function (e) {
@@ -97,23 +106,27 @@ define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip
                 this.lastT = e.timeStamp;
                 this.setPosition(this.x, this.y);
             }
-            if (!this.$timer)
-                this.$timer = setTimeout(this.update, 100);
+            if (!this.$updateTooltipTimer) {
+                this.$updateTooltipTimer = setTimeout(this.update, 100);
+            }
         };
 
         this.onMouseOut = function (e) {
-            if (e && e.currentTarget.contains(e.relatedTarget))
+            if (e && e.currentTarget.contains(e.relatedTarget)) {
                 return;
+            }
             this.hide();
             this.editor.session.removeMarker(this.marker);
-            this.$timer = clearTimeout(this.$timer);
+            this.$updateTooltipTimer = clearTimeout(this.$updateTooltipTimer);
         };
 
         this.setPosition = function (x, y) {
-            if (x + 10 + this.width > this.maxWidth)
+            if (x + 10 + this.width > this.maxWidth) {
                 x = window.innerWidth - this.width - 10;
-            if (y > window.innerHeight * 0.75 || y + 20 + this.height > this.maxHeight)
+            }
+            if (y > window.innerHeight * 0.75 || y + 20 + this.height > this.maxHeight) {
                 y = y - this.height - 30;
+            }
 
             tooltip.Tooltip.prototype.setPosition.call(this, x + 10, y + 20);
         };
