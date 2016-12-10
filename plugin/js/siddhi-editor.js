@@ -157,7 +157,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
          * @param {string} content Content to set into the ace editor
          */
         self.setContent = function (content) {
-            aceEditor.setValue(content, 1);
+            aceEditor.setValue((content ? content : ""), 1);
         };
 
         /**
@@ -363,7 +363,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
         }
 
         return self;
-    };
+    }
 
     /**
      * Siddhi Web Worker wrapper prototype
@@ -477,6 +477,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
         function updateCompletionEngineData(data) {
             editor.completionEngine.clearData();            // Clear the exiting completion engine data
             editor.completionEngine.streamsList = data.completionData.streamsList;
+            editor.completionEngine.partitionsList = data.completionData.partitionsList;
             editor.completionEngine.eventTablesList = data.completionData.eventTablesList;
             editor.completionEngine.eventTriggersList = data.completionData.eventTriggersList;
             editor.completionEngine.evalScriptsList = data.completionData.evalScriptsList;

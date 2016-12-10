@@ -164,6 +164,7 @@ var SiddhiEditor = {};
         walker.syntaxErrorList = [];
         walker.completionData = {
             streamsList: {},
+            partitionsList: [],
             eventTablesList: {},
             eventTriggersList: {},
             evalScriptsList: {},
@@ -171,7 +172,7 @@ var SiddhiEditor = {};
         };
         walker.incompleteData = {
             streams: [],
-            partitionInnerStreams: []
+            partitions: []
         };
         walker.statementsList = [];
         walker.tokenToolTipData = [];
@@ -183,6 +184,7 @@ var SiddhiEditor = {};
             walker.syntaxErrorList = [];
             walker.completionData = {
                 streamsList: {},
+                partitionsList: [],
                 eventTablesList: {},
                 eventTriggersList: {},
                 evalScriptsList: {},

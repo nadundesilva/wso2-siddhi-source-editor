@@ -134,18 +134,23 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
                 var outputAttributeCtx;
                 while (outputAttributeCtx = querySelectionCtx.output_attribute(i)) {
                     if (outputAttributeCtx.attribute_name()) {
-                        attributes[this.walker.utils.getTextFromANTLRCtx(outputAttributeCtx.attribute_name())] = undefined;
+                        attributes[this.walker.utils.getTextFromANTLRCtx(outputAttributeCtx.attribute_name())] =
+                            SiddhiEditor.constants.dataPopulation.UNDEFINED_DATA_TYPE;
                     } else if (outputAttributeCtx.attribute_reference() &&
                         outputAttributeCtx.attribute_reference().attribute_name()) {
-                        attributes[this.walker.utils.getTextFromANTLRCtx(outputAttributeCtx.attribute_reference().attribute_name())] = undefined;
+                        attributes[this.walker.utils.getTextFromANTLRCtx(outputAttributeCtx.attribute_reference().attribute_name())] =
+                            SiddhiEditor.constants.dataPopulation.UNDEFINED_DATA_TYPE;
                     }
                     i++;
                 }
 
-                if (!isInner) {
+                if (isInner) {
+                    this.walker.completionData.partitionsList[this.partitionCount][outputTarget] = {
+                        attributes: attributes
+                    };
+                } else {
                     this.walker.completionData.streamsList[outputTarget] = {
-                        attributes: attributes,
-                        isInner: isInner
+                        attributes: attributes
                     };
                 }
             }
@@ -159,6 +164,7 @@ DataPopulationListener.prototype.exitQuery = function (ctx) {
 };
 
 DataPopulationListener.prototype.enterPartition = function (ctx) {
+    this.walker.completionData.partitionsList.push({});
     this.walker.incompleteData.partitions.push([]);
 };
 

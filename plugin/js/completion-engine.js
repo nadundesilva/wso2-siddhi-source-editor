@@ -372,6 +372,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
          */
         self.clearData = function () {
             self.streamsList = {};
+            self.partitionsList = [];
             self.eventTablesList = {};
             self.eventTriggersList = {};
             self.evalScriptsList = {};
@@ -1574,11 +1575,15 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
          * @returns {Array} list of function snippets
          */
         function getInBuiltFunctionNames() {
-            return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.functions)
-                .map(function (processor) {
-                    processor.type = constants.typeToDisplayNameMap[constants.FUNCTIONS];
-                    return processor;
-                });
+            if (CompletionEngine.functionOperationSnippets.inBuilt.functions) {
+                return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.functions)
+                    .map(function (processor) {
+                        processor.type = constants.typeToDisplayNameMap[constants.FUNCTIONS];
+                        return processor;
+                    });
+            } else {
+                return [];
+            }
         }
 
         /**
@@ -1588,11 +1593,15 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
          * @returns {Array} list of window processor snippets
          */
         function getInBuiltWindowProcessors() {
-            return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors)
-                .map(function (processor) {
-                    processor.type = constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS];
-                    return processor;
-                });
+            if (CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors) {
+                return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.windowProcessors)
+                    .map(function (processor) {
+                        processor.type = constants.typeToDisplayNameMap[constants.WINDOW_PROCESSORS];
+                        return processor;
+                    });
+            } else {
+                return [];
+            }
         }
 
         /**
@@ -1602,11 +1611,15 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
          * @returns {Array} list of stream processor snippets
          */
         function getInBuiltStreamProcessors() {
-            return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors)
-                .map(function (processor) {
-                    processor.type = constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS];
-                    return processor;
-                });
+            if (CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors) {
+                return Object.values(CompletionEngine.functionOperationSnippets.inBuilt.streamProcessors)
+                    .map(function (processor) {
+                        processor.type = constants.typeToDisplayNameMap[constants.STREAM_PROCESSORS];
+                        return processor;
+                    });
+            } else {
+                return [];
+            }
         }
 
         /**

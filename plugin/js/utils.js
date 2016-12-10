@@ -17,7 +17,7 @@
 /*
  * Utility functions to be used by the siddhi editor and the siddhi web worker
  */
-define(function () {
+define(["./constants"], function (constants) {
 
     "use strict";   // JS strict mode
 
@@ -116,7 +116,11 @@ define(function () {
             for (var attribute in attributes) {
                 if (attributes.hasOwnProperty(attribute)) {
                     description += "<li>" +
-                        attribute + (attributes[attribute] ? " - " + attributes[attribute].toUpperCase() : "") +
+                        attribute + (
+                            attributes[attribute] &&
+                            attributes[attribute] != constants.dataPopulation.UNDEFINED_DATA_TYPE ?
+                            " - " + attributes[attribute].toUpperCase() : ""
+                        ) +
                         "</li>";
                 }
             }
