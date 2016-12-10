@@ -1853,19 +1853,6 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
      *                      "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"],
      *                      "optional": "boolean"
      *                  }
-     *                  {
-     *                      "multiple": [       // Set of parameters that can be repeated
-     *                          {
-     *                              "name": "name of the parameter that can be repeated",
-     *                              "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"]
-     *                          },
-     *                          {
-     *                              "name": "name of the second parameter that can be repeated",
-     *                              "type": ["possible", "types", "of", "arguments", "that", "can", "be", "passed", "for", "this", "parameter"]\
-     *                          }
-     *                      ],
-     *                      "optional": "boolean"
-     *                  }
      *              ],
      *              "return": ["possible", "types", "returned", "by", "the", "processor"]
      *          }
@@ -1970,24 +1957,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
                 if (i != 0) {
                     snippetText += ", ";
                 }
-                if (parameter.multiple) {
-                    var repeatAmount = 2;
-                    for (var j = 0; j < repeatAmount; j++) {   // Adding the multiple attributes twice
-                        for (var k = 0; k < parameter.multiple.length; k++) {
-                            if (k != 0) {
-                                snippetText += ", ";
-                            }
-                            snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.multiple[k].name + j + "}";
-                            snippetVariableCount++;
-                        }
-                        if (j != repeatAmount - 1) {
-                            snippetText += ", ";
-                        }
-                    }
-                } else {
-                    snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.name + "}";
-                    snippetVariableCount++;
-                }
+                snippetText += "${" + (snippetVariableCount + 1) + ":" + parameter.name + "}";
+                snippetVariableCount++;
             }
             snippetText += ")\n";
         }

@@ -65,25 +65,13 @@ define(function () {
             if (metaData.parameters.length > 0) {
                 description += "<ul>";
                 for (var j = 0; j < metaData.parameters.length; j++) {
-                    if (metaData.parameters[j].multiple) {
-                        for (var k = 0; k < metaData.parameters[j].multiple.length; k++) {
-                            description += "<li>" +
-                                metaData.parameters[j].multiple[k].name +
-                                (metaData.parameters[j].optional ? " (optional & multiple)" : "") + " - " +
-                                (metaData.parameters[j].multiple[k].type.length > 0 ?
-                                    metaData.parameters[j].multiple[k].type.join(" | ").toUpperCase() :
-                                    "")
-                                + "</li>";
-                        }
-                    } else {
-                        description += "<li>" +
-                            metaData.parameters[j].name +
-                            (metaData.parameters[j].optional ? " (optional)" : "") +
-                            (metaData.parameters[j].type.length > 0 ?
-                            " - " + metaData.parameters[j].type.join(" | ").toUpperCase() :
-                                "") +
-                            "</li>";
-                    }
+                    description += "<li>" +
+                        metaData.parameters[j].name +
+                        (metaData.parameters[j].optional ? " (optional)" : "") +
+                        (metaData.parameters[j].type.length > 0 ?
+                        " - " + metaData.parameters[j].type.join(" | ").toUpperCase() :
+                            "") +
+                        "</li>";
                 }
                 description += "</ul>";
             } else {
