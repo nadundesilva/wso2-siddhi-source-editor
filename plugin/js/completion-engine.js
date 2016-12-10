@@ -656,7 +656,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
                     handleQueryOutputRateSuggestions(regexResults);
                     break;
                 case "insert":
-                    handleQueryInsertIntoSuggestions(regexResults);
+                    handleQueryInsertIntoSuggestions(regexResults, fullEditorText);
                     break;
                 case "insert overwrite":
                 case "delete":
@@ -1017,8 +1017,9 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
          *
          * @private
          * @param {string[]} regexResults Array of groups from the regex execution of the query
+         * @param {string} fullEditorText Complete editor text before the cursor
          */
-        function handleQueryInsertIntoSuggestions(regexResults) {
+        function handleQueryInsertIntoSuggestions(regexResults, fullEditorText) {
             var streamOutputClause = regexResults[12];
 
             // Regexps used for identifying the suggestions
@@ -1029,6 +1030,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
                 "events\\s+)?into\\s+[a-zA-Z]*$", "i");
             var afterQuerySuggestionsRegex = new RegExp("^(?:(?:" + regex.query.output.eventTypes + ")?events\\s+)?" +
                 "into\\s+" + regex.identifier + "\\s*(?:;)?\\s+[a-zA-Z]*$", "i");
+            var streamFinderRegex = new RegExp(regex.query.input.standardStreamRegex, "ig");
 
             // Testing to find the relevant suggestion
             if (streamOutputClause == "" || afterHalfTypedKeywordSuggestionsRegex.test(streamOutputClause)) {
@@ -1043,14 +1045,33 @@ define(["ace/ace", "jquery", "./constants", "./utils", "ace/snippets", "ace/rang
             } else if (afterOutputEventTypesSuggestionRegex.test(streamOutputClause)) {
                 addCompletions({value: "into "});
             } else if (afterIntoKeywordSuggestionsRegex.test(streamOutputClause)) {
-                addCompletions(Object.keys(self.streamsList).map(function (stream) {
-                    return {
-                        caption: stream,
-                        value: stream + ";",
-                        type: constants.typeToDisplayNameMap[constants.STREAMS],
-                        description: self.streamsList[stream].description
+                var isInner = streamFinderRegex.exec(regexResults.input)[1] == "#";
+                if (!isInner) {
+                    addCompletions(Object.keys(self.streamsList).map(function (stream) {
+                        return {
+                            caption: stream,
+                            value: stream + ";",
+                            type: constants.typeToDisplayNameMap[constants.STREAMS],
+                            description: self.streamsList[stream].description,
+                            priority: 6
+                        }
+                    }));
+                }
+                if (isInsidePartition(regexResults)) {
+                    var partitionNumber = getTheCurrentPartitionIndex(fullEditorText);
+                    if (self.partitionsList[partitionNumber]) {
+                        addCompletions(Object.keys(self.partitionsList[partitionNumber]).map(function (innerStream) {
+                            innerStream = (isInner ? innerStream.substring(1) : innerStream);
+                            return {
+                                caption: innerStream,
+                                value: innerStream + ";",
+                                type: constants.typeToDisplayNameMap[constants.INNER_STREAMS],
+                                description: self.partitionsList[partitionNumber][innerStream].description,
+                                priority: 6
+                            }
+                        }));
                     }
-                }));
+                }
                 addCompletions(Object.keys(self.eventTablesList).map(function (table) {
                     return {
                         caption: table,
