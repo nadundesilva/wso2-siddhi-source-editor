@@ -13,36 +13,15 @@
     <groupId>org.wso2.siddhi.editor</groupId>
     <artifactId>siddhi-editor-backend</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
     <name>Siddhi Editor - Backend Demo</name>
 
-    <modules>
-        <module>components/org.wso2.siddhi.editor.api</module>
-        <module>components/org.wso2.siddhi.editor.api.commons</module>
-        <module>components/org.wso2.siddhi.editor.api.core</module>
-    </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.wso2.siddhi</groupId>
-                <artifactId>siddhi-core</artifactId>
-                <version>${siddhi.version}</version>
-            </dependency>
-
-            <!-- Siddhi Editor Backend dependencies start here -->
-            <dependency>
-                <groupId>org.wso2.siddhi.editor</groupId>
-                <artifactId>org.wso2.siddhi.editor.api.core</artifactId>
-                <version>${siddhi.editor.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.siddhi.editor</groupId>
-                <artifactId>org.wso2.siddhi.editor.api.commons</artifactId>
-                <version>${siddhi.editor.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.wso2.siddhi</groupId>
+            <artifactId>siddhi-core</artifactId>
+            <version>${siddhi.version}</version>
+        </dependency>
+    </dependencies>
 
     <properties>
         <microservice.mainClass>org.wso2.siddhi.editor.api.Application</microservice.mainClass>

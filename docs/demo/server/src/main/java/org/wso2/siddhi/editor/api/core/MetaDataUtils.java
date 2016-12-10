@@ -1,10 +1,10 @@
 package org.wso2.siddhi.editor.api.core;
 
 import org.wso2.siddhi.core.SiddhiManager;
-import org.wso2.siddhi.core.annotations.Description;
-import org.wso2.siddhi.core.annotations.Parameter;
-import org.wso2.siddhi.core.annotations.Parameters;
-import org.wso2.siddhi.core.annotations.Return;
+import org.wso2.siddhi.core.util.docs.annotation.Description;
+import org.wso2.siddhi.core.util.docs.annotation.Parameter;
+import org.wso2.siddhi.core.util.docs.annotation.Parameters;
+import org.wso2.siddhi.core.util.docs.annotation.Return;
 import org.wso2.siddhi.core.executor.function.FunctionExecutor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
 import org.wso2.siddhi.core.query.processor.stream.function.StreamFunctionProcessor;

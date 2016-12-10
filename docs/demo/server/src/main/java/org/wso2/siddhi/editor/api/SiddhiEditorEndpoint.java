@@ -51,7 +51,7 @@ public class SiddhiEditorEndpoint {
                 // Transforming the element ID to partition inner streams map to element ID no to partition inner streams map
                 Map<Integer, Map<String, AbstractDefinition>> partitionElementIdNoToInnerStreamsMap =
                         new ConcurrentHashMap<>();
-                executionPlanRuntime.getInnerStreams().entrySet().parallelStream().forEach(
+                executionPlanRuntime.getPartitionedInnerStreamDefinitionMap().entrySet().parallelStream().forEach(
                         entry -> partitionElementIdNoToInnerStreamsMap.put(
                                 Integer.parseInt(entry.getKey().split("-")[1]),
                                 entry.getValue()
