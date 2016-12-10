@@ -61,22 +61,7 @@ define(function () {
             description += metaData.description ? "<p>" + self.wordWrap(metaData.description, 100) + "</p>" : "<br>";
         }
         if (metaData.parameters) {
-            description += "Parameters - ";
-            if (metaData.parameters.length > 0) {
-                description += "<ul>";
-                for (var j = 0; j < metaData.parameters.length; j++) {
-                    description += "<li>" +
-                        metaData.parameters[j].name +
-                        (metaData.parameters[j].optional ? " (optional)" : "") +
-                        (metaData.parameters[j].type.length > 0 ?
-                        " - " + metaData.parameters[j].type.join(" | ").toUpperCase() :
-                            "") +
-                        "</li>";
-                }
-                description += "</ul>";
-            } else {
-                description += "none<br><br>";
-            }
+            description += "Parameters - " + generateAttributeListDescription(metaData.parameters);
         }
         if (metaData.returnType) {
             description += "Return Type - ";
@@ -85,6 +70,15 @@ define(function () {
             } else {
                 description += "none";
             }
+            description += "<br><br>";
+        }
+        if (metaData.returnEvent) {
+            description += "Additional Attributes in Return Event - " +
+                generateAttributeListDescription(metaData.returnEvent);
+        }
+        if (metaData.example) {
+            description += "Example - <br><br>" +
+                "<span style='margin-left: 1em'>" + self.wordWrap(metaData.example) + "</span>";
         }
         description += "</div>";
         return description;
@@ -185,6 +179,33 @@ define(function () {
         description += "</div>";
         return description;
     };
+
+    /**
+     * Generate a description html string from an attribute list
+     * Descriptions are intended to be shown in the tooltips for completions
+     *
+     * @param {object[]} attributeList The list of attributes from which the description string is generated
+     * @return {string} html string of the description generated from the attribute list provided
+     */
+    function generateAttributeListDescription(attributeList) {
+        var description = "";
+        if (attributeList.length > 0) {
+            description += "<ul>";
+            for (var j = 0; j < attributeList.length; j++) {
+                description += "<li>" +
+                    attributeList[j].name +
+                    (attributeList[j].optional ? " (optional)" : "") +
+                    (attributeList[j].type.length > 0 ?
+                    " - " + attributeList[j].type.join(" | ").toUpperCase() :
+                        "") +
+                    "</li>";
+            }
+            description += "</ul>";
+        } else {
+            description += "none<br><br>";
+        }
+        return description;
+    }
 
     return self;
 });

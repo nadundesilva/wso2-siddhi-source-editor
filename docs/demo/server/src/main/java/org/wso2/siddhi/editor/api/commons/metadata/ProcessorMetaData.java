@@ -11,6 +11,8 @@ public class ProcessorMetaData {
     private String description;
     private List<ParameterMetaData> parameters;
     private List<String> returnType;
+    private List<AttributeMetaData> returnEvent;
+    private String example;
 
     public String getName() {
         return name;
@@ -36,11 +38,27 @@ public class ProcessorMetaData {
         this.parameters = parameters;
     }
 
-    public List<String> getreturnType() {
+    public List<String> getReturnType() {
         return returnType;
     }
 
-    public void setreturnType(List<String> returnType) {
+    public void setReturnType(List<String> returnType) {
         this.returnType = returnType;
+    }
+
+    public List<AttributeMetaData> getReturnEvent() {
+        return returnEvent;
+    }
+
+    public void setReturnEvent(List<AttributeMetaData> returnEvent) {
+        this.returnEvent = returnEvent;
+    }
+
+    public String getExample() {
+        return example;
+    }
+
+    public void setExample(String example) {
+        this.example = example;
     }
 }

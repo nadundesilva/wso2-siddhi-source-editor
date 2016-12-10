@@ -1,15 +1,19 @@
 package org.wso2.siddhi.editor.api.core;
 
 import org.wso2.siddhi.core.SiddhiManager;
-import org.wso2.siddhi.core.util.docs.annotation.Description;
-import org.wso2.siddhi.core.util.docs.annotation.Parameter;
-import org.wso2.siddhi.core.util.docs.annotation.Parameters;
-import org.wso2.siddhi.core.util.docs.annotation.Return;
 import org.wso2.siddhi.core.executor.function.FunctionExecutor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
 import org.wso2.siddhi.core.query.processor.stream.function.StreamFunctionProcessor;
 import org.wso2.siddhi.core.query.processor.stream.window.WindowProcessor;
 import org.wso2.siddhi.core.query.selector.attribute.aggregator.AttributeAggregator;
+import org.wso2.siddhi.core.util.docs.annotation.AdditionalAttribute;
+import org.wso2.siddhi.core.util.docs.annotation.Description;
+import org.wso2.siddhi.core.util.docs.annotation.Example;
+import org.wso2.siddhi.core.util.docs.annotation.Parameter;
+import org.wso2.siddhi.core.util.docs.annotation.Parameters;
+import org.wso2.siddhi.core.util.docs.annotation.Return;
+import org.wso2.siddhi.core.util.docs.annotation.ReturnEvent;
+import org.wso2.siddhi.editor.api.commons.metadata.AttributeMetaData;
 import org.wso2.siddhi.editor.api.commons.metadata.MetaData;
 import org.wso2.siddhi.editor.api.commons.metadata.ParameterMetaData;
 import org.wso2.siddhi.editor.api.commons.metadata.ProcessorMetaData;
@@ -19,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -244,14 +249,19 @@ public class MetaDataUtils {
             Parameters parametersAnnotation = processorClass.getAnnotation(Parameters.class);   // When multiple parameters are present
             Parameter parameterAnnotation = processorClass.getAnnotation(Parameter.class);      // When only single parameter is present
             Return returnAnnotation = processorClass.getAnnotation(Return.class);
+            ReturnEvent returnEventAnnotation = processorClass.getAnnotation(ReturnEvent.class);
+            Example exampleAnnotation = processorClass.getAnnotation(Example.class);
 
             if (descriptionAnnotation != null || parametersAnnotation != null || returnAnnotation != null) {
                 processorMetaData = new ProcessorMetaData();
                 processorMetaData.setName(processorName.substring(0, 1).toLowerCase() + processorName.substring(1));
 
+                // Adding Description annotation data
                 if (descriptionAnnotation != null) {
                     processorMetaData.setDescription(descriptionAnnotation.value());
                 }
+
+                // Adding Parameter annotation data
                 if (parametersAnnotation != null) {
                     // When multiple parameters are present
                     List<ParameterMetaData> parameterMetaDataList = new ArrayList<>();
@@ -273,13 +283,35 @@ public class MetaDataUtils {
                     List<ParameterMetaData> parameterMetaDataList = new ArrayList<>();
                     parameterMetaDataList.add(parameterMetaData);
                     processorMetaData.setParameters(parameterMetaDataList);
-                } else {
-                    processorMetaData.setParameters(new ArrayList<>());
                 }
-                if (returnAnnotation != null) {
-                    processorMetaData.setreturnType(Arrays.asList(returnAnnotation.value()));
-                } else {
-                    processorMetaData.setParameters(new ArrayList<>());
+
+                // Adding Return annotation data
+                if (STREAM_FUNCTION_PROCESSOR.equals(processorType) ||
+                        STREAM_PROCESSOR.equals(processorType) ||
+                        WINDOW_PROCESSOR.equals(processorType)) {
+                    // Setting the return type to event for stream functions, stream processors and windows
+                    processorMetaData.setReturnType(Collections.singletonList("event"));
+                } else if (returnAnnotation != null) {
+                    processorMetaData.setReturnType(Arrays.asList(returnAnnotation.value()));
+                }
+
+                // Adding ReturnEvent annotation data
+                // Adding return event additional attributes only if the processor type is stream processor
+                if (returnEventAnnotation != null &&
+                        STREAM_PROCESSOR.equals(processorType)) {
+                    List<AttributeMetaData> attributeMetaDataList = new ArrayList<>();
+                    for (AdditionalAttribute additionalAttribute : returnEventAnnotation.value()) {
+                        AttributeMetaData attributeMetaData = new AttributeMetaData();
+                        attributeMetaData.setName(additionalAttribute.name());
+                        attributeMetaData.setType(Arrays.asList(additionalAttribute.type()));
+                        attributeMetaDataList.add(attributeMetaData);
+                    }
+                    processorMetaData.setReturnEvent(attributeMetaDataList);
+                }
+
+                // Adding Example annotation data
+                if (exampleAnnotation != null) {
+                    processorMetaData.setExample(exampleAnnotation.value());
                 }
             }
         }
