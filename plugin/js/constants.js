@@ -52,7 +52,10 @@ define(function() {
      */
     var scripts = document.getElementsByTagName("script");
     var relativePathToCurrentJS = scripts[scripts.length - 1].getAttribute("src");
-    constants.BASE_URL = relativePathToCurrentJS.substring(0, relativePathToCurrentJS.length - "lib/requirejs-2.3.2/require.js".length);
+    constants.BASE_URL =
+        relativePathToCurrentJS.substring(
+            0, relativePathToCurrentJS.length - "lib/requirejs-2.3.2/require.js".length
+        );
 
     // Server side validation related constants
     constants.SERVER_URL = "http://localhost:8080/";

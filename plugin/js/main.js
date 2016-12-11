@@ -15,7 +15,10 @@
  */
 
 requirejs.config({
-    baseUrl: window.location.protocol + "//" + window.location.host + window.location.pathname.split("/").slice(0, -3).join("/") + "/plugin",
+    baseUrl: window.location.protocol + "//" +
+                window.location.host +
+                window.location.pathname.split("/").slice(0, -3).join("/") +
+                "/plugin",
     paths: {
         jquery: "lib/jquery.min",
         ace: "lib/ace-editor"
@@ -31,6 +34,7 @@ require(["js/siddhi-editor"], function(SiddhiEditor) {
 
     "use strict";   // JS strict mode
 
+    // Initializing the Siddhi Editor
     new SiddhiEditor({
         divID: "editor",
         realTimeValidation: true,

@@ -5,7 +5,7 @@
 
 /*
  * Generating tooltips when user hovers over a token
-  * The tooltip content is set in siddhi-editor.js
+ * The tooltip content is set in siddhi-editor.js
  */
 define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip", "./constants", "exports"],
     function (dom, oop, event, range, tooltip, constants, exports) {
@@ -67,9 +67,14 @@ define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip
                 return;
             }
 
-            // This had been added to suit the siddhi editor implementation of token tool tips
+            /*
+             * This had been added to suit the siddhi editor implementation of token tool tips
+             */
             var tokenText = token.tooltip;
             if (tokenText) {
+                // Showing the tooltip using the tooltip specified in the token
+
+                // Setting the tooltip html to the tooltip popup
                 if (this.tokenText != tokenText) {
                     this.setHtml(tokenText);
                     this.width = this.getWidth();
@@ -77,22 +82,27 @@ define(["ace/lib/dom", "ace/lib/oop", "ace/lib/event", "ace/range", "ace/tooltip
                     this.tokenText = tokenText;
                 }
 
+                // Showing the tooltip
                 if (!this.$showTooltipTimer) {
                     if (!this.isOpen) {
+                        // Starting the timer to show tooltip if it not already open
                         var self = this;
                         this.$showTooltipTimer = setTimeout(function() {
                             self.show(null, self.x, self.y);
                         }, constants.TOOLTIP_SHOW_DELAY - 100);
                     } else {
+                        // Updating the position if it is already open
                         this.show(null, this.x, this.y);
                     }
                 }
 
                 this.token = token;
                 session.removeMarker(this.marker);
-                this.range = new range.Range(docPos.row, token.start, docPos.row, token.start + token.value.length);
+                this.range =
+                    new range.Range(docPos.row, token.start, docPos.row, token.start + token.value.length);
                 this.marker = session.addMarker(this.range, "ace_bracket", "text", false);
             } else {
+                // Hiding the tooltip if there is no tooltip specified for the token
                 clearTimeout(this.$showTooltipTimer);
                 this.$showTooltipTimer = undefined;
                 this.hide();

@@ -64,11 +64,12 @@ define(["require","exports","module","ace/lib/oop","ace/range","ace/mode/folding
             var match = line.match(this.foldingStartMarker);
             if (match) {
                 var i = match.index;
-                var matchFound;
 
                 if (match[1]) {     // Brackets are matched using a special function which supports nested brackets
                     return this.openingBracketBlock(session, match[1], row, i);
                 }
+
+                var matchFound;
                 for (var j = 1; j < match.length; j++) {
                     if (match[j]) {
                         matchFound = true;
@@ -92,6 +93,7 @@ define(["require","exports","module","ace/lib/oop","ace/range","ace/mode/folding
                 if (match[1]) {     // Brackets are matched using a special function which supports nested brackets
                     return this.closingBracketBlock(session, match[1], row, i);
                 }
+
                 for (j = 1; j < match.length; j++) {
                     if (match[j]) {
                         matchFound = true;

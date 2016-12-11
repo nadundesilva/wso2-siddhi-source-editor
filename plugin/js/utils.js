@@ -58,7 +58,8 @@ define(["./constants"], function (constants) {
     self.generateDescriptionForProcessor = function (metaData) {
         var description = "<div>" + (metaData.name ? "<strong>" + metaData.name + "</strong><br>" : "");
         if (metaData.description) {
-            description += metaData.description ? "<p>" + self.wordWrap(metaData.description, 100) + "</p>" : "<br>";
+            description +=
+                metaData.description ? "<p>" + self.wordWrap(metaData.description, 100) + "</p>" : "<br>";
         }
         if (metaData.parameters) {
             description += "Parameters - " + generateAttributeListDescription(metaData.parameters);
@@ -159,7 +160,8 @@ define(["./constants"], function (constants) {
             for (var attribute in metaData.attributes) {
                 if (metaData.attributes.hasOwnProperty(attribute)) {
                     description += "<li>" +
-                        attribute + (metaData.attributes[attribute] ? " - " + metaData.attributes[attribute].toUpperCase() : "") +
+                        attribute + (metaData.attributes[attribute] ? " - " +
+                        metaData.attributes[attribute].toUpperCase() : "") +
                         "</li>";
                 }
             }

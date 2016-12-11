@@ -19,8 +19,11 @@
 var SiddhiQLListener = require('./gen/SiddhiQLListener').SiddhiQLListener;
 
 /**
- * The Token Tool Tip Update Listener prototype constructor
+ * The Token Tool Tip Poinr Recognition Listener prototype constructor
  * Inherits from SiddhiQLListener generated from SiddhiQL grammar using ANTLR4
+ *
+ * Only recognizng the tooltip points is done by this listener
+ * The actual adding of the tooltips are done in the main js
  *
  * @constructor
  * @param walker The walker for which this listener is generating token tool tips
@@ -35,6 +38,7 @@ TokenTooltipPointRecognitionListener.prototype = Object.create(SiddhiQLListener.
 TokenTooltipPointRecognitionListener.prototype.constructor = TokenTooltipPointRecognitionListener;
 
 TokenTooltipPointRecognitionListener.prototype.exitFunction_operation = function (ctx) {
+    // Identifying eval scripts, window processors, stream processors, stream function, function executors, attribute aggregators for tooltips
     var namespaceCtx = ctx.function_namespace(0);
     var functionCtx = ctx.function_id(0);
 
@@ -54,6 +58,7 @@ TokenTooltipPointRecognitionListener.prototype.exitFunction_operation = function
 };
 
 TokenTooltipPointRecognitionListener.prototype.exitStream_id = function (ctx) {
+    // Identifying sources for tooltips
     var sourceName = this.walker.utils.getTextFromANTLRCtx(ctx);
     var isInnerStream;
 
@@ -70,6 +75,7 @@ TokenTooltipPointRecognitionListener.prototype.exitStream_id = function (ctx) {
 };
 
 TokenTooltipPointRecognitionListener.prototype.exitTrigger_name = function (ctx) {
+    // Identifying triggers for tooltips
     var triggerName = this.walker.utils.getTextFromANTLRCtx(ctx);
 
     if (triggerName) {
@@ -80,6 +86,7 @@ TokenTooltipPointRecognitionListener.prototype.exitTrigger_name = function (ctx)
 };
 
 TokenTooltipPointRecognitionListener.prototype.exitPartition = function () {
+    // Incrementing the partition count so that the correct index in used in the next partition
     this.partitionCount++;
 };
 

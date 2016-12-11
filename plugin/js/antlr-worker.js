@@ -241,9 +241,11 @@ var SiddhiEditor = {};
             // Adding the syntax errors identified into the editor gutter
             renderer.notifyParseTreeWalkingCompletion(walker.syntaxErrorList);
 
+            // Walking the parse tree to generate completion data
             var dataPopulationListener = new DataPopulationListener(walker);
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(dataPopulationListener, lastParseTree);
 
+            // Notify the main js and clear completion data
             renderer.notifyDataPopulationCompletion(walker.completionData, walker.incompleteData, walker.statementsList);
             clearCompletionEngineData();
         };
@@ -254,9 +256,12 @@ var SiddhiEditor = {};
          * Position of the tooltip, type of the tooltip and other data required by the tooltip will be passed back to the main js
          */
         walker.recognizeTokenTooltipPoints = function () {
+            // Walking the parse tree to identify the token tooltip points
+            // Actually adding the tooltips in done in the main.js
             var tokenTooltipPointRecognitionListener = new TokenTooltipPointRecognitionListener(walker);
             antlr4.tree.ParseTreeWalker.DEFAULT.walk(tokenTooltipPointRecognitionListener, lastParseTree);
 
+            // Notify the main js and clear data
             renderer.notifyTokenTooltipPointRecognitionCompletion(walker.tokenToolTipData);
             clearTokenTooltipData();
         };

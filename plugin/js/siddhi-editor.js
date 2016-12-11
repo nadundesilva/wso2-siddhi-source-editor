@@ -59,10 +59,19 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
 
         self.realTimeValidation = config.realTimeValidation;
         new aceTokenTooltip.TokenTooltip(aceEditor);
-        aceEditor.setReadOnly(config.readOnly);
+
+        /*
+         * Setting the language mode to siddhi
+         *
+         * Language mode is located at ace-editor/mode/siddhi.js
+         * Highlight style is located at ace-editor/mode/siddhi_highlight_rules.js.js
+         * Folding is located at ace-editor/mode/folding/siddhi.js
+         * Snippets are located at ace-editor/snippets/siddhi.js
+         */
+        aceEditor.session.setMode(constants.ace.SIDDHI_MODE);
 
         // Setting the editor options
-        aceEditor.session.setMode(constants.ace.SIDDHI_MODE);   // Language mode located at ace-editor/mode-siddhi.js
+        aceEditor.setReadOnly(config.readOnly);
         aceEditor.setTheme(config.theme ? "ace/theme/" + config.theme : constants.ace.DEFAULT_THEME);
         aceEditor.getSession().setUseWrapMode(true);
         aceEditor.getSession().setTabSize(4);
@@ -110,6 +119,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
         });
 
         // Adding events for adjusting the completions list styles
+        // This is used for showing different styles for different types of completions
         aceEditor.renderer.on("afterRender", function () {
             // Checking if a popup is open when the editor is re-rendered
             if (aceEditor.completer && aceEditor.completer.popup) {
@@ -119,7 +129,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
                         ".ace_autocomplete > .ace_scroller > .ace_content > .ace_text-layer > .ace_line"
                     );
                     for (var i = 0; i < completionElements.length; i++) {
-                        var element = completionElements[i].getElementsByClassName("ace_rightAlignedText")[0];
+                        var element =
+                            completionElements[i].getElementsByClassName("ace_rightAlignedText")[0];
                         if (element && displayNameToStyleMap[element.innerHTML]) {
                             completionElements[i].setAttribute(
                                 "style",
@@ -131,7 +142,11 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
             }
         });
 
-        // Starting a new siddhi worker for running antlr tasks
+        /*
+         * Starting a new siddhi worker for running antlr tasks
+         * This is done to isolate the antlr tasks form the main js to solve RequireJS conflicts
+         * Also this will enable the antlr tasks to run without blocking the UI thread
+         */
         var siddhiWorker = new SiddhiWorker(new MessageHandler(self));
 
         /**
@@ -166,15 +181,18 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
          * @private
          */
         function adjustAutoCompletionHandlers() {
-            // This method will dynamically select the appropriate completer for current context when auto complete event occurred.
+            // Selecting the completer for current context when auto complete event is fired
             // SiddhiCompleter needs to be the first completer in the list as it will update the snippets
-            var completerList = [self.completionEngine.SiddhiCompleter, self.completionEngine.SnippetCompleter];
+            var completerList =
+                [self.completionEngine.SiddhiCompleter, self.completionEngine.SnippetCompleter];
 
             // Adding keyword completor if the cursor is not in front of dot or colon
             var objectNameRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*\\.\\s*$", "i");
             var namespaceRegex = new RegExp("[a-zA-Z_][a-zA-Z_0-9]*\\s*:\\s*$", "i");
             var singleLineCommentRegex = new RegExp("--(?:.(?!\n))*$");
             var blockCommentRegex = new RegExp("\\/\\*(?:(?:.|\n)(?!\\*\\/))*$");
+
+            // Adding the keyword completor
             var editorText = aceEditor.getValue();
             if (!(objectNameRegex.test(editorText) || namespaceRegex.test(editorText) ||
                 singleLineCommentRegex.test(editorText) || blockCommentRegex.test(editorText))) {
@@ -193,6 +211,7 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
             // Clearing all errors before finding the errors again
             self.state.semanticErrorList = [];
             self.state.syntaxErrorList = [];
+
             siddhiWorker.onEditorChange(aceEditor.getValue().trim());
         }
 
@@ -254,7 +273,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
 
                         self.completionEngine.partitionsList = [];
                         for (var i = 0; i < response.innerStreams.length; i++) {
-                            var innerStreams = getStreamsFromStreamDefinitions(response.innerStreams[i], true);
+                            var innerStreams =
+                                getStreamsFromStreamDefinitions(response.innerStreams[i], true);
                             self.completionEngine.partitionsList.push(innerStreams);
                         }
 
@@ -276,7 +296,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
                         var query = "";
                         for (var i = 0; i < self.completionEngine.statementsList.length; i++) {
                             if (self.completionEngine.statementsList[i].statement.substring(0, 2) != "\\*" &&
-                                self.completionEngine.statementsList[i].statement.substring(0, 2) != "--") {  // Appending statements excepts comments
+                                self.completionEngine.statementsList[i].statement.substring(0, 2) != "--") {
+                                // Appending statements excepts comments
                                 query += self.completionEngine.statementsList[i].statement + "  \n";
                                 (function (line, query) {
                                     submitToServerForSemanticErrorCheck({
@@ -284,7 +305,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
                                         missingStreams: []
                                     }, function (response) {
                                         if (!foundSemanticErrors && response.status != "SUCCESS" &&
-                                            Date.now() - self.state.lastEdit >= constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
+                                            Date.now() - self.state.lastEdit >=
+                                                    constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
                                             // Update the semanticErrorList
                                             self.state.semanticErrorList.push({
                                                 row: line,
@@ -296,16 +318,18 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
                                             // Update the state of the foundSemanticErrors to stop sending another server call
                                             foundSemanticErrors = true;
 
-                                            // Show the errors
+                                            // Show the errors in the ace editor gutter
                                             aceEditor.session.setAnnotations(
-                                                self.state.semanticErrorList.concat(self.state.syntaxErrorList)
+                                                self.state.semanticErrorList
+                                                    .concat(self.state.syntaxErrorList)
                                             );
                                         }
                                     });
                                 })(self.completionEngine.statementsList[i].line, query);
 
                                 if (foundSemanticErrors ||
-                                    Date.now() - self.state.lastEdit < constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
+                                    Date.now() - self.state.lastEdit <
+                                            constants.SERVER_SIDE_VALIDATION_DELAY - 100) {
                                     break;
                                 }
                             }
@@ -334,7 +358,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
                     streams[streamDefinitionsList[i].id] = {
                         attributes: attributes,
                         description: utils.generateDescriptionForStreamOrTable(
-                            (isInner ? "Inner " : "") +"Stream", streamDefinitionsList[i].id, attributes
+                            (isInner ? "Inner " : "") + "Stream",
+                            streamDefinitionsList[i].id, attributes
                         )
                     };
                 }
@@ -613,7 +638,8 @@ define(["ace/ace", "jquery", "./constants", "./utils", "./completion-engine", ".
             var partitionNumber = tooltipData.partitionNumber;
 
             if (editor.completionEngine.partitionsList[partitionNumber]) {
-                var innerStream = editor.completionEngine.partitionsList[partitionNumber][innerStreamName];
+                var innerStream =
+                    editor.completionEngine.partitionsList[partitionNumber][innerStreamName];
                 if (innerStream && innerStream.description) {
                     updateTokenTooltip(row, column, innerStream.description);
                 }
