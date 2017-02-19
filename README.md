@@ -33,38 +33,4 @@ You can configure the Siddhi Editor by passing the configurations object into Si
 * autoCompletion (optional - default: false) - boolean
 * readOnly (optional - deafult: false) - boolean
 * theme (optional - default: "crimson_editor") - string<br>
-  The following themes are avaialable. Previews of the themes can be found in the ACE editor demo provided in [Kitchen Sink](https://ace.c9.io/build/kitchen-sink.html). (Note that other features available in the ace editor may be altered and only the themes are recomended to be previewed using Kitchen Sink)
-  * ambiance
-  * chaos
-  * chrome
-  * clouds
-  * clouds_midnight
-  * cobalt
-  * crimson_editor
-  * dawn
-  * dreamweaver
-  * eclipse
-  * github
-  * idle_fingers
-  * iplastic
-  * katzenmilch
-  * kr_theme
-  * kuroir
-  * merbivore
-  * merbivore_soft
-  * mono_industrial
-  * monokai
-  * pastel_on_dark
-  * solarized_dark
-  * solarized_light
-  * sqlserver
-  * terminal
-  * textmate
-  * tomorrow
-  * tomorrow_night
-  * tomorrow_night_blue
-  * tomorrow_night_bright
-  * tomorrow_night_eighties
-  * twilight
-  * vibrant_ink
-  * xcode
+  Previews of the themes available can be found in the ACE editor demo provided in [Kitchen Sink](https://ace.c9.io/build/kitchen-sink.html). (Note that other features available in the ace editor may be altered and only the themes are recomended to be previewed using Kitchen Sink)
