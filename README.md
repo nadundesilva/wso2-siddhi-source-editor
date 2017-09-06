@@ -34,3 +34,7 @@ You can configure the Siddhi Editor by passing the configurations object into Si
 * readOnly (optional - deafult: false) - boolean
 * theme (optional - default: "crimson_editor") - string<br>
   Previews of the themes available can be found in the ACE editor demo provided in [Kitchen Sink](https://ace.c9.io/build/kitchen-sink.html). (Note that other features available in the ace editor may be altered and only the themes are recomended to be previewed using Kitchen Sink)
+
+## Continuation
+
+This project had been moved to and is currently maintained by [WSO2 Carbon Analytics project](https://github.com/wso2/carbon-analytics/tree/master/components/org.wso2.carbon.siddhi.editor.core/src/main/resources/web/js/source-editor)
